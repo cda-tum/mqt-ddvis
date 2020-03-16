@@ -41,14 +41,78 @@
                 "./cpp/module",
             ],
             "libraries": [
-                "/home/michael/Documents/nodejs_workspace/qdd_vis/cpp/qfr_lib/libdd_package.a",
-                "/home/michael/Documents/nodejs_workspace/qdd_vis/cpp/qfr_lib/libqfr.a",
+                #"./cpp/qfr_lib/libdd_package.a",
+                #"./cpp/qfr_lib/libqfr.a",
             ],
             'dependencies': [
-                "<!(node -p \"require('node-addon-api').gyp\")"
+                "<!(node -p \"require('node-addon-api').gyp\")",
+                "dd_package",
+                "qfr",
             ],
             'defines': [ 'NAPI_DISABLE_CPP_EXCEPTIONS' ],
         },
+        {
+            "target_name": "dd_package",
+            "type": "static_library",
+            "sources": [
+                "./cpp/dd_package/src/DDcomplex.cpp",
+                "./cpp/dd_package/src/DDpackage.cpp",
+            ],
+            "inlcude_dirs": [
+                "./cpp/dd_package/include",
+            ],
+        },
+        {
+            "target_name": "qfr",
+            "type": "static_library",
+            "sources": [
+                "./cpp/qfr/src/algorithms/Entanglement.cpp",
+                "./cpp/qfr/src/algorithms/GoogleRandomCircuitSampling.cpp",
+                "./cpp/qfr/src/algorithms/Grover.cpp",
+                "./cpp/qfr/src/algorithms/QFT.cpp",
+                "./cpp/qfr/src/operations/NonUnitaryOperation.cpp",
+                "./cpp/qfr/src/operations/Operation.cpp",
+                "./cpp/qfr/src/operations/StandardOperation.cpp",
+                "./cpp/qfr/src/qasm_parser/Parser.cpp",
+                "./cpp/qfr/src/qasm_parser/Scanner.cpp",
+                "./cpp/qfr/src/QuantumComputation.cpp",
+            ],
+            "include_dirs": [
+                "./cpp/qfr/include",
+                "./cpp/qfr/include/algorithms",
+                "./cpp/qfr/include/operations",
+                "./cpp/qfr/include/qasm_parser",
+                "./cpp/qfr/extern/dd_package/include",
+                "./cpp/qfr/test",
+            ],
+            "dependencies": [
+                "dd_package",
+            ],
+            "cflags": [
+                "-std=c++14",
+                "-mtune=native",
+                "-march=native",
+                "-O3",
+                "-fexceptions",
+                "-fPIC",
+            ],
+            "cxxflags": [
+                "-std=c++14",
+                "-mtune=native",
+                "-march=native",
+                "-O3",
+                "-fexceptions",
+                "-fPIC",
+            ],
+            "cflags_cc": [
+                "-std=c++14",
+                "-mtune=native",
+                "-march=native",
+                "-O3",
+                "-fexceptions",
+                "-fPIC",
+            ],
+        }
     ]
 }
 
