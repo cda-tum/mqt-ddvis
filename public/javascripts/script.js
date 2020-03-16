@@ -93,7 +93,7 @@ $(() =>  {
                 }
             });
         };
-        setTimeout(() => func(), stepWaitTime);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
+        setTimeout(() => func(), stepWaitTime/2);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
     });
     /* ######################################################### */
     $('#prev').on('click', () => {
@@ -141,7 +141,7 @@ $(() =>  {
                 }
             });
         };
-        setTimeout(() => func(), stepWaitTime);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
+        setTimeout(() => func(), stepWaitTime/2);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
     });
 });
 
