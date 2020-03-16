@@ -1,5 +1,4 @@
 node_modules
 build
-cpp/qfr_lib
 cpp/sample_qasm
 public/data/*
