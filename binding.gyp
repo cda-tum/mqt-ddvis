@@ -41,8 +41,8 @@
                 "./cpp/module",
             ],
             "libraries": [
-                "/home/michael/Documents/nodejs_workspace/qdd_vis/cpp/qfr_lib/libdd_package.a",
-                "/home/michael/Documents/nodejs_workspace/qdd_vis/cpp/qfr_lib/libqfr.a",
+                "libdd_package.a",
+                "libqfr.a",
             ],
             'dependencies': [
                 "<!(node -p \"require('node-addon-api').gyp\")"
