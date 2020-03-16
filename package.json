@@ -1,0 +1,41 @@
+{
+  "name": "qdd_visualizer",
+  "version": "1.0.0",
+  "description": "Visualizes Quantum Algorithms as Quantum Decision Diagrams",
+  "main": "server.js",
+  "scripts": {
+    "install": "node-gyp rebuild",
+    "start": "node bin/www",
+    "dev": "nodemon bin/www"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/7Magic7Mike7/qdd_vis"
+  },
+  "keywords": [
+    "quantum",
+    "computer",
+    "decision",
+    "diagrams",
+    "qdd"
+  ],
+  "author": "Michael Artner",
+  "license": "ISC",
+  "gypfile": true,
+  "dependencies": {
+    "node-addon-api": "^2.0.0",
+    "bootstrap": "^4.4.1",
+    "gyp": "^0.5.0",
+    "jquery": "^3.4.1",
+    "popper": "^1.0.1",
+    "body-parser": "^1.19.0",
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "express": "^4.17.1",
+    "morgan": "~1.9.1",
+    "http-errors": "~1.6.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.2"
+  }
+}

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="./stylesheets/style.css"/>
+	
+    <title>QDD Visualizer</title>
+</head>
+<body>
+    <header>
+        <h1>QDD Visualizer</h1>
+    </header>
+
+    <div class="tab">
+        <button class="tablinks" onclick="openTab(event, 'Simulation')">Simulation</button>
+        <button class="tablinks" onclick="openTab(event, 'Verification')">Verification</button>
+        <button class="tablinks" onclick="openTab(event, 'Emulation')">Emulation</button>
+    </div>
+
+    <div id="Simulation" class="tabcontent">
+        <section id="demo-sec">
+            <button type="button" id="init" class="btn btn-primary">Init State</button>
+            <button type="button" id="addBell" class="btn btn-primary">Add Bell Circuit</button>
+            <button type="button" id="print" class="btn btn-primary">Print</button>
+            <p></p>
+        </section>
+    
+        <section id="app">
+            <nav>
+                <h2>Load Algorithm</h2>
+                <p>Enter Algorithm here</p>
+                <p id="highlight" class="text"></p>
+                <textarea type="text" id="q_algo" ></textarea>
+                <p></p>
+                <button type="button" id="load" class="btn btn-primary">Load</button>
+                <button type="button" id="toStart" class="btn btn-primary">&#8606</button>
+                <button type="button" id="prev" class="btn btn-primary">&#8592</button>
+                <button type="button" id="next" class="btn btn-primary">&#8594</button>
+                <button type="button" id="toEnd" class="btn btn-primary">&#8608</button>
+            </nav>
+            <article>
+                <h1>Display DD here</h1>
+                <object id="qdd_img" type="image/svg+xml"></object>
+            </article>
+        </section>
+    </div>
+
+    <div id="Verification" class="tabcontent">
+        
+    </div>
+
+    <div id="Emulation" class="tabcontent">
+        
+    </div>
+
+    
+
+<!-- 
+    <footer>
+        <h1>JKU</h1>
+    </footer>
+-->
+    <section id="debug">
+        <h4>Debug Text:</h4>
+        <p id="output"> </p>
+    </section>
+
+    <script 
+        src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" 
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" 
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" 
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" 
+        crossorigin="anonymous"></script>
+    <script src="./javascripts/script.js"></script>
+</body>
+</html>

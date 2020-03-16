@@ -1,0 +1,133 @@
+
+/* ################################## base style ################################## */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Style the header */
+header, footer {
+    background-color: rgb(140, 188, 243);;
+    padding: 30px;
+    text-align: center;
+    font-size: 35px;
+    color: white;
+}
+
+header {
+    margin-bottom: 5px;
+}
+
+/* Create two columns/boxes that floats next to each other */
+nav {
+    float: left;
+    width: 30%;
+    height: min-content;
+    background: #f1f1f1;
+    padding: 20px;
+    max-height: 500px;
+    text-align: center;
+}
+
+article {
+    float: left;
+    padding: 20px;
+    width: 70%;
+	height: 600px;
+    text-align: center;
+}
+
+/* Clear floats after the columns */
+section:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+/* Style the footer */
+footer {
+    font-style: italic;
+}
+
+/* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
+@media (max-width: 600px) {
+    nav, article {
+        width: 100%;
+        height: auto;
+    }
+}
+
+/* ################################## specific element types ################################## */
+/* tab related code adapted from https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_tabs */
+/* Style the tab */
+.tab {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+}
+  
+/* Style the buttons inside the tab */
+.tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+    font-size: 17px;
+}
+  
+/* Change background color of buttons on hover */
+.tab button:hover {
+    background-color: #ddd;
+}
+  
+/* Create an active/current tablink class */
+  .tab button.active {
+    background-color: #ccc;
+}
+  
+/* Style the tab content */
+.tabcontent {
+    display: none;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-top: none;
+    animation: fadeEffect 0.7s; /* Fading effect takes 1 second */
+}
+
+/* Go from zero to full opacity */
+@keyframes fadeEffect {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+
+/* ################################## specific elements ################################## */
+#img {
+    /*both lines below doesn't seem to affect anything*/
+    margin: 10px;   
+    height: 300px;
+}
+
+#q_algo {
+    width: 200px;
+    height: 250px;
+    max-height: inherit;
+}
+
+#prev {
+    margin-left: 10px;
+}
+
+#debug {
+    margin-top: 50px;
+    padding-top: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+    background-color: rgb(238, 40, 89);
+    color: #f1f1f1;
+}
