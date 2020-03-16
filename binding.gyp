@@ -36,13 +36,17 @@
                 "./cpp/qfr/include/algorithms",
                 "./cpp/qfr/include/operations",
                 "./cpp/qfr/include/qasm_parser",
+                #"./cpp/qfr/test",
                 "./cpp/qfr/extern/dd_package/include",
-                "./cpp/qfr/test",
                 "./cpp/module",
             ],
             "libraries": [
-                "~/Documents/nodejs_workspace/qdd_vis/cpp/qfr/extern/dd_package/build/src/libdd_package.a",
-                "~/Documents/nodejs_workspace/qdd_vis/cpp/qfr/build/src/libqfr.a",
+                #"~/Documents/nodejs_workspace/qdd_vis/cpp/qfr/extern/dd_package/build/src/libdd_package.a",
+                #"~/Documents/nodejs_workspace/qdd_vis/cpp/qfr/build/src/libqfr.a",
+                #"../cpp/qfr/extern/dd_package/build/src/libdd_package.a",
+                #"../cpp/qfr/build/src/libqfr.a",
+                "../cpp/libs/libdd_package.a",
+                "../cpp/libs/libqfr.a",
             ],
             'dependencies': [
                 "<!(node -p \"require('node-addon-api').gyp\")"
