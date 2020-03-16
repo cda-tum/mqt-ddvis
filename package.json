@@ -23,6 +23,8 @@
   "license": "ISC",
   "gypfile": true,
   "dependencies": {
+    "uglify-js": ">= 2.6.0",
+    "minimist": ">=1.2.2",
     "node-addon-api": "^2.0.0",
     "bootstrap": "^4.4.1",
     "gyp": "^0.5.0",
