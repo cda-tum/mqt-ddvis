@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "install": "node-gyp rebuild",
-    "start": "node bin/www",
+    "start": "node-gyp rebuild && node bin/www",
     "dev": "nodemon bin/www"
   },
   "repository": {

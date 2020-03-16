@@ -1,0 +1,2 @@
+
+web: node-gyp rebuild && node bin/www.js
