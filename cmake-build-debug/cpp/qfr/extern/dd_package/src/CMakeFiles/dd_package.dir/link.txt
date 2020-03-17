@@ -1,0 +1,2 @@
+"/usr/bin/gcc-ar-7" cr libdd_package.a  CMakeFiles/dd_package.dir/DDpackage.cpp.o CMakeFiles/dd_package.dir/DDcomplex.cpp.o
+"/usr/bin/gcc-ranlib-7" libdd_package.a

@@ -1,0 +1,1 @@
+/usr/bin/c++  -g   CMakeFiles/QDD_Vis.dir/cpp/module/module.cpp.o CMakeFiles/QDD_Vis.dir/cpp/module/QDDVis.cpp.o  -o QDD_Vis 
