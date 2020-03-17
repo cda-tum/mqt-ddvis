@@ -1,4 +1,3 @@
 node_modules
 build
-cpp/sample_qasm
 public/data/*
