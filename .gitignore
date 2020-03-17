@@ -1,4 +1,6 @@
 node_modules
 build
+cpp/qfr/test
+cpp/qfr/extern/googletest
 cpp/sample_qasm
 public/data/*
