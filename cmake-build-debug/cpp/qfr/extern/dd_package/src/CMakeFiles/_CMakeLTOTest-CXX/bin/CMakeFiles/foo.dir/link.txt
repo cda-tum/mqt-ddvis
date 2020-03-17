@@ -1,2 +1,0 @@
-"/usr/bin/gcc-ar-7" cr libfoo.a  CMakeFiles/foo.dir/foo.cpp.o
-"/usr/bin/gcc-ranlib-7" libfoo.a

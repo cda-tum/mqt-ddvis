@@ -20,7 +20,7 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
 
         //"private" methods
         void reset();
-        void exportDD(std::string ip);
+        void exportDD(const std::string& ipaddr);
 
         //exported ("public") methods       - return type must be Napi::Value or void!
         Napi::Value Load(const Napi::CallbackInfo& info);
@@ -29,23 +29,17 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
 
         //fields
         const long id = NextID++;
-        std::string ip;
+        std::string ip{};
         std::unique_ptr<dd::Package> dd;
         std::unique_ptr<qc::QuantumComputation> qc;
-        dd::Edge sim;
-        //std::vector<std::unique_ptr<Operation>> iterator;
+        dd::Edge sim{};
 
-        __gnu_cxx::__normal_iterator<
-            std::unique_ptr<qc::Operation, std::default_delete<qc::Operation>> *,
-            std::vector<
-                std::unique_ptr<qc::Operation, std::default_delete<qc::Operation>>, 
-                std::allocator<std::unique_ptr<qc::Operation, std::default_delete<qc::Operation>>>
-            >
-        > iterator;
+        std::vector<std::unique_ptr<qc::Operation>>::iterator iterator{};
 
         std::array<short, qc::MAX_QUBITS> line {};
-        bool ready;     //true if a valid algorithm is imported, false otherwise
-        bool atInitial; //whether we currently visualize the initial state or not
+        bool ready = false;     //true if a valid algorithm is imported, false otherwise
+        bool atInitial = true; //whether we currently visualize the initial state or not
+        bool atEnd = false; // whether we currently visualize the end of the given circuit
 };
 
 #endif

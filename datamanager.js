@@ -1,5 +1,5 @@
 
-const qddVis = require("./build/Release/qdd_vis");
+const qddVis = require("./build/Release/QDD_Vis");
 
 var data = [];
 
@@ -9,7 +9,7 @@ function parseIP(req) {
 
 function register(req) {
     const ip = parseIP(req);
-    const exists = data.some((val, index, array) => val.ip == ip);
+    const exists = data.some((val, index, array) => val.ip === ip);
     if(exists) console.log(ip + " already registered!");
     else {
         console.log(ip + " registered");

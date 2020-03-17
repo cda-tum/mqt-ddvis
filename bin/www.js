@@ -4,7 +4,7 @@
  * Module dependencies.
  */
 
-var server = require('../server');
+var app = require('../server');
 var debug = require('debug')('qdd-visualizer:server');
 var http = require('http');
 
@@ -13,13 +13,13 @@ var http = require('http');
  */
 
 var port = normalizePort(process.env.PORT || '3000');
-server.set('port', port);
+app.set('port', port);
 
 /**
  * Create HTTP server.
  */
 
-var server = http.createServer(server);
+var server = http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.

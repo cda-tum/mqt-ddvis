@@ -60,29 +60,22 @@ QDDVis::QDDVis(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVis>(info) 
 
     this->dd = std::make_unique<dd::Package>();
     this->qc = std::make_unique<qc::QuantumComputation>();
-    this->line = {};
-    line.fill(qc::LINE_DEFAULT);
-    this->iterator = this->qc->end();
-    this->iterator--;
 
-    this->sim = this->dd->makeZeroState(2); //todo fix argument ------------------------------------------
-    this->atInitial = true;
+    line.fill(qc::LINE_DEFAULT);
+    this->iterator = this->qc->begin();
 }
 
 
 void QDDVis::reset() {
     this->qc->reset();
-
-    dd::Edge zeroState = dd->makeZeroState(qc->getNqubits());
-    dd->incRef(zeroState);
-    sim = zeroState;
+    sim = { };
     ready = false;
     atInitial = true;
+    atEnd = false;
 }
 
-const std::string ending = ".dot";
-void QDDVis::exportDD(std::string ip) {
-    std::string file = "public/data/" + ip + ending;
+void QDDVis::exportDD(const std::string& ipaddr) {
+    std::string file = "public/data/" + ipaddr + ".dot";
     std::cout << file << std::endl;
     dd->export2Dot(sim, file.c_str(), true);
 }
@@ -114,7 +107,6 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     try {
         qc->import(ss, qc::OpenQASM);
         std::cout << "LOADING" << std::endl;
-
     } catch(std::exception& e) {
         std::cout << "Exception while loading the algorithm: " << e.what() << std::endl;
         reset();
@@ -123,12 +115,11 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         return Napi::Boolean::New(env, false);
     }
 
-    dd::Edge zeroState = dd->makeZeroState(qc->getNqubits());
-    dd->incRef(zeroState);
-
-    sim = zeroState;
-    ready = true;
+    sim = dd->makeZeroState(qc->getNqubits());
+	dd->incRef(sim);
+	ready = true;
     atInitial = true;
+    atEnd = false;
     iterator = qc->begin();
 
     exportDD(this->ip);
@@ -143,13 +134,13 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
     if(!ready) {
         Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
         return Napi::Boolean::New(env, false);
+    } else if (qc->empty()) {
+	    return Napi::Boolean::New(env, false);
     }
 
-    if(atInitial) atInitial = false;      //todo special case: no gates ----------------------------------------------------------------------------------
-    else iterator++;     //adjust the position of the iterator
-
-    if(iterator == qc->end()) {
-        iterator--;
+    if(atInitial){
+    	atInitial = false;
+    } else if(atEnd) {
         return Napi::Boolean::New(env, false); //we can't go any further ahead
     }
     
@@ -163,6 +154,10 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
         dd->garbageCollect();
 
         exportDD(this->ip);
+        iterator++; // advance iterator
+        if (iterator == qc->end()) {
+        	atEnd = true;
+        }
         return Napi::Boolean::New(env, true);   //something changed
 
     } catch(std::exception& e) {
@@ -177,14 +172,19 @@ Napi::Value QDDVis::Prev(const Napi::CallbackInfo& info) {
     if(!ready) {
         Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
         return Napi::Boolean::New(env, false);
+    } else if (qc->empty()) {
+    	return Napi::Boolean::New(env, false);
     }
 
-    if(atInitial) return Napi::Boolean::New(env, false);
+    if (atEnd) {
+    	atEnd = false;
+    	iterator--;
+    } else if (atInitial) {
+	    return Napi::Boolean::New(env, false); //we can't go any further behind
+    }
 
     try {
         dd::Edge currDD = (*iterator)->getInverseDD(dd, line); // get the inverse of the current operation
-        if(iterator == qc->begin()) atInitial = true;
-        else iterator--;                     //adjust the position of the iterator
 
         auto temp = dd->multiply(currDD, sim);   //"remove" the current operation by multiplying with its inverse
         dd->incRef(temp);
@@ -193,6 +193,12 @@ Napi::Value QDDVis::Prev(const Napi::CallbackInfo& info) {
         dd->garbageCollect();
 
         exportDD(this->ip);
+        if (iterator == qc->begin()) {
+        	atInitial = true;
+        } else {
+        	iterator--;
+        }
+
         return Napi::Boolean::New(env, true);   //something changed
 
     } catch(std::exception& e) {
