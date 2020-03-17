@@ -43,10 +43,10 @@
             "libraries": [
                 #"~/Documents/nodejs_workspace/qdd_vis/cpp/qfr/extern/dd_package/build/src/libdd_package.a",
                 #"~/Documents/nodejs_workspace/qdd_vis/cpp/qfr/build/src/libqfr.a",
-                #"../cpp/qfr/extern/dd_package/build/src/libdd_package.a",
-                #"../cpp/qfr/build/src/libqfr.a",
-                "../cpp/libs/libdd_package.a",
-                "../cpp/libs/libqfr.a",
+                "../cpp/qfr/extern/dd_package/build/src/libdd_package.a",
+                "../cpp/qfr/build/src/libqfr.a",
+                #"../cpp/libs/libdd_package.a",
+                #"../cpp/libs/libqfr.a",
             ],
             'dependencies': [
                 "<!(node -p \"require('node-addon-api').gyp\")",
