@@ -4,7 +4,7 @@
 #include <napi.h>
 #include <string>
 
-#include "Operation.hpp"
+#include "operations/Operation.hpp"
 #include "QuantumComputation.hpp"
 #include "DDcomplex.h"
 #include "DDpackage.h"
@@ -12,7 +12,7 @@
 class QDDVis : public Napi::ObjectWrap<QDDVis> {
     public:
         static Napi::Object Init(Napi::Env evn, Napi::Object exports);
-        QDDVis(const Napi::CallbackInfo& info);
+        explicit QDDVis(const Napi::CallbackInfo& info);
 
     private:
         static Napi::FunctionReference constructor;

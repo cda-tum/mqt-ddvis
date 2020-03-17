@@ -1,3 +1,4 @@
 [submodule "cpp/qfr"]
 	path = cpp/qfr
 	url = https://github.com/iic-jku/qfr.git
+	branch = master

@@ -1,16 +1,16 @@
 
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
 #include <string>
 #include <functional>
 #include <memory>
 #include <stdexcept>
 
-#include "StandardOperation.hpp"
+#include "operations/StandardOperation.hpp"
 #include "QuantumComputation.hpp"
-#include "QFT.hpp"
-#include "Grover.hpp"
-#include "GoogleRandomCircuitSampling.hpp"
+#include "algorithms/QFT.hpp"
+#include "algorithms/Grover.hpp"
+#include "algorithms/GoogleRandomCircuitSampling.hpp"
 #include "DDcomplex.h"
 #include "DDpackage.h"
 
