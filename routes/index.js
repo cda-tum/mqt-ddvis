@@ -79,7 +79,7 @@ router.get('/next', (req, res) => {
 module.exports = router;
 
 function sendFile(res, ip, msg) {
-    fs.readFile("public/data/" + ip + ".dot.svg", "utf8", (error, file) => {
+    fs.readFile("data/" + ip + ".dot.svg", "utf8", (error, file) => {
         if(error) res.send({ msg: msg + " failed with " + error.message, ip: ip, svg: null });
         else res.send({ msg: msg + " success", ip: ip, svg: file });
     });
