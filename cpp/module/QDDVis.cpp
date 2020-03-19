@@ -75,7 +75,7 @@ void QDDVis::reset() {
 }
 
 void QDDVis::exportDD(const std::string& ipaddr) {
-    std::string file = "public/data/" + ipaddr + ".dot";
+    std::string file = "data/" + ipaddr + ".dot";
     std::cout << file << std::endl;
     dd->export2Dot(sim, file.c_str(), true);
 }
