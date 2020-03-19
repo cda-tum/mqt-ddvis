@@ -24,19 +24,19 @@
     </div>
 
     <div id="Simulation" class="tabcontent">
-        <section id="demo-sec">
-            <button type="button" id="init" class="btn btn-primary">Init State</button>
-            <button type="button" id="addBell" class="btn btn-primary">Add Bell Circuit</button>
-            <button type="button" id="print" class="btn btn-primary">Print</button>
-            <p></p>
-        </section>
+        <!--   Accordion     -->
+        <button class="accordion" >Example Algorithms</button>
+        <div class="panel">
+            <button onclick="loadDeutsch()">Deutsch</button>
+        </div>
     
         <section id="app">
             <nav>
                 <h2>Load Algorithm</h2>
-                <p>Enter Algorithm here</p>
                 <p id="highlight" class="text"></p>
-                <textarea type="text" id="q_algo" ></textarea>
+                <div id="drop_zone" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
+                    <textarea id="q_algo" type="text" placeholder="Enter Algorithm or drop .qasm-File here."></textarea>
+                </div>
                 <p></p>
                 <button type="button" id="load" class="btn btn-primary">Load</button>
                 <button type="button" id="toStart" class="btn btn-primary">&#8606</button>
@@ -45,8 +45,10 @@
                 <button type="button" id="toEnd" class="btn btn-primary">&#8608</button>
             </nav>
             <article>
-                <h1>Display DD here</h1>
-                <object id="qdd_img" type="image/svg+xml"></object>
+                <h1>Quantum Decision Diagram</h1>
+                <div id="svg_div">
+                    <p>Here will be the Quantum Decision Diagram</p>
+                </div>
             </article>
         </section>
     </div>
@@ -81,6 +83,8 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" 
         integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" 
         crossorigin="anonymous"></script>
-    <script src="./javascripts/script.js"></script>
+
+    <script src="./javascripts/route_script.js"></script>
+    <script src="./javascripts/event_script.js"></script>
 </body>
 </html>

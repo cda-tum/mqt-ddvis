@@ -37,27 +37,23 @@ router.post('/load', (req, res) => {
         try {
             const q_algo = req.body.algo;
             const text = data.vis.load(q_algo);
-            res.send({ msg: "loaded successfully", ip: data.ip });
+            sendFile(res, data.ip, "loading");
+
         } catch(err) {
             res.status(400).json({ msg: err.message });
-            console.log(err);
         }
     } else {
         console.log("ERROR! Ip not found!");
     }
 });
 
-//router.get('/')
-
 router.get('/prev', (req, res) => {
     const data = dm.get(req);
     if(data) {
         const ret = data.vis.prev();
-        if(ret) {
-            res.send({ msg: "prev state", reload: "true", ip: data.ip });   //something changes so we update the shown dd
-        } else {
-            res.send({ msg: "can't go back because we are at the beginning", reload: "false" });
-        }
+        if(ret) sendFile(res, data.ip, "prev");
+        else res.send({ msg: "can't go back because we are at the beginning" });    //the client will search for res.svg, but it will be null so they won't redraw
+
     } else {
         console.log("ERROR! Ip not found!");
     }
@@ -68,7 +64,8 @@ router.get('/next', (req, res) => {
     if(data) {
         const ret = data.vis.next();
         if(ret) {
-            res.send({ msg: "next state", reload: "true", ip: data.ip });   //something changes so we update the shown dd
+            //res.send({ msg: "next state", reload: "true", ip: data.ip });   //something changes so we update the shown dd
+            sendFile(res, data.ip, "next");
         } else {
             res.send({ msg: "can't go ahead because we are at the end", reload: "false" });
         }
@@ -77,21 +74,13 @@ router.get('/next', (req, res) => {
     }
 });
 
-router.get('/init', (req, res) => {
-    bells = 0;
-    curr_algo = qasm_header;
-    res.send({ msg: "state is now zero", algo: curr_algo });
-});
-
-router.get('/addBell', (req, res) => {
-    bells++;
-    curr_algo += bell_circ;
-    res.send({ msg: "Added a BellGate - now there are " + bells, algo: curr_algo });
-});
-
-router.get('/print', (req, res) => {
-    const ip = dm.parseIP(req);
-    res.send({ msg: "printing", ip: ip });
-});
+//####################################################################################################################################################################
 
 module.exports = router;
+
+function sendFile(res, ip, msg) {
+    fs.readFile("public/data/" + ip + ".dot.svg", "utf8", (error, file) => {
+        if(error) res.send({ msg: msg + " failed with " + error.message, ip: ip, svg: null });
+        else res.send({ msg: msg + " success", ip: ip, svg: file });
+    });
+}
