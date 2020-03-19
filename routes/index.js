@@ -1,27 +1,28 @@
 
-const qddVis = require("../build/Release/qdd_vis");
+const qddVis = require("../build/Release/QDD_Vis");
 const express = require('express');
 const bodyParser = require("body-parser");
 const router = express.Router();
 const dm = require('../datamanager');
+const fs = require('fs');
 
 //var vis = new qddVis.QDDVis("123");
 
 const qasm_header = "OPENQASM 2.0; \n" + 
-                    "qreg q[2]; \n";
+                    "qreg q[2]; \n" +
+                    "include \"qelib1.inc\"; \n";
 
-const bell_circ =   "U(pi/2,0,pi) q[0]; \n" + 
-                    "CX q[0],q[1];\n";
+const bell_circ =   "h q[0]; \n" +
+                    "cx q[0],q[1]; \n";
 
 const default_algo =    qasm_header +
                         bell_circ +
-                        bell_circ +
-                        bell_circ +
-                        bell_circ +
                         "";
 var curr_algo = default_algo;
-var bells = 4;
+var bells = 1;
 
+// make sure the data directory exists
+fs.mkdirSync("public/data", { recursive: true })
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -52,7 +53,7 @@ router.get('/prev', (req, res) => {
     const data = dm.get(req);
     if(data) {
         const ret = data.vis.prev();
-        if(ret == 1) {
+        if(ret) {
             res.send({ msg: "prev state", reload: "true", ip: data.ip });   //something changes so we update the shown dd
         } else {
             res.send({ msg: "can't go back because we are at the beginning", reload: "false" });

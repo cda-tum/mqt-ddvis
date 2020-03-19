@@ -40,10 +40,11 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/cpp/qfr/CMakeLists.txt")
 endif()
 
 # create executable
-add_executable(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
         cpp/module/module.cpp
         cpp/module/QDDVis.cpp
         cpp/module/QDDVis.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 
 # always use modern CMake "target_..." commands
 target_include_directories(${PROJECT_NAME} PUBLIC cpp/module) # include directories
@@ -69,5 +70,13 @@ endif()
 # set compiler flags (this assumes gcc or clang)
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall $<$<CONFIG:DEBUG>:-g3 -Og -Wextra -Wpedantic -pedantic> $<$<CONFIG:RELEASE>:-O3 -mtune=native -march=native -DNDEBUG -g0>)
 
-# in order to find <napi.h> this may be necessary
-# target_include_directories(${PROJECT_NAME} PUBLIC node_modules/node-addon-api node_modules/node-addon-api/src)
+# Include N-API wrappers
+execute_process(COMMAND node -p "require('node-addon-api').include"
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                OUTPUT_VARIABLE NODE_ADDON_API_DIR
+                )
+string(REPLACE "\n" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
+string(REPLACE "\"" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${NODE_ADDON_API_DIR} ${NODE_ADDON_API_DIR}/src)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_JS_INC})
+target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB})

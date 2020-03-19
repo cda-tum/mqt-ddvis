@@ -1,6 +1,0 @@
-/snap/clion/103/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/michael/CLionProjects/QDD_Vis/QDD_Vis
--- dd_package update
--- using installed DD package
--- Configuring done
--- Generating done
--- Build files have been written to: /home/michael/CLionProjects/QDD_Vis/QDD_Vis/cmake-build-debug

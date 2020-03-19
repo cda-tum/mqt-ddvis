@@ -86,7 +86,7 @@ $(() =>  {
                 success: (res) => {
                     debugText(res.msg);
                     
-                    if(res.reload == "true") {
+                    if(res.reload === "true") {
                         print(res.ip);
                         setTimeout(() => func(), stepWaitTime); //wait a bit so the current qdd can be shown to the user
                     }
@@ -105,7 +105,7 @@ $(() =>  {
             success: (res) => {
                 debugText(res.msg);
                 
-                if(res.reload == "true") print(res.ip);
+                if(res.reload === "true") print(res.ip);
             }
         });
     });
@@ -119,7 +119,7 @@ $(() =>  {
             success: (res) => {
                 debugText(res.msg);
                 
-                if(res.reload == "true") print(res.ip);
+                if(res.reload === "true") print(res.ip);
             }
         });
     });
@@ -134,7 +134,7 @@ $(() =>  {
                 success: (res) => {
                     debugText(res.msg);
                     
-                    if(res.reload == "true") {
+                    if(res.reload === "true") {
                         print(res.ip);
                         setTimeout(() => func(), stepWaitTime); //wait a bit so the current qdd can be shown to the user
                     }
