@@ -32,4 +32,5 @@ app.use('/users', usersRouter);
 
 module.exports = app;
 
-fs.mkdirSync("./data", () => {});
+const data_path = "./data";
+if(!fs.existsSync(data_path)) fs.mkdirSync(data_path, () => {});
