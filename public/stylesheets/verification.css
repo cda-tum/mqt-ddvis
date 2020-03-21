@@ -1,0 +1,45 @@
+
+/* Create four columns/boxes that float next to each other */
+#ver_algo1_text, #ver_algo2_text {
+    width: 15%;
+    background: #f1f1f1;
+    padding: 5px;
+    height: min-content;
+    max-height: 500px;
+    text-align: center;
+}
+#ver_algo1_text {
+    float: left;
+}
+#ver_algo2_text {
+    float: right;
+}
+
+#ver_algo1_qdd, #ver_algo2_qdd {
+    float: left;
+    padding: 20px;
+    width: 35%;
+    height: 600px;
+    text-align: center;
+}
+
+#ver_algo1, #ver_algo2 {
+    min-height: 400px;
+    max-width: 100%;
+    max-height: 100%
+}
+
+
+#ver_drop_zone1, #ver_drop_zone2 {
+    border: 5px dashed black;
+    padding: 0;
+}
+
+
+/* Responsive layout - makes the four columns/boxes stack on top of each other instead of next to each other, on small screens */
+@media (max-width: 600px) {
+    #ver_algo1_text, #ver_algo1_qdd, #ver_algo2_qdd, #ver_algo2_text {
+        width: 100%;
+        height: auto;
+    }
+}
