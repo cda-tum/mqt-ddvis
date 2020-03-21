@@ -1,4 +1,10 @@
 
+
+//todo on tab change certain things need to be done:
+/*
+    - "kill" the current simulation/verification/emulation process
+    - maybe reset the tab-data?
+ */
 //from: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_tabs
 function openTab(event, tabId) {
     let i, tabcontent, tablinks;
