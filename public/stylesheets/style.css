@@ -8,7 +8,7 @@ body {
     font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Style the header */
+/* Style the header and the footer */
 header, footer {
     background-color: rgb(140, 188, 243);;
     padding: 30px;
@@ -21,8 +21,22 @@ header {
     margin-bottom: 5px;
 }
 
+footer {
+    font-style: italic;
+}
+
+#debug {
+    margin-top: 50px;
+    padding-top: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+    background-color: rgb(238, 40, 89);
+    color: #f1f1f1;
+}
+
+/* Simulation ##################################################################################### */
 /* Create two columns/boxes that floats next to each other */
-nav {
+#algo_div {
     float: left;
     width: 30%;
     height: min-content;
@@ -32,7 +46,7 @@ nav {
     text-align: center;
 }
 
-article {
+#qdd_div {
     float: left;
     padding: 20px;
     width: 70%;
@@ -41,24 +55,37 @@ article {
 }
 
 /* Clear floats after the columns */
-section:after {
+#Simulation:after {
     content: "";
     display: table;
     clear: both;
 }
 
-/* Style the footer */
-footer {
-    font-style: italic;
+#drop_zone {
+    border: 5px dashed black;
+    padding: 5px;
+}
+
+#q_algo {
+    width: 200px;
+    height: 250px;
+    max-height: inherit;
 }
 
 /* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
 @media (max-width: 600px) {
-    nav, article {
+    #algo_div, #qdd_div {
         width: 100%;
         height: auto;
     }
 }
+
+/* Verification ##################################################################################### */
+
+
+
+/* Emulation ##################################################################################### */
+
 
 /* ################################## specific element types ################################## */
 /* tab related code adapted from https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_tabs */
@@ -133,35 +160,4 @@ footer {
     background-color: white;
     display: none;
     overflow: hidden;
-}
-
-/* ################################## specific elements ################################## */
-#img {
-    /*both lines below doesn't seem to affect anything*/
-    margin: 10px;   
-    height: 300px;
-}
-
-#drop_zone {
-    border: 5px dashed black;
-    padding: 5px;
-}
-
-#q_algo {
-    width: 200px;
-    height: 250px;
-    max-height: inherit;
-}
-
-#prev {
-    margin-left: 10px;
-}
-
-#debug {
-    margin-top: 50px;
-    padding-top: 10px;
-    padding-left: 20px;
-    padding-right: 20px;
-    background-color: rgb(238, 40, 89);
-    color: #f1f1f1;
 }
