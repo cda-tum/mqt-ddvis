@@ -1,0 +1,67 @@
+
+/* Create two columns/boxes that floats next to each other */
+#algo_div {
+    float: left;
+    width: 30%;
+    height: min-content;
+    background: #f1f1f1;
+    padding: 20px;
+    max-height: 500px;
+    text-align: center;
+}
+
+#qdd_div {
+    float: left;
+    padding: 20px;
+    width: 70%;
+    height: 600px;
+    text-align: center;
+}
+
+#drop_zone {
+    border: 5px dashed black;
+    padding: 5px;
+}
+
+#q_algo {
+    width: 200px;
+    height: 250px;
+}
+
+/* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
+@media (max-width: 600px) {
+    #algo_div, #qdd_div {
+        width: 100%;
+        height: auto;
+    }
+}
+
+
+/* accordion from https://www.w3schools.com/howto/howto_js_accordion.asp */
+/* Style the buttons that are used to open and close the accordion panel */
+.accordion {
+    background-color: #eee;
+    color: #444;
+    cursor: pointer;
+    padding: 10px;
+    margin: 15px;
+    width: 100%;
+    text-align: left;
+    border: none;
+    outline: none;
+    transition: 0.4s;
+}
+
+/* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+.active, .accordion:hover {
+    background-color: #ccc;
+}
+
+/* Style the accordion panel. Note: hidden by default */
+.panel {
+    padding: 0 18px;
+    margin-bottom: 15px;
+    background-color: white;
+    display: none;
+    overflow: hidden;
+}

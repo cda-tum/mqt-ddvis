@@ -1,4 +1,63 @@
 
+
+//from https://www.w3schools.com/howto/howto_js_accordion.asp
+const acc = document.getElementsByClassName("accordion");
+for (let i = 0; i < acc.length; i++) {
+    acc[i].addEventListener("click", () => {
+        /* Toggle between adding and removing the "active" class,
+        to highlight the button that controls the panel */
+        acc[i].classList.toggle("active");
+
+        /* Toggle between hiding and showing the active panel */
+        const panel = acc[i].nextElementSibling;
+        if (panel.style.display === "block") panel.style.display = "none";
+        else panel.style.display = "block";
+    });
+}
+
+function loadDeutsch() {
+    const q_algo = document.getElementById("q_algo");
+    q_algo.textContent =
+        "OPENQASM 2.0;\n" +
+        "include \"qelib1.inc\";\n" +
+        "\n" +
+        "qreg q[2];\n" +
+        "creg c[2];\n" +
+        "\n" +
+        "x q[1];\n" +
+        "h q[0];\n" +
+        "h q[1];\n" +
+        "cx q[0],q[1];\n" +
+        "h q[0];\n"
+    ;
+}
+
+function dropHandler(event) {
+    event.preventDefault();
+
+    if(event.dataTransfer.items) {
+        for(let i = 0; i < event.dataTransfer.files.length; i++) {
+            //if(event.dataTransfer.items[i].kind === 'file') {
+            if(event.dataTransfer.files[i].name.endsWith(".qasm")) {
+                let file = event.dataTransfer.files[i];
+                let reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const q_algo = document.getElementById("q_algo");
+                    q_algo.textContent = e.target.result;
+                };
+                reader.readAsBinaryString(file);
+
+            } else {
+                //todo show error
+            }
+            //}
+        }
+    }
+}
+
+
+
 const stepWaitTime = 700;   //in ms
 
 $(() =>  {
@@ -7,8 +66,8 @@ $(() =>  {
         const op = $('#output');
         op.text("");
         const q_algo = $('#q_algo').val();
-        
-        $.post("/load", { algo: q_algo }, 
+
+        $.post("/load", { algo: q_algo },
             (res) => {
                 debugText(res.msg);
                 print(res.svg);
@@ -25,7 +84,7 @@ $(() =>  {
                 contentType: 'application/json',
                 success: (res) => {
                     debugText(res.msg);
-                    
+
                     if(res.svg) {
                         print(res.svg);
                         setTimeout(() => func(), stepWaitTime); //wait a bit so the current qdd can be shown to the user
@@ -73,7 +132,7 @@ $(() =>  {
                 contentType: 'application/json',
                 success: (res) => {
                     debugText(res.msg);
-                    
+
                     if(res.svg) {
                         print(res.svg);
                         setTimeout(() => func(), stepWaitTime); //wait a bit so the current qdd can be shown to the user
