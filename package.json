@@ -4,8 +4,8 @@
   "description": "Visualizes Quantum Algorithms as Quantum Decision Diagrams",
   "main": "server.js",
   "scripts": {
-    "install": "cmake-js compile",
-    "start": "cmake-js compile && node ./bin/www",
+    "start": "bash start.sh",
+    "run": "cmake-js compile && node ./bin/www",
     "dev": "nodemon bin/www"
   },
   "repository": {
