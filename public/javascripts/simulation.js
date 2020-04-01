@@ -17,7 +17,8 @@ for (let i = 0; i < acc.length; i++) {
 
 function loadDeutsch() {
     const q_algo = document.getElementById("q_algo");
-    q_algo.textContent =
+    console.log("Before: " + q_algo.value);
+    q_algo.value =
         "OPENQASM 2.0;\n" +
         "include \"qelib1.inc\";\n" +
         "\n" +
@@ -30,6 +31,68 @@ function loadDeutsch() {
         "cx q[0],q[1];\n" +
         "h q[0];\n"
     ;
+
+    console.log("After: " + q_algo.value);
+}
+
+
+let basicStates = null;
+/*function validate() {
+    const basic_states = document.getElementById("basic_states");
+    const arr = basic_states.value.split(" ");
+
+    basicStates = [];
+    arr.forEach(value => {
+        const index = value.indexOf("j");
+        if(0 <= value.indexOf("+")) {   //complex number
+            console.log(value + " is a complex number");
+
+            const parts = value.split("+");
+            if(parts.length === 2) {
+
+            }
+
+        } else if(0 <= value.indexOf("-")) {   //complex number
+            console.log(value + " is a complex number");
+
+
+        } else if(index === 0 || index === value.length-1) {      //imaginary number
+            console.log(value + " is a imaginary number");
+
+            if(index === 0) value = value.substring(1);
+            else value = value.substring(0, index);
+
+            const num = parseFloat(value);
+            if(num) basicStates.push(new Complex(0, num));
+            else {
+                document.getElementById("output").value = "Error! " + value + " is no float!";  //todo error
+            }
+
+        } else {            //real number
+            console.log(value + " is a real number");
+
+            const num = parseFloat(value);
+            if(num) basicStates.push(new Complex(num, 0));
+            else {
+                document.getElementById("output").value = "Error! " + value + " is no float!";  //todo error
+            }
+        }
+    });
+
+    basicStates.forEach(value => console.log("bs: " + value));
+}
+*/
+function validate() {
+    $(() => {
+        const basic_states = $('#basic_states').val();
+        debugText();
+
+        $.post("/validate", { basicStates: basic_states },
+            (res) => {
+                debugText(res.msg);
+            }
+        );
+    });
 }
 
 function dropHandler(event) {
@@ -44,7 +107,7 @@ function dropHandler(event) {
 
                 reader.onload = function(e) {
                     const q_algo = document.getElementById("q_algo");
-                    q_algo.textContent = e.target.result;
+                    q_algo.value = e.target.result;
                 };
                 reader.readAsBinaryString(file);
 
@@ -66,8 +129,9 @@ $(() =>  {
         const op = $('#output');
         op.text("");
         const q_algo = $('#q_algo').val();
+        console.log("Value of q_algo: " + q_algo);
 
-        $.post("/load", { algo: q_algo },
+        $.post("/load", { basicStates: basicStates, algo: q_algo },
             (res) => {
                 debugText(res.msg);
                 print(res.svg);

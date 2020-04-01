@@ -1,10 +1,10 @@
 
 const qddVis = require("../build/Release/QDD_Vis");
 const express = require('express');
-const bodyParser = require("body-parser");
 const router = express.Router();
 const dm = require('../datamanager');
 const fs = require('fs');
+const Complex = require('complex.js');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -13,11 +13,34 @@ router.get('/', function(req, res, next) {
     //res.render('index', { title: 'QDD Visualizer' });
 });
 
+router.post('/validate', (req, res) => {
+    const arr = req.body.basicStates.split(" ");
+
+    let compNumbers = [];
+    arr.forEach(value => {
+        value = value.replace("j", "i");
+        try {
+            const comp = new Complex(value);
+            compNumbers.push(comp);
+        } catch(error) {
+            console.log(error);
+        }
+    });
+
+    let sum = 0;
+    compNumbers.forEach(value => sum += value.abs());
+
+    console.log("sum = " + sum);
+    if(sum === 1.0) res.status(200).json({ msg: "valid basic states" });
+    else res.status(400).json({ msg: "sum of magnitudes is " + sum + " but must be 1.0!" });
+});
+
 router.post('/load', (req, res) => {
     const data = dm.get(req);
     if(data) {
         try {
             const q_algo = req.body.algo;
+            const basicStates = req.body.basicStates;
             const text = data.vis.load(q_algo);
             sendFile(res, data.ip, "loading");
 
