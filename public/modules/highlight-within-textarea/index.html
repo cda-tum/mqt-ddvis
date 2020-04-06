@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Highlight Within Textarea</title>
+
+		<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700|Droid+Sans+Mono" rel="stylesheet">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+		<!-- highlight-within-textarea1 CSS/JS -->
+		<link href="jquery.highlight-within-textarea.css" rel="stylesheet">
+		<script src=""></script>
+
+		<!-- custom styles for highlight-within-textarea1 -->
+		<style>
+			.hwt-container {
+				background-color: #f8f9fa;
+			}
+
+			.hwt-content {
+				width: 760px;
+				height: 100px;
+				padding: 20px;
+				border: 1px solid #adb5bd;
+				color: inherit;
+				font: 18px/25px 'Droid Sans Mono', sans-serif;
+			}
+
+			.hwt-input:focus {
+				outline-color: #495057;
+			}
+
+			.hwt-content mark {
+				border-radius: 3px;
+				background-color: #d0bfff;
+			}
+
+			.hwt-content mark.red {
+				background-color: #ffc9c9;
+			}
+
+			.hwt-content mark.blue {
+				background-color: #a3daff;
+			}
+
+			.hwt-content mark.yellow {
+				background-color: #ffec99;
+			}
+		</style>
+
+		<!-- general styles to make this page look decent -->
+		<style>
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				max-width: 800px;
+				margin: 40px auto;
+				padding: 0 20px;
+				font: 18px/1.4 'Open Sans', sans-serif;
+				color: #495057;
+				background-color: #f1f3f5;
+			}
+
+			a {
+				display: inline-block;
+				margin-bottom: 5px;
+				padding: 10px 30px;
+				border-radius: 5px;
+				color: #f8f9fa;
+				background-color: #495057;
+				text-decoration: none;
+			}
+
+			section {
+				margin-top: 60px;
+			}
+
+			code {
+				padding: 0 5px;
+				font-family: 'Droid Sans Mono', sans-serif;
+				font-size: 16px;
+				background-color: #dee2e6;
+			}
+
+			script {
+				display: block;
+				margin-top: 10px;
+				padding-left: 15px;
+				border-left: 5px solid #adb5bd;
+				background-color: #e9ecef;
+				white-space: pre-wrap;
+				font: 14px/1.5 'Droid Sans Mono', sans-serif;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Highlight Within Textarea</h1>
+		<p>Some demos and code snippets for using the plugin. Edit textareas to see the real-time highlighting. View page source to see the CSS.</p>
+		<p>
+			<a href="https://github.com/lonekorean/highlight-within-textarea/tree/master">Go to GitHub repo</a>
+			<a href="https://www.npmjs.com/package/highlight-within-textarea">Go to npm package</a>
+		</p>
+
+		<section>
+			<h2>String</h2>
+			<p>Note that this is case-insensitive.</p>
+			<textarea class="string-example">Potato potato tomato potato.</textarea>
+			<script>
+$('.string-example').highlightWithinTextarea({
+    highlight: 'potato'
+});
+			</script>
+		</section>
+
+		<section>
+			<h2>RegExp</h2>
+			<p>Don't forget the <code>g</code> (find all) and <code>i</code> (case-insensitive) flags if you need them.</p>
+			<textarea class="regex-example">Dog, cat, chicken, goose. Dogs, cats, chickens, geese.</textarea>
+			<script>
+$('.regex-example').highlightWithinTextarea({
+    highlight: /dogs?|cats?|g(oo|ee)se/gi
+});
+			</script>
+		</section>
+
+		<section>
+			<h2>Array of Two Numbers (Range)</h2>
+			<p>An array of exactly two numbers is treated as a range. Highlighting starts at the first character index (inclusive) and ends at the second character index (exclusive).</p>
+			<textarea class="range-example">abcdefgh</textarea>
+			<script>
+$('.range-example').highlightWithinTextarea({
+    highlight: [2, 6]
+});
+			</script>
+		</section>
+
+		<section>
+			<h2>Array of Other Things</h2>
+			<p>You can highlight multiple things, using any types mentioned here, with an array.</p>
+			<textarea class="array-example">apple watermelon banana orange mango</textarea>
+			<script>
+$('.array-example').highlightWithinTextarea({
+    highlight: [
+        'orange',
+        /ba(na)*/gi,
+        [0, 5]
+    ]
+});
+			</script>
+		</section>
+
+		<section>
+			<h2>Function</h2>
+			<p>You can use a function for custom logic. It can return any of the types mentioned here. Return anything falsey (<code>false</code>, <code>undefined</code>, etc.) to indicate no highlighting. The current textarea input is provided to it for convenience.</p>
+			<textarea class="function-example">Sun Mon Tue Wed Thu Fri Sat :) &lt;-- remove the smiley...</textarea>
+			<script>
+function getSmileyDayString(input) {
+    const dayStrings = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    if (input.indexOf(':)') !== -1) {
+        let dayIndex = (new Date()).getDay();
+        return dayStrings[dayIndex];
+    } else {
+        // no smiley, no highlighting
+        return false;
+    }
+}
+
+$('.function-example').highlightWithinTextarea({
+    highlight: getSmileyDayString
+});
+			</script>
+		</section>
+
+		<section>
+			<h2>Custom Object (with Class Name)</h2>
+			<p>Any type mentioned here can be put in an object wrapper with <code>highlight</code> and <code>className</code> properties. This lets you set CSS classes in the highlight markup for custom styling, such as changing the highlight color.</p>
+			<textarea class="class-example">Here's a blueberry. There's a strawberry. Surprise, it's a banananana!</textarea>
+			<script>
+$('.class-example').highlightWithinTextarea({
+    highlight: [
+        {
+            highlight: 'strawberry',
+            className: 'red'
+        },
+        {
+            highlight: 'blueberry',
+            className: 'blue'
+        },
+        {
+            highlight: /ba(na)*/gi,
+            className: 'yellow'
+        }
+    ]
+});
+			</script>
+		</section>
+	</body>
+</html>

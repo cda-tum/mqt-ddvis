@@ -36,7 +36,8 @@
     "minimist": ">=1.2.2",
     "morgan": "~1.9.1",
     "node-addon-api": "^2.0.0",
-    "uglify-js": ">= 2.6.0"
+    "uglify-js": ">= 2.6.0",
+    "highlight-within-textarea": "^2.0.5"
   },
   "devDependencies": {
     "nodemon": "^2.0.2"

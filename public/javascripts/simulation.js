@@ -1,3 +1,52 @@
+//states of the simulation tab
+const STATE_NOTHING_LOADED = 0;
+const STATE_LOADED = 1;
+const STATE_SIMULATING_START = 2;
+const STATE_SIMULATING_END = 3;
+
+function changeState(state) {
+    let enable;
+    let disable;
+    switch (state) {
+        case STATE_NOTHING_LOADED:
+            enable = [];
+            disable = [ "toStart", "prev", "next", "toEnd" ];
+            break;
+
+        case STATE_LOADED:
+            enable = [ "load", "toStart", "prev", "next", "toEnd", "stepDuration" ];
+            disable = [];
+            break;
+
+        case STATE_SIMULATING_START:
+            enable = [];
+            disable = [ "load", "prev", "next", "toEnd", "stepDuration" ];
+            break;
+
+        case STATE_SIMULATING_END:
+            enable = [];
+            disable = [ "load", "toStart", "prev", "next", "stepDuration" ];
+            break;
+    }
+
+    enableElementsWithID(enable);
+    disableElementsWithID(disable);
+}
+
+function enableElementsWithID(ids) {
+    ids.forEach((id) => {
+        const elem = document.getElementById(id);
+        elem.disabled = false;
+    });
+}
+
+function disableElementsWithID(ids) {
+    ids.forEach((id) => {
+        const elem = document.getElementById(id);
+        elem.disabled = true;
+    });
+}
+
 
 
 //from https://www.w3schools.com/howto/howto_js_accordion.asp
@@ -17,7 +66,6 @@ for (let i = 0; i < acc.length; i++) {
 
 function loadDeutsch() {
     const q_algo = document.getElementById("q_algo");
-    console.log("Before: " + q_algo.value);
     q_algo.value =
         "OPENQASM 2.0;\n" +
         "include \"qelib1.inc\";\n" +
@@ -31,12 +79,10 @@ function loadDeutsch() {
         "cx q[0],q[1];\n" +
         "h q[0];\n"
     ;
-
-    console.log("After: " + q_algo.value);
 }
 
 
-let basicStates = null;
+let basisStates = null;
 /*function validate() {
     const basic_states = document.getElementById("basic_states");
     const arr = basic_states.value.split(" ");
@@ -84,10 +130,10 @@ let basicStates = null;
 */
 function validate() {
     $(() => {
-        const basic_states = $('#basic_states').val();
+        const basis_states = $('#basis_states').val();
         debugText();
 
-        $.post("/validate", { basicStates: basic_states },
+        $.post("/validate", { basisStates: basis_states },
             (res) => {
                 debugText(res.msg);
             }
@@ -119,22 +165,31 @@ function dropHandler(event) {
     }
 }
 
+//$('#q_algo').highlightWithinTextarea({
+//    highlight: [1, 10] // string, regexp, array, function, or custom object
+//});
 
+let stepDuration = 700;   //in ms
 
-const stepWaitTime = 700;   //in ms
+changeState(STATE_NOTHING_LOADED);      //initial state
 
 $(() =>  {
     /* ######################################################### */
     $('#load').on('click', () => {
         const op = $('#output');
         op.text("");
+
+        const basis_states = $('#basis_states').val();
         const q_algo = $('#q_algo').val();
         console.log("Value of q_algo: " + q_algo);
+        console.log("Basis states: " + basis_states);
 
-        $.post("/load", { basicStates: basicStates, algo: q_algo },
+        $.post("/load", { basisStates: basis_states, algo: q_algo },
             (res) => {
                 debugText(res.msg);
                 print(res.svg);
+
+                changeState(STATE_LOADED);
             }
         );
     });
@@ -142,21 +197,29 @@ $(() =>  {
     $('#toStart').on('click', () => {
         debugText();
 
+        updateStepDuration();
+
+        changeState(STATE_SIMULATING_START);
+
         const func = () => {
+            const startTime = performance.now();
             $.ajax({
                 url: '/prev',
                 contentType: 'application/json',
                 success: (res) => {
                     debugText(res.msg);
 
+                    const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
                     if(res.svg) {
                         print(res.svg);
-                        setTimeout(() => func(), stepWaitTime); //wait a bit so the current qdd can be shown to the user
-                    }
+                        setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
+
+                    } else changeState(STATE_LOADED);
                 }
             });
         };
-        setTimeout(() => func(), stepWaitTime/2);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
+        setTimeout(() => func(), stepDuration/2);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
+
     });
     /* ######################################################### */
     $('#prev').on('click', () => {
@@ -190,21 +253,28 @@ $(() =>  {
     $('#toEnd').on('click', () => {
         debugText();
 
+        updateStepDuration();
+
+        changeState(STATE_SIMULATING_END);
+
         const func = () => {
+            const startTime = performance.now();
             $.ajax({
                 url: '/next',
                 contentType: 'application/json',
                 success: (res) => {
                     debugText(res.msg);
 
+                    const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
                     if(res.svg) {
                         print(res.svg);
-                        setTimeout(() => func(), stepWaitTime); //wait a bit so the current qdd can be shown to the user
-                    }
+                        setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
+
+                    } else changeState(STATE_LOADED);
                 }
             });
         };
-        setTimeout(() => func(), stepWaitTime/2);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
+        setTimeout(() => func(), stepDuration/2);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
     });
 });
 
@@ -213,6 +283,11 @@ function print(svg) {
     const start = svg.indexOf('<svg');
 
     div.innerHTML = svg.substring(start);
+}
+
+function updateStepDuration() {
+    const newVal = $("#stepDuration").val();    //update the stepDuration-value
+    if(0 <= newVal) stepDuration = newVal;
 }
 
 function debugText(text = "") {
