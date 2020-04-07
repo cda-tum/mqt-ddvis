@@ -112,6 +112,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     const std::string algo = arg.Utf8Value();
     std::stringstream ss{algo};
 
+    /*
     if(info.Length() == 2) {      //also basic states have been passed
         if(info[1].IsArray()) {
             Napi::Array compVals = info[1].As<Napi::Array>();
@@ -143,6 +144,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
             std::cout << "error, param 2 is not an array either!" << std::endl;
         }
     }
+    */
 
     try {
         qc->import(ss, qc::OpenQASM);
