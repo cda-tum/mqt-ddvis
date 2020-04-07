@@ -27,8 +27,8 @@ router.post('/load', (req, res) => {
     const data = dm.get(req);
     if(data) {
         try {
-            let basisStates = req.body.basisStates;
             const q_algo = req.body.algo;
+            let basisStates = req.body.basisStates;
             let worked;
             if(basisStates) {   //basis states were defined by the user so we try to use them
                 basisStates = parseBasisStates(basisStates, true);

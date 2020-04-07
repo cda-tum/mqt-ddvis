@@ -14,18 +14,18 @@ function changeState(state) {
             break;
 
         case STATE_LOADED:
-            enable = [ "load", "toStart", "prev", "next", "toEnd", "stepDuration" ];
+            enable = [ "toStart", "prev", "next", "toEnd", "stepDuration" ];
             disable = [];
             break;
 
         case STATE_SIMULATING_START:
             enable = [];
-            disable = [ "load", "prev", "next", "toEnd", "stepDuration" ];
+            disable = [ "prev", "next", "toEnd", "stepDuration" ];
             break;
 
         case STATE_SIMULATING_END:
             enable = [];
-            disable = [ "load", "toStart", "prev", "next", "stepDuration" ];
+            disable = [ "toStart", "prev", "next", "stepDuration" ];
             break;
     }
 
@@ -141,6 +141,7 @@ function validate() {
     });
 }
 
+//events ###############################################################################################################
 function dropHandler(event) {
     event.preventDefault();
 
@@ -164,6 +165,7 @@ function dropHandler(event) {
         }
     }
 }
+//######################################################################################################################
 
 //$('#q_algo').highlightWithinTextarea({
 //    highlight: [1, 10] // string, regexp, array, function, or custom object
@@ -175,23 +177,25 @@ changeState(STATE_NOTHING_LOADED);      //initial state
 
 $(() =>  {
     /* ######################################################### */
-    $('#load').on('click', () => {
+    $('#q_algo').on('focusout', () => {
         const op = $('#output');
         op.text("");
 
-        const basis_states = $('#basis_states').val();
+        //const basis_states = $('#basis_states').val();
         const q_algo = $('#q_algo').val();
         console.log("Value of q_algo: " + q_algo);
-        console.log("Basis states: " + basis_states);
+        //console.log("Basis states: " + basis_states);
 
-        $.post("/load", { basisStates: basis_states, algo: q_algo },
-            (res) => {
-                debugText(res.msg);
-                print(res.svg);
+        if(q_algo) {
+            $.post("/load", { basisStates: null, algo: q_algo },
+                (res) => {
+                    debugText(res.msg);
+                    print(res.svg);
 
-                changeState(STATE_LOADED);
-            }
-        );
+                    changeState(STATE_LOADED);
+                }
+            );
+        }
     });
     /* ######################################################### */
     $('#toStart').on('click', () => {
