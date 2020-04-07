@@ -16,6 +16,13 @@
 
 #include "QDDVis.h"
 
+
+struct Comp {
+    double re = 0.0;
+    double im = 0.0;
+};
+
+
 long QDDVis::NextID = 1;
 
 Napi::FunctionReference QDDVis::constructor;
@@ -81,7 +88,7 @@ void QDDVis::exportDD(const std::string& ipaddr) {
 }
 
 
-/**Parameters: String
+/**Parameters: String algorithm, Object basicStates
  * Returns: true or false 
  * 
  * Tries to import the passed algorithm and returns whether it was successful or not.
@@ -90,8 +97,8 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     Napi::HandleScope scope(env);
 
-    //check if a String has been passed
-    if(info.Length() < 1) {
+    //check if a String and maybe an object representing the basic states has been passed
+    if(info.Length() < 1 || 2 < info.Length()) {
         Napi::RangeError::New(env, "Need 1 (String) argument!").ThrowAsJavaScriptException();
         return Napi::Boolean::New(env, false);
     }
@@ -99,10 +106,43 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         Napi::TypeError::New(env, "String expected!").ThrowAsJavaScriptException();
         return Napi::Boolean::New(env, false);
     }
+
+    //the first parameter (algorithm)
     Napi::String arg = info[0].As<Napi::String>();
     const std::string algo = arg.Utf8Value();
     std::stringstream ss{algo};
 
+    if(info.Length() == 2) {      //also basic states have been passed
+        if(info[1].IsArray()) {
+            Napi::Array compVals = info[1].As<Napi::Array>();
+
+            if(compVals.Length() % 2 == 0) {
+                const unsigned int length = compVals.Length() / 2;
+                Comp* basicStates = (Comp*)malloc(length * sizeof(Comp));
+
+                for(unsigned int i = 0; i < compVals.Length(); i++) {
+                    const Napi::Value val = compVals[i];
+                    const double num = (double)val.AsNapi::Number>();
+                    const Comp* bs = basicStates + (i/2);
+
+                    //the first value of the pair is always the real part, the second value the imaginary part
+                    if(i % 2 == 0) bs->re = num;
+                    else bs->im = num;
+                }
+
+                for(unsigned int i = 0; i < length; i++) {
+                    const Comp* bs = (basicStates + i);
+                    std::cout << "#" << i << "\tRe=" << bs->re << "\tIm=" << bs->im << std::endl;
+                }
+
+            } else {
+                //todo error
+                std::cout << "error, param 2 must have an even length!" << std::endl;
+            }
+        } else {
+            std::cout << "error, param 2 is not an array either!" << std::endl;
+        }
+    }
 
     try {
         qc->import(ss, qc::OpenQASM);
@@ -110,7 +150,6 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     } catch(std::exception& e) {
         std::cout << "Exception while loading the algorithm: " << e.what() << std::endl;
         reset();
-        //return Napi::Boolean::New(env, false);
         Napi::Error::New(env, "Invalid Algorithm!").ThrowAsJavaScriptException();
         return Napi::Boolean::New(env, false);
     }

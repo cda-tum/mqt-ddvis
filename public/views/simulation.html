@@ -1,23 +1,42 @@
 
 <!-- IDs should be unique among all views! (if they are not, they will all get the same styling and script-behaviour) -->
 
+<link href="../modules/highlight-within-textarea/jquery.highlight-within-textarea.css" rel="stylesheet">
+<script src="../modules/highlight-within-textarea/jquery.highlight-within-textarea.js"></script>
 
 <link rel="stylesheet" href="../stylesheets/simulation.css"/>
 <script src="../javascripts/simulation.js"></script>
+
 
 <!--   Accordion     -->
 <button class="accordion" >Example Algorithms</button>
 <div class="panel">
     <button onclick="loadDeutsch()">Deutsch</button>
 </div>
+<button class="accordion" >Advanced Settings</button>
+<div class="panel">
+    <label for="basis_states">Basis States:</label>
+    <input type="text" id="basis_states"/>
+    <button onclick="validate()">Validate Input</button>
+    <label for="stepDuration">Step Duration in ms: </label>
+    <input type="number" min="0" id="stepDuration" value="700"/>
+</div>
 
 <div id="algo_div">
     <h2>Algorithm</h2>
-    <p id="highlight" class="text"></p>
+    <!--  Adds a button where you can choose a local file for uploading (alternative to drag&drop)
+    <form>
+      <div class="form-group">
+        <label for="exampleFormControlFile1">Example file input</label>
+        <input type="file" class="form-control-file" id="exampleFormControlFile1">
+      </div>
+    </form>
+    -->
     <div id="drop_zone" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
         <textarea id="q_algo" type="text" placeholder="Enter Algorithm or drop .qasm-File here."></textarea>
     </div>
     <p></p>
+
     <button type="button" id="load" class="btn btn-primary">Load</button>
     <button type="button" id="toStart" class="btn btn-primary">&#8606</button>
     <button type="button" id="prev" class="btn btn-primary">&#8592</button>
