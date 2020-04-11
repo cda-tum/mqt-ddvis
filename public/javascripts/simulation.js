@@ -1,8 +1,7 @@
 //states of the simulation tab
 const STATE_NOTHING_LOADED = 0;
 const STATE_LOADED = 1;
-const STATE_SIMULATING_START = 2;
-const STATE_SIMULATING_END = 3;
+const STATE_SIMULATING = 2;
 
 function changeState(state) {
     let enable;
@@ -14,18 +13,13 @@ function changeState(state) {
             break;
 
         case STATE_LOADED:
-            enable = [ "toStart", "prev", "next", "toEnd", "stepDuration" ];
+            enable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "stepDuration" ];
             disable = [];
             break;
 
-        case STATE_SIMULATING_START:
+        case STATE_SIMULATING:
             enable = [];
-            disable = [ "prev", "next", "toEnd", "stepDuration" ];
-            break;
-
-        case STATE_SIMULATING_END:
-            enable = [];
-            disable = [ "toStart", "prev", "next", "stepDuration" ];
+            disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "stepDuration" ];
             break;
     }
 
@@ -79,6 +73,8 @@ function loadDeutsch() {
         "cx q[0],q[1];\n" +
         "h q[0];\n"
     ;
+
+    loadAlgorithm();
 }
 
 
@@ -143,7 +139,7 @@ function validate() {
 
 //events ###############################################################################################################
 function dropHandler(event) {
-    event.preventDefault();
+    event.preventDefault();     //prevents the browser from opening the file and therefore leaving the website
 
     if(event.dataTransfer.items) {
         for(let i = 0; i < event.dataTransfer.files.length; i++) {
@@ -155,10 +151,13 @@ function dropHandler(event) {
                 reader.onload = function(e) {
                     const q_algo = document.getElementById("q_algo");
                     q_algo.value = e.target.result;
+
+                    loadAlgorithm();
                 };
                 reader.readAsBinaryString(file);
 
             } else {
+                console.log("ERROR");
                 //todo show error
             }
             //}
@@ -175,19 +174,19 @@ let stepDuration = 700;   //in ms
 
 changeState(STATE_NOTHING_LOADED);      //initial state
 
-$(() =>  {
-    /* ######################################################### */
-    $('#q_algo').on('focusout', () => {
+
+function loadAlgorithm() {
+    $(() => {
         const op = $('#output');
         op.text("");
 
         //const basis_states = $('#basis_states').val();
         const q_algo = $('#q_algo').val();
-        console.log("Value of q_algo: " + q_algo);
         //console.log("Basis states: " + basis_states);
+        const opNum = $('#startLine').val();
 
         if(q_algo) {
-            $.post("/load", { basisStates: null, algo: q_algo },
+            $.post("/load", { basisStates: null, algo: q_algo, opNum: opNum },      //todo get opNum from user input
                 (res) => {
                     debugText(res.msg);
                     print(res.svg);
@@ -197,14 +196,27 @@ $(() =>  {
             );
         }
     });
+}
+
+$(() =>  {
     /* ######################################################### */
     $('#toStart').on('click', () => {
         debugText();
 
         updateStepDuration();
 
-        changeState(STATE_SIMULATING_START);
+        changeState(STATE_SIMULATING);
+        $.ajax({
+            url: '/tostart',
+            contentType: 'application/json',
+            success: (res) => {
+                debugText(res.msg);
 
+                if(res.svg) print(res.svg);
+            }
+        });
+        changeState(STATE_LOADED);
+        /*
         const func = () => {
             const startTime = performance.now();
             $.ajax({
@@ -223,12 +235,14 @@ $(() =>  {
             });
         };
         setTimeout(() => func(), stepDuration/2);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
+        */
 
     });
     /* ######################################################### */
     $('#prev').on('click', () => {
         debugText();
 
+        changeState(STATE_SIMULATING);
         $.ajax({
             url: '/prev',
             contentType: 'application/json',
@@ -238,11 +252,13 @@ $(() =>  {
                 if(res.svg) print(res.svg);
             }
         });
+        changeState(STATE_LOADED);
     });
     /* ######################################################### */
     $('#next').on('click', () => {
         debugText();
 
+        changeState(STATE_SIMULATING);
         $.ajax({
             url: '/next',
             contentType: 'application/json',
@@ -252,6 +268,7 @@ $(() =>  {
                 if(res.svg) print(res.svg);
             }
         });
+        changeState(STATE_LOADED);
     });
     /* ######################################################### */
     $('#toEnd').on('click', () => {
@@ -259,8 +276,19 @@ $(() =>  {
 
         updateStepDuration();
 
-        changeState(STATE_SIMULATING_END);
+        changeState(STATE_SIMULATING);
+        $.ajax({
+            url: '/toend',
+            contentType: 'application/json',
+            success: (res) => {
+                debugText(res.msg);
 
+                if(res.svg) print(res.svg);
+            }
+        });
+        changeState(STATE_LOADED);
+
+        /*
         const func = () => {
             const startTime = performance.now();
             $.ajax({
@@ -279,6 +307,7 @@ $(() =>  {
             });
         };
         setTimeout(() => func(), stepDuration/2);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
+         */
     });
 });
 

@@ -21,11 +21,15 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
         //"private" methods
         void reset();
         void exportDD(const std::string& ipaddr);
+        void stepForward();
+        void stepBack();
 
         //exported ("public") methods       - return type must be Napi::Value or void!
         Napi::Value Load(const Napi::CallbackInfo& info);
+        Napi::Value ToStart(const Napi::CallbackInfo& info);
         Napi::Value Next(const Napi::CallbackInfo& info);
         Napi::Value Prev(const Napi::CallbackInfo& info);
+        Napi::Value ToEnd(const Napi::CallbackInfo& info);
 
         //fields
         const long id = NextID++;

@@ -27,17 +27,20 @@ router.post('/load', (req, res) => {
     const data = dm.get(req);
     if(data) {
         try {
-            const q_algo = req.body.algo;
-            let basisStates = req.body.basisStates;
+            const qAlgo = req.body.algo;
+            const opNum = parseInt(req.body.opNum);
             let worked;
+            /*
+            let basisStates = req.body.basisStates;
             if(basisStates) {   //basis states were defined by the user so we try to use them
                 basisStates = parseBasisStates(basisStates, true);
 
                 console.log(basisStates);
-                worked = data.vis.load(q_algo, basisStates);
+                worked = data.vis.load(qAlgo, basisStates);
 
-            } else worked = data.vis.load(q_algo);
-
+            } else worked = data.vis.load(qAlgo);
+             */
+            worked = data.vis.load(qAlgo, opNum);
 
             if(worked) sendFile(res, data.ip, "loading");
             else res.status(400).json({ msg: "Error while loading the algorithm!" });
@@ -45,6 +48,18 @@ router.post('/load', (req, res) => {
         } catch(err) {
             res.status(400).json({ msg: err.message });
         }
+    } else {
+        console.log("ERROR! Ip not found!");
+    }
+});
+
+router.get('/tostart', (req, res) => {
+    const data = dm.get(req);
+    if(data) {
+        const ret = data.vis.toStart();
+        if(ret) sendFile(res, data.ip, "toStart");
+        else res.send({ msg: "you were already at the start" });    //the client will search for res.svg, but it will be null so they won't redraw
+
     } else {
         console.log("ERROR! Ip not found!");
     }
@@ -66,12 +81,21 @@ router.get('/next', (req, res) => {
     const data = dm.get(req);
     if(data) {
         const ret = data.vis.next();
-        if(ret) {
-            //res.send({ msg: "next state", reload: "true", ip: data.ip });   //something changes so we update the shown dd
-            sendFile(res, data.ip, "next");
-        } else {
-            res.send({ msg: "can't go ahead because we are at the end", reload: "false" });
-        }
+        if(ret) sendFile(res, data.ip, "next");     //something changes so we update the shown dd
+        else res.send({ msg: "can't go ahead because we are at the end", reload: "false" });
+
+    } else {
+        console.log("ERROR! Ip not found!");
+    }
+});
+
+router.get('/toend', (req, res) => {
+    const data = dm.get(req);
+    if(data) {
+        const ret = data.vis.toEnd();
+        if(ret) sendFile(res, data.ip, "toEnd"); //something changes so we update the shown dd
+        else res.send({ msg: "you were already at the end", reload: "false" });
+
     } else {
         console.log("ERROR! Ip not found!");
     }
