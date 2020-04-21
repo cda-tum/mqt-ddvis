@@ -65,3 +65,11 @@
     display: none;
     overflow: hidden;
 }
+
+.hwt-container {
+    display: block;
+}
+
+.red {
+    background-color: red;
+}

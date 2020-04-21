@@ -1,25 +1,42 @@
 //states of the simulation tab
-const STATE_NOTHING_LOADED = 0;
-const STATE_LOADED = 1;
-const STATE_SIMULATING = 2;
+const STATE_NOTHING_LOADED = 0;     //initial state, goes to LOADED
+const STATE_LOADED = 1;             //can go to SIMULATING and DIASHOW, both of them can lead to LOADED
+const STATE_SIMULATING = 2;         //can go to LOADED
+const STATE_DIASHOW = 3;            //can go to LOADED
+
+let runDia = false;
+let pauseDia = false;
+let stepDuration = 700;   //in ms
+
+changeState(STATE_NOTHING_LOADED);      //initial state
+
 
 function changeState(state) {
     let enable;
     let disable;
+    runDia = false;
+    pauseDia = false;
     switch (state) {
         case STATE_NOTHING_LOADED:
             enable = [];
-            disable = [ "toStart", "prev", "next", "toEnd" ];
+            disable = [ "toStart", "prev", "next", "toEnd", "automatic", "stop" ];
             break;
 
         case STATE_LOADED:
-            enable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "stepDuration" ];
+            enable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "automatic", "stepDuration" ];
             disable = [];
             break;
 
         case STATE_SIMULATING:
             enable = [];
-            disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "stepDuration" ];
+            disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "automatic", "stop", "stepDuration" ];
+            break;
+
+        case STATE_DIASHOW:
+            runDia = true;
+            pauseDia = false;
+            enable = [ "stop" ];
+            disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "stepDuration" ];        //todo should next (maybe even toEnd) be enabled?
             break;
     }
 
@@ -166,14 +183,14 @@ function dropHandler(event) {
 }
 //######################################################################################################################
 
-//$('#q_algo').highlightWithinTextarea({
-//    highlight: [1, 10] // string, regexp, array, function, or custom object
-//});
-
-let stepDuration = 700;   //in ms
-
-changeState(STATE_NOTHING_LOADED);      //initial state
-
+$('#q_algo').highlightWithinTextarea({
+    highlight: [
+        {
+            highlight: "Potato",
+            className: "red"
+        }
+    ]
+});
 
 function loadAlgorithm() {
     $(() => {
@@ -308,6 +325,43 @@ $(() =>  {
         };
         setTimeout(() => func(), stepDuration/2);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
          */
+    });
+    /* ######################################################### */
+    $('#automatic').on('click', () => {
+
+        if(runDia) {
+            pauseDia = true;
+            runDia = false;
+
+        } else {
+            runDia = true;
+            debugText();
+
+            updateStepDuration();
+            changeState(STATE_DIASHOW);
+
+
+            const func = () => {
+                const startTime = performance.now();
+                $.ajax({
+                    url: '/next',
+                    contentType: 'application/json',
+                    success: (res) => {
+                        debugText(res.msg);
+
+                        const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
+                        if(res.svg) {
+                            print(res.svg);
+                            if(!pauseDia) setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
+
+                        } else changeState(STATE_LOADED);
+                    }
+                    //todo what should we do on error?
+                });
+            };
+            setTimeout(() => func(), stepDuration/2);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
+        }
+
     });
 });
 
