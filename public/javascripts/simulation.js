@@ -183,14 +183,14 @@ function dropHandler(event) {
 }
 //######################################################################################################################
 
-$('#q_algo').highlightWithinTextarea({
-    highlight: [
-        {
-            highlight: "Potato",
-            className: "red"
-        }
-    ]
-});
+// $('#q_algo').highlightWithinTextarea({
+//     highlight: [
+//         {
+//             highlight: "Potato",
+//             className: "red"
+//         }
+//     ]
+//});
 
 function loadAlgorithm() {
     $(() => {
@@ -205,6 +205,10 @@ function loadAlgorithm() {
         if(q_algo) {
             $.post("/load", { basisStates: null, algo: q_algo, opNum: opNum },      //todo get opNum from user input
                 (res) => {
+                    preformatAlgorithm();
+
+                    resetHighlighting();
+
                     debugText(res.msg);
                     print(res.svg);
 
@@ -213,6 +217,13 @@ function loadAlgorithm() {
             );
         }
     });
+}
+
+function preformatAlgorithm() {
+    const algo = $('#q_algo');
+
+    //TODO implement
+    //every operation needs to be in a separate line
 }
 
 $(() =>  {
@@ -229,31 +240,14 @@ $(() =>  {
             success: (res) => {
                 debugText(res.msg);
 
-                if(res.svg) print(res.svg);
+                if(res.svg) {
+                    print(res.svg);
+                    highlightedLines = 0;
+                    updateHighlighting();
+                }
             }
         });
         changeState(STATE_LOADED);
-        /*
-        const func = () => {
-            const startTime = performance.now();
-            $.ajax({
-                url: '/prev',
-                contentType: 'application/json',
-                success: (res) => {
-                    debugText(res.msg);
-
-                    const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
-                    if(res.svg) {
-                        print(res.svg);
-                        setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
-
-                    } else changeState(STATE_LOADED);
-                }
-            });
-        };
-        setTimeout(() => func(), stepDuration/2);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
-        */
-
     });
     /* ######################################################### */
     $('#prev').on('click', () => {
@@ -266,7 +260,14 @@ $(() =>  {
             success: (res) => {
                 debugText(res.msg);
 
-                if(res.svg) print(res.svg);
+                if(res.svg) {
+                    print(res.svg);
+
+                    highlightedLines--;
+                    updateHighlighting();
+                    //removeHighlightedLine();
+                    console.log("Prev: " + highlightedLines);
+                }
             }
         });
         changeState(STATE_LOADED);
@@ -282,7 +283,14 @@ $(() =>  {
             success: (res) => {
                 debugText(res.msg);
 
-                if(res.svg) print(res.svg);
+                if(res.svg) {   //we haven't reached the end yet
+                    print(res.svg);
+
+                    highlightedLines++;
+                    updateHighlighting();
+                    //addHighlightedLine();
+                    console.log("Next: " + highlightedLines);
+                }
             }
         });
         changeState(STATE_LOADED);
@@ -300,31 +308,19 @@ $(() =>  {
             success: (res) => {
                 debugText(res.msg);
 
-                if(res.svg) print(res.svg);
+                if(res.svg) {
+                    print(res.svg);
+
+                    highlightedLines = 0;
+                    const lines = $('#q_algo').val().split('\n');
+                    for(let i = 0; i < lines.length; i++) {
+                        if(isOperation(lines[i])) highlightedLines++;
+                    }
+                    updateHighlighting()
+                }
             }
         });
         changeState(STATE_LOADED);
-
-        /*
-        const func = () => {
-            const startTime = performance.now();
-            $.ajax({
-                url: '/next',
-                contentType: 'application/json',
-                success: (res) => {
-                    debugText(res.msg);
-
-                    const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
-                    if(res.svg) {
-                        print(res.svg);
-                        setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
-
-                    } else changeState(STATE_LOADED);
-                }
-            });
-        };
-        setTimeout(() => func(), stepDuration/2);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
-         */
     });
     /* ######################################################### */
     $('#automatic').on('click', () => {
@@ -377,7 +373,133 @@ function updateStepDuration() {
     if(0 <= newVal) stepDuration = newVal;
 }
 
+
 function debugText(text = "") {
     const op = $('#output');
     op.text(text);
 }
+
+
+
+//highlighting              ONLY WORKS IF EACH LINE CONTAINS NO MORE THAN 1 OPERATION!!!
+function handleScroll() {
+    const algo = $('#q_algo');
+    const backdrop = $('#backdrop');
+
+    const scrollTop = algo.scrollTop();
+    backdrop.scrollTop(scrollTop);
+
+    //var scrollLeft = algo.scrollLeft();
+    //$backdrop.scrollLeft(scrollLeft);
+}
+
+function handleInput() {
+    const algo = $('#q_algo');
+    const highlighting = $('#highlighting');
+
+    const text = algo.val();
+    const highlightedText = applyHighlights(text);
+    highlighting.html(highlightedText);
+}
+
+function resetHighlighting() {
+    highlightedLines = 0;
+
+    const algo = $('#q_algo');
+    const lines = algo.val().split('\n');
+
+    let regStarted = false;
+    for(let i = 0; i < lines.length; i++) {
+        if(isOperation(lines[i])) {
+            operationOffset = i-1;  //can never be negative because the file has to start with the QASM-header
+            break;
+        }
+    }
+
+    //$('#highlighting').html("\n\n\n\n\n");      //todo calculate operationOffset and enter \n dynamically
+
+}
+
+function updateHighlighting() {
+    const algo = $('#q_algo');
+    const highlighting = $('#highlighting');
+
+    const text = algo.val();
+    const highlightedText = applyHighlights(text);
+    highlighting.html(highlightedText);
+}
+
+/**Checks if the given QASM-line is an operation
+ *
+ * @param text
+ */
+function isOperation(text) {
+    if(text) {
+        //todo implement
+
+        if( text.trim() === "" ||
+            text.includes("OPENQASM") ||
+            text.includes("include") ||
+            text.includes("reg"))
+            return false;
+
+        return true;
+
+    } else return false;
+}
+
+let operationOffset = 5;        //on which line the QASM-header ends - next line is the first operation
+let highlightedLines = 0;
+function applyHighlights(text) {
+    const lines = text.split('\n');
+    let ignoredLines = 0;
+    for(let i = operationOffset; i < lines.length; i++) {
+        if(isOperation(lines[i])) {
+            if(i - ignoredLines < operationOffset + highlightedLines)
+                lines[i] = "<mark>" + "                          " + "</mark>";     //todo adjust text content so it matches line-width as good as possible
+        } else ignoredLines++;
+    }
+
+    text = "";
+    lines.forEach(l => {
+       text += l;
+       text += "\n";
+    });
+
+    //if (isIE) {
+    //    // IE wraps whitespace differently in a div vs textarea, this fixes it
+    //    text = text.replace(/ /g, ' <wbr>');
+    //}
+
+    return text;
+}
+
+/*
+function addHighlightedLine() {
+    const highlighting = $('#highlighting');
+    highlighting.html(highlighting.html() + "\n<mark>      a            </mark>");
+
+    console.log("Log: " + highlighting.html());
+}
+
+function removeHighlightedLine() {
+    const highlighting = $('#highlighting');
+    const lines = highlighting.html().split('\n');
+    const end = lines.lastIndexOf("\n");
+    highlighting.html(lines.substring(0, end));
+}
+*/
+
+function bindEvents() {
+    const algo = $('#q_algo');
+    algo.on({
+        'input': handleInput,
+        'scroll': handleScroll
+    });
+
+    //$toggle.on('click', function() {
+    //    $container.toggleClass('perspective');
+    //});
+}
+
+bindEvents();

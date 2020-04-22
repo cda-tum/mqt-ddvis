@@ -7,10 +7,10 @@ node [shape=circle, center=true];
 "0h0"  [label="", shape=point];
 "0h2"  [label="", shape=point];
 "1" [ label="q0" ,style=filled, fillcolor=lightgray ];
-"1h0"  [label="", shape=point , fillcolor=red, color=red];
+"1h0"  [label="", shape=point ];
 "1h2"  [label="", shape=point ];
 
-"R" -> "0"
+"R" -> "0" [label="(-1)" ];
 {rank=same; "0h0" "0h2"}
 "0" -> "0h0" [arrowhead=none,color=darkgreen];
 "0h0" -> "1" [label=" (√½)" ];
@@ -18,7 +18,8 @@ node [shape=circle, center=true];
 "0h2" -> "1" [label=" (-√½)" ];
 {rank=same; "1h0" "1h2"}
 "1" -> "1h0" [arrowhead=none,color=darkgreen];
+"1h0"-> "T" [label= "(√½)", ];
 "1" -> "1h2" [arrowhead=none,color=red];
-"1h2"-> "T";
+"1h2"-> "T" [label= "(√½)", ];
 
 }

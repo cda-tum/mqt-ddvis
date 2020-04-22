@@ -33,7 +33,10 @@
       </div>
     </form>
     -->
-    <div id="drop_zone" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
+    <div id="drop_zone" class=".container" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
+        <div id="backdrop" class="backdrop">
+            <div id="highlighting" class="highlights"></div>
+        </div>
         <textarea id="q_algo" type="text" onfocusout="loadAlgorithm()" placeholder="Enter Algorithm or drop .qasm-File here."></textarea>
     </div>
     <p></p>
