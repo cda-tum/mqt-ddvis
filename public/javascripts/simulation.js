@@ -1,31 +1,46 @@
 //states of the simulation tab
-const STATE_NOTHING_LOADED = 0;
-const STATE_LOADED = 1;
-const STATE_SIMULATING_START = 2;
-const STATE_SIMULATING_END = 3;
+const STATE_NOTHING_LOADED = 0;     //initial state, goes to LOADED
+const STATE_LOADED = 1;             //can go to SIMULATING and DIASHOW, both of them can lead to LOADED
+const STATE_SIMULATING = 2;         //can go to LOADED
+const STATE_DIASHOW = 3;            //can go to LOADED
+
+let runDia = false;
+let pauseDia = false;
+let stepDuration = 700;   //in ms
+
+changeState(STATE_NOTHING_LOADED);      //initial state
+
 
 function changeState(state) {
     let enable;
     let disable;
+    runDia = false;
+    pauseDia = false;
     switch (state) {
         case STATE_NOTHING_LOADED:
             enable = [];
-            disable = [ "toStart", "prev", "next", "toEnd" ];
+            disable = [ "toStart", "prev", "next", "toEnd", "automatic", "stop" ];
             break;
 
         case STATE_LOADED:
-            enable = [ "load", "toStart", "prev", "next", "toEnd", "stepDuration" ];
+            //$('#automatic').val("&#9654");
+            document.getElementById("automatic").value = "&#9654";
+            enable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "automatic", "stepDuration" ];
             disable = [];
             break;
 
-        case STATE_SIMULATING_START:
+        case STATE_SIMULATING:
             enable = [];
-            disable = [ "load", "prev", "next", "toEnd", "stepDuration" ];
+            disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "automatic", "stop", "stepDuration" ];
             break;
 
-        case STATE_SIMULATING_END:
-            enable = [];
-            disable = [ "load", "toStart", "prev", "next", "stepDuration" ];
+        case STATE_DIASHOW:
+            runDia = true;
+            pauseDia = false;
+            //$('#automatic').val("&#9616;&#9616;");
+            document.getElementById("automatic").value = "||";//"&#9616;&#9616;";
+            enable = [ "stop" ];
+            disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "stepDuration" ];        //todo should next (maybe even toEnd) be enabled?
             break;
     }
 
@@ -79,6 +94,8 @@ function loadDeutsch() {
         "cx q[0],q[1];\n" +
         "h q[0];\n"
     ;
+
+    loadAlgorithm();
 }
 
 
@@ -141,8 +158,9 @@ function validate() {
     });
 }
 
+//events ###############################################################################################################
 function dropHandler(event) {
-    event.preventDefault();
+    event.preventDefault();     //prevents the browser from opening the file and therefore leaving the website
 
     if(event.dataTransfer.items) {
         for(let i = 0; i < event.dataTransfer.files.length; i++) {
@@ -154,100 +172,134 @@ function dropHandler(event) {
                 reader.onload = function(e) {
                     const q_algo = document.getElementById("q_algo");
                     q_algo.value = e.target.result;
+
+                    loadAlgorithm();
                 };
                 reader.readAsBinaryString(file);
 
             } else {
+                console.log("ERROR");
                 //todo show error
             }
             //}
         }
     }
 }
+//######################################################################################################################
 
-//$('#q_algo').highlightWithinTextarea({
-//    highlight: [1, 10] // string, regexp, array, function, or custom object
+// $('#q_algo').highlightWithinTextarea({
+//     highlight: [
+//         {
+//             highlight: "Potato",
+//             className: "red"
+//         }
+//     ]
 //});
 
-let stepDuration = 700;   //in ms
-
-changeState(STATE_NOTHING_LOADED);      //initial state
-
-$(() =>  {
-    /* ######################################################### */
-    $('#load').on('click', () => {
+function loadAlgorithm() {
+    $(() => {
         const op = $('#output');
         op.text("");
 
-        const basis_states = $('#basis_states').val();
+        //const basis_states = $('#basis_states').val();
         const q_algo = $('#q_algo').val();
-        console.log("Value of q_algo: " + q_algo);
-        console.log("Basis states: " + basis_states);
+        //console.log("Basis states: " + basis_states);
+        const opNum = $('#startLine').val();
+        //highlightedLines = opNum;
+        //updateHighlighting();
 
-        $.post("/load", { basisStates: basis_states, algo: q_algo },
-            (res) => {
-                debugText(res.msg);
-                print(res.svg);
+        if(q_algo) {
+            $.post("/load", { basisStates: null, algo: q_algo, opNum: opNum },      //todo get opNum from user input
+                (res) => {
+                    preformatAlgorithm();
 
-                changeState(STATE_LOADED);
-            }
-        );
+                    resetHighlighting();
+
+                    debugText(res.msg);
+                    print(res.svg);
+
+                    changeState(STATE_LOADED);
+                }
+            );
+        }
     });
+}
+
+function preformatAlgorithm() {
+    const algo = $('#q_algo');
+
+    //TODO implement
+    //every operation needs to be in a separate line
+}
+
+$(() =>  {
     /* ######################################################### */
     $('#toStart').on('click', () => {
         debugText();
 
         updateStepDuration();
 
-        changeState(STATE_SIMULATING_START);
+        changeState(STATE_SIMULATING);
+        $.ajax({
+            url: '/tostart',
+            contentType: 'application/json',
+            success: (res) => {
+                debugText(res.msg);
 
-        const func = () => {
-            const startTime = performance.now();
-            $.ajax({
-                url: '/prev',
-                contentType: 'application/json',
-                success: (res) => {
-                    debugText(res.msg);
-
-                    const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
-                    if(res.svg) {
-                        print(res.svg);
-                        setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
-
-                    } else changeState(STATE_LOADED);
+                if(res.svg) {
+                    print(res.svg);
+                    highlightedLines = 0;
+                    updateHighlighting();
                 }
-            });
-        };
-        setTimeout(() => func(), stepDuration/2);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
-
+            }
+        });
+        changeState(STATE_LOADED);
     });
     /* ######################################################### */
     $('#prev').on('click', () => {
         debugText();
 
+        changeState(STATE_SIMULATING);
         $.ajax({
             url: '/prev',
             contentType: 'application/json',
             success: (res) => {
                 debugText(res.msg);
 
-                if(res.svg) print(res.svg);
+                if(res.svg) {
+                    print(res.svg);
+
+                    highlightedLines--;
+                    updateHighlighting();
+                    //removeHighlightedLine();
+                    console.log("Prev: " + highlightedLines);
+                }
             }
         });
+        changeState(STATE_LOADED);
     });
     /* ######################################################### */
     $('#next').on('click', () => {
         debugText();
 
+        changeState(STATE_SIMULATING);
         $.ajax({
             url: '/next',
             contentType: 'application/json',
             success: (res) => {
                 debugText(res.msg);
 
-                if(res.svg) print(res.svg);
+                if(res.svg) {   //we haven't reached the end yet
+                    print(res.svg);
+
+                    highlightedLines++;
+                    updateHighlighting();
+                    //addHighlightedLine();
+                    console.log("Next: " + highlightedLines);
+                }
             }
         });
+        changeState(STATE_LOADED);
     });
     /* ######################################################### */
     $('#toEnd').on('click', () => {
@@ -255,26 +307,63 @@ $(() =>  {
 
         updateStepDuration();
 
-        changeState(STATE_SIMULATING_END);
+        changeState(STATE_SIMULATING);
+        $.ajax({
+            url: '/toend',
+            contentType: 'application/json',
+            success: (res) => {
+                debugText(res.msg);
 
-        const func = () => {
-            const startTime = performance.now();
-            $.ajax({
-                url: '/next',
-                contentType: 'application/json',
-                success: (res) => {
-                    debugText(res.msg);
+                if(res.svg) {
+                    print(res.svg);
 
-                    const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
-                    if(res.svg) {
-                        print(res.svg);
-                        setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
-
-                    } else changeState(STATE_LOADED);
+                    highlightedLines = 0;
+                    const lines = $('#q_algo').val().split('\n');
+                    for(let i = 0; i < lines.length; i++) {
+                        if(isOperation(lines[i])) highlightedLines++;
+                    }
+                    updateHighlighting()
                 }
-            });
-        };
-        setTimeout(() => func(), stepDuration/2);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
+            }
+        });
+        changeState(STATE_LOADED);
+    });
+    /* ######################################################### */
+    $('#automatic').on('click', () => {
+
+        if(runDia) {
+            pauseDia = true;
+            runDia = false;
+
+        } else {
+            runDia = true;
+            debugText();
+
+            updateStepDuration();
+            changeState(STATE_DIASHOW);
+
+
+            const func = () => {
+                const startTime = performance.now();
+                $.ajax({
+                    url: '/next',
+                    contentType: 'application/json',
+                    success: (res) => {
+                        debugText(res.msg);
+
+                        const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
+                        if(res.svg) {
+                            print(res.svg);
+                            if(!pauseDia) setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
+
+                        } else changeState(STATE_LOADED);
+                    }
+                    //todo what should we do on error?
+                });
+            };
+            setTimeout(() => func(), stepDuration/2);     //not really needed but I think it looks better if the first transition isn't immediate but at the same pace as the others
+        }
+
     });
 });
 
@@ -290,7 +379,134 @@ function updateStepDuration() {
     if(0 <= newVal) stepDuration = newVal;
 }
 
+
 function debugText(text = "") {
     const op = $('#output');
     op.text(text);
 }
+
+
+
+//highlighting              ONLY WORKS IF EACH LINE CONTAINS NO MORE THAN 1 OPERATION!!!
+//adapted from: https://codepen.io/lonekorean/pen/gaLEMR
+function handleScroll() {
+    const algo = $('#q_algo');
+    const backdrop = $('#backdrop');
+
+    const scrollTop = algo.scrollTop();
+    backdrop.scrollTop(scrollTop);
+
+    //var scrollLeft = algo.scrollLeft();
+    //$backdrop.scrollLeft(scrollLeft);
+}
+
+function handleInput() {
+    const algo = $('#q_algo');
+    const highlighting = $('#highlighting');
+
+    const text = algo.val();
+    const highlightedText = applyHighlights(text);
+    highlighting.html(highlightedText);
+}
+
+function resetHighlighting() {
+    highlightedLines = 0;
+
+    const algo = $('#q_algo');
+    const lines = algo.val().split('\n');
+
+    let regStarted = false;
+    for(let i = 0; i < lines.length; i++) {
+        if(isOperation(lines[i])) {
+            operationOffset = i-1;  //can never be negative because the file has to start with the QASM-header
+            break;
+        }
+    }
+
+    //$('#highlighting').html("\n\n\n\n\n");      //todo calculate operationOffset and enter \n dynamically
+
+}
+
+function updateHighlighting() {
+    const algo = $('#q_algo');
+    const highlighting = $('#highlighting');
+
+    const text = algo.val();
+    const highlightedText = applyHighlights(text);
+    highlighting.html(highlightedText);
+}
+
+/**Checks if the given QASM-line is an operation
+ *
+ * @param text
+ */
+function isOperation(text) {
+    if(text) {
+        //todo implement
+
+        if( text.trim() === "" ||
+            text.includes("OPENQASM") ||
+            text.includes("include") ||
+            text.includes("reg"))
+            return false;
+
+        return true;
+
+    } else return false;
+}
+
+let operationOffset = 5;        //on which line the QASM-header ends - next line is the first operation
+let highlightedLines = 0;
+function applyHighlights(text) {
+    const lines = text.split('\n');
+    let ignoredLines = 0;
+    for(let i = operationOffset; i < lines.length; i++) {
+        if(isOperation(lines[i])) {
+            if(i - ignoredLines < operationOffset + highlightedLines)
+                lines[i] = "<mark>                                  </mark>";     //todo adjust text content so it matches line-width as good as possible
+        } else ignoredLines++;
+    }
+
+    text = "";
+    lines.forEach(l => {
+       text += l;
+       text += "\n";
+    });
+
+    //if (isIE) {
+    //    // IE wraps whitespace differently in a div vs textarea, this fixes it
+    //    text = text.replace(/ /g, ' <wbr>');
+    //}
+
+    return text;
+}
+
+/*
+function addHighlightedLine() {
+    const highlighting = $('#highlighting');
+    highlighting.html(highlighting.html() + "\n<mark>      a            </mark>");
+
+    console.log("Log: " + highlighting.html());
+}
+
+function removeHighlightedLine() {
+    const highlighting = $('#highlighting');
+    const lines = highlighting.html().split('\n');
+    const end = lines.lastIndexOf("\n");
+    highlighting.html(lines.substring(0, end));
+}
+*/
+
+function bindEvents() {
+    const algo = $('#q_algo');
+    algo.on({
+        'input': handleInput,
+        'scroll': handleScroll
+    });
+
+    //$toggle.on('click', function() {
+    //    $container.toggleClass('perspective');
+    //});
+}
+
+bindEvents();
