@@ -98,6 +98,7 @@
 .highlights {
     white-space: pre-wrap;
     word-wrap: break-word;
+    text-align: left;
     color: transparent;
 }
 

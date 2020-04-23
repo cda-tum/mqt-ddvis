@@ -23,6 +23,8 @@ function changeState(state) {
             break;
 
         case STATE_LOADED:
+            //$('#automatic').val("&#9654");
+            document.getElementById("automatic").value = "&#9654";
             enable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "automatic", "stepDuration" ];
             disable = [];
             break;
@@ -35,6 +37,8 @@ function changeState(state) {
         case STATE_DIASHOW:
             runDia = true;
             pauseDia = false;
+            //$('#automatic').val("&#9616;&#9616;");
+            document.getElementById("automatic").value = "||";//"&#9616;&#9616;";
             enable = [ "stop" ];
             disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "stepDuration" ];        //todo should next (maybe even toEnd) be enabled?
             break;
@@ -201,6 +205,8 @@ function loadAlgorithm() {
         const q_algo = $('#q_algo').val();
         //console.log("Basis states: " + basis_states);
         const opNum = $('#startLine').val();
+        //highlightedLines = opNum;
+        //updateHighlighting();
 
         if(q_algo) {
             $.post("/load", { basisStates: null, algo: q_algo, opNum: opNum },      //todo get opNum from user input
@@ -382,6 +388,7 @@ function debugText(text = "") {
 
 
 //highlighting              ONLY WORKS IF EACH LINE CONTAINS NO MORE THAN 1 OPERATION!!!
+//adapted from: https://codepen.io/lonekorean/pen/gaLEMR
 function handleScroll() {
     const algo = $('#q_algo');
     const backdrop = $('#backdrop');
@@ -456,7 +463,7 @@ function applyHighlights(text) {
     for(let i = operationOffset; i < lines.length; i++) {
         if(isOperation(lines[i])) {
             if(i - ignoredLines < operationOffset + highlightedLines)
-                lines[i] = "<mark>" + "                          " + "</mark>";     //todo adjust text content so it matches line-width as good as possible
+                lines[i] = "<mark>                                  </mark>";     //todo adjust text content so it matches line-width as good as possible
         } else ignoredLines++;
     }
 
