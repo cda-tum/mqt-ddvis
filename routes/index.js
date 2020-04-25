@@ -30,8 +30,8 @@ router.post('/load', (req, res) => {
         try {
             const qAlgo = req.body.algo;
             const opNum = parseInt(req.body.opNum);
-            let worked;
             /*
+            let worked;
             let basisStates = req.body.basisStates;
             if(basisStates) {   //basis states were defined by the user so we try to use them
                 basisStates = parseBasisStates(basisStates, true);
@@ -41,9 +41,9 @@ router.post('/load', (req, res) => {
 
             } else worked = data.vis.load(qAlgo);
              */
-            worked = data.vis.load(qAlgo, opNum);
 
-            if(worked) sendFile(res, data.ip, "loading");
+            const numOfOperations = data.vis.load(qAlgo, opNum);
+            if(numOfOperations > -1) sendFile(res, data.ip, numOfOperations);
             else res.status(400).json({ msg: "Error while loading the algorithm!" });
 
         } catch(err) {
@@ -58,7 +58,7 @@ router.get('/tostart', (req, res) => {
     const data = dm.get(req);
     if(data) {
         const ret = data.vis.toStart();
-        if(ret) sendFile(res, data.ip, "toStart");
+        if(ret) sendFile(res, data.ip);
         else res.send({ msg: "you were already at the start" });    //the client will search for res.svg, but it will be null so they won't redraw
 
     } else {
@@ -70,7 +70,7 @@ router.get('/prev', (req, res) => {
     const data = dm.get(req);
     if(data) {
         const ret = data.vis.prev();
-        if(ret) sendFile(res, data.ip, "prev");
+        if(ret) sendFile(res, data.ip);
         else res.send({ msg: "can't go back because we are at the beginning" });    //the client will search for res.svg, but it will be null so they won't redraw
 
     } else {
@@ -82,7 +82,7 @@ router.get('/next', (req, res) => {
     const data = dm.get(req);
     if(data) {
         const ret = data.vis.next();
-        if(ret) sendFile(res, data.ip, "next");     //something changes so we update the shown dd
+        if(ret) sendFile(res, data.ip);     //something changes so we update the shown dd
         else res.send({ msg: "can't go ahead because we are at the end", reload: "false" });
 
     } else {
@@ -94,7 +94,7 @@ router.get('/toend', (req, res) => {
     const data = dm.get(req);
     if(data) {
         const ret = data.vis.toEnd();
-        if(ret) sendFile(res, data.ip, "toEnd"); //something changes so we update the shown dd
+        if(ret) sendFile(res, data.ip); //something changes so we update the shown dd
         else res.send({ msg: "you were already at the end", reload: "false" });
 
     } else {
@@ -106,10 +106,10 @@ router.get('/toend', (req, res) => {
 
 module.exports = router;
 
-function sendFile(res, ip, msg) {
+function sendFile(res, ip, msg = "") {
     fs.readFile("data/" + ip + ".dot.svg", "utf8", (error, file) => {
         if(error) res.send({ msg: msg + " failed with " + error.message, ip: ip, svg: null });
-        else res.send({ msg: msg + " success", ip: ip, svg: file });
+        else res.send({ msg: msg, ip: ip, svg: file });
     });
 }
 function sendFile(res, ip, msg) {
