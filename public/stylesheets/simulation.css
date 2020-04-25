@@ -17,10 +17,11 @@
     height: 600px;
     text-align: center;
 }
-
-#drop_zone {
-    border: 5px dashed black;
+/*
+#svg_div {
+    width: 70px;
 }
+ */
 
 /* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
 @media (max-width: 600px) {
@@ -28,6 +29,10 @@
         width: 100%;
         height: auto;
     }
+}
+
+.example-algo {
+    width: 100px;
 }
 
 
@@ -65,24 +70,21 @@
 #drop_zone {
     width: 300px;
     height: 300px;
-}
 
-#backdrop, #q_algo {
-    width: 290px;       /* drop_zone.width - 2 * drop_zone.border */
-    height: 290px;
-}
-
-.highlights, #q_algo {
-    padding: 10px;
-    font: 20px/28px 'Open Sans', sans-serif;
-    letter-spacing: 1px;
-}
-
-#drop_zone {
     display: block;
     margin: 0 auto;
     transform: translateZ(0);
     -webkit-text-size-adjust: none;
+}
+
+#backdrop, #q_algo, #line_numbers {
+    width: 290px;       /* drop_zone.width - 2 * drop_zone.border */
+    height: 290px;
+}
+
+.highlights, #q_algo, #line_numbers {
+    padding: 10px;
+    letter-spacing: 1px;
 }
 
 .backdrop {
@@ -96,19 +98,28 @@
 }
 
 .highlights {
+    padding-left: 0;
+    padding-right: 0;
     white-space: pre-wrap;
     word-wrap: break-word;
     text-align: left;
     color: transparent;
 }
 
+#line_numbers {
+    z-index: 2;
+    border: none;
+    white-space: pre-line;
+    text-align: left;
+}
 
 #q_algo {
     display: block;
     position: absolute;
-    z-index: 2;
+    z-index: 3;
     margin: 0;
-    border: 2px solid #74637f;
+    padding-left: 30px;
+    /*border: 2px solid #74637f;*/
     border-radius: 0;
     color: #000;
     background-color: transparent;
@@ -120,5 +131,5 @@ mark {
     width: 200px;
     border-radius: 3px;
     color: transparent;
-    background-color: #b1d5e5;
+    background-color: #b1adad;
 }

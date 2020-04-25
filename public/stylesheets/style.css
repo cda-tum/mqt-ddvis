@@ -4,17 +4,18 @@
     box-sizing: border-box;
 }
 
-body {
-    font-family: Arial, Helvetica, sans-serif;
+body * {
+    font-family: 'Lucida Grande', 'Lucida Sans Unicode', 'Trebuchet MS', sans-serif;
+    font-size: 12px;
 }
+
 
 /* Style the header and the footer */
 header, footer {
-    background-color: rgb(140, 188, 243);;
+    background-color: white; /*rgb(140, 188, 243);*/
     padding: 30px;
     text-align: center;
-    font-size: 35px;
-    color: white;
+    color: black;
 }
 
 header {
@@ -23,6 +24,22 @@ header {
 
 footer {
     font-style: italic;
+}
+
+h1 {
+    font-size: 25px;
+}
+
+h2 {
+    font-size: 20px;
+}
+
+h3 {
+    font-size: 16px;
+}
+
+h4 {
+    font-size: 12px;
 }
 
 #debug {
@@ -71,7 +88,6 @@ footer {
     cursor: pointer;
     padding: 14px 16px;
     transition: 0.3s;
-    font-size: 17px;
 }
   
 /* Change background color of buttons on hover */

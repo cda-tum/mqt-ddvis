@@ -134,15 +134,15 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     //check if a String and maybe an object representing the basic states has been passed
     if(info.Length() != 2) {
         Napi::RangeError::New(env, "Need 2 (String, unsigned int) arguments!").ThrowAsJavaScriptException();
-        return Napi::Boolean::New(env, false);
+        return Napi::Number::New(env, -1);
     }
     if (!info[0].IsString()) {
         Napi::TypeError::New(env, "String expected!").ThrowAsJavaScriptException();
-        return Napi::Boolean::New(env, false);
+        return Napi::Number::New(env, -1);
     }
     if (!info[1].IsNumber()) {
         Napi::TypeError::New(env, "unsigned int expected!").ThrowAsJavaScriptException();
-        return Napi::Boolean::New(env, false);
+        return Napi::Number::New(env, -1);
     }
 
     //the first parameter (algorithm)
@@ -196,7 +196,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         std::cout << "Exception while loading the algorithm: " << e.what() << std::endl;
         reset();
         Napi::Error::New(env, "Invalid Algorithm!").ThrowAsJavaScriptException();
-        return Napi::Boolean::New(env, false);
+        return Napi::Number::New(env, -1);
     }
 
     sim = dd->makeZeroState(qc->getNqubits());
@@ -218,7 +218,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
 
     exportDD(this->ip);
 
-    return Napi::Boolean::New(env, true);
+    return Napi::Number::New(env, qc->getNops());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -291,7 +291,6 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
         return Napi::Boolean::New(env, false);
     }
 
-    std::cout << "Test" << std::endl;
     if(atInitial){
         atInitial = false;
     } else if(atEnd) {
