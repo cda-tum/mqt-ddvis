@@ -537,7 +537,7 @@ function setLineNumbers() {
         numOfOperations >= 10 ? 2 :
         1;
 
-    for(let i = 0; i < lines.length; i++) {
+    for(let i = 0; i < lines.length-1; i++) {
         if(i <= operationOffset) lines[i] = "";
         else {
             const num = (i - operationOffset);
@@ -647,7 +647,7 @@ function applyHighlights(text) {
     */
 
     let opLines = 0;
-    for(let i = 0; i < lines.length; i++) {
+    for(let i = 0; i < lines.length-1; i++) {
         if(isOperation(lines[i])) opLines++;
         if(opLines <= highlightedLines)
             lines[i] = "<mark>a" + "" + "                                  </mark>";     //todo adjust text content so it matches line-width as good as possible
