@@ -10,8 +10,8 @@ node [shape=circle, center=true];
 "1h0"  [label="", shape=point];
 "1h2"  [label="", shape=point , fillcolor=red, color=red];
 "2" [ label="q2" ,style=filled, fillcolor=lightgray ];
-"2h0"  [label="", shape=point , fillcolor=red, color=red];
-"2h2"  [label="", shape=point];
+"2h0"  [label="", shape=point];
+"2h2"  [label="", shape=point , fillcolor=red, color=red];
 "3" [ label="q1" ,style=filled, fillcolor=lightgray ];
 "3h0"  [label="", shape=point];
 "3h2"  [label="", shape=point , fillcolor=red, color=red];
@@ -30,8 +30,8 @@ node [shape=circle, center=true];
 "1" -> "1h2" [arrowhead=none,color=red];
 {rank=same; "2h0" "2h2"}
 "2" -> "2h0" [arrowhead=none,color=darkgreen];
+"2h0" -> "3";
 "2" -> "2h2" [arrowhead=none,color=red];
-"2h2" -> "3";
 {rank=same; "3h0" "3h2"}
 "3" -> "3h0" [arrowhead=none,color=darkgreen];
 "3h0" -> "4";

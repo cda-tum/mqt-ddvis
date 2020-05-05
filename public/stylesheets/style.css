@@ -104,7 +104,7 @@ h4 {
 .tabcontent {
     display: none;
     padding: 6px 12px;
-    border: 1px solid #ccc;
+    /*border: 1px solid #ccc;*/
     border-top: none;
     animation: fadeEffect 0.7s; /* Fading effect takes 1 second */
 }
