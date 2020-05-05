@@ -1,3 +1,5 @@
+const automatic = $('#automatic');
+
 //states of the simulation tab
 const STATE_NOTHING_LOADED = 0;     //initial state, goes to LOADED
 const STATE_LOADED = 1;             //can go to SIMULATING and DIASHOW, both of them can lead to LOADED (somewhere between start and end)
@@ -16,47 +18,44 @@ changeState(STATE_NOTHING_LOADED);      //initial state
 function changeState(state) {
     let enable;
     let disable;
-    runDia = false;
-    pauseDia = false;
     switch (state) {
         case STATE_NOTHING_LOADED:
             enable = [];
-            disable = [ "toStart", "prev", "next", "toEnd", "automatic", "stop" ];
+            disable = [ "toStart", "prev", "next", "toEnd", "automatic" ];
             break;
 
         case STATE_LOADED:
-            //$('#automatic').val("&#9654");
-            //document.getElementById("automatic").value = "&#9654";
+            automatic.text("\u25B6");   //play-symbol in unicode
             enable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "automatic", "stepDuration" ];
-            disable = [ "stop" ];
+            disable = [  ];
             break;
 
         case STATE_LOADED_START:
             //$('#automatic').val("&#9654");
             //document.getElementById("automatic").value = "&#9654";
             enable = [ "drop_zone", "q_algo", "next", "toEnd", "automatic", "stepDuration" ];
-            disable = [ "toStart", "prev" , "stop" ];
+            disable = [ "toStart", "prev" ];
             break;
 
         case STATE_LOADED_END:
             //$('#automatic').val("&#9654");
             //document.getElementById("automatic").value = "&#9654";
             enable = [ "drop_zone", "q_algo", "toStart", "prev", "stepDuration" ];
-            disable = [ "toEnd", "next", "automatic", "stop" ];     //todo disable q_algo because we can't alter any line because we run through all lines? or maybe the user should be able to add additional linee at the end?
+            disable = [ "toEnd", "next", "automatic" ];     //todo disable q_algo because we can't alter any line because we run through all lines? or maybe the user should be able to add additional linee at the end?
             break;
 
         case STATE_SIMULATING:
             enable = [];
-            disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "automatic", "stop", "stepDuration" ];
+            disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "automatic", "stepDuration" ];
             break;
 
         case STATE_DIASHOW:
             runDia = true;
             pauseDia = false;
-            //$('#automatic').val("&#9616;&#9616;");
-            document.getElementById("automatic").value = "||";//"&#9616;&#9616;";
+            automatic.text("||");   //\u23F8
+            //document.getElementById("automatic").value = "||";//"&#9616;&#9616;";
             enable = [ "automatic" ];
-            disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "stop", "stepDuration" ];        //todo should next (maybe even toEnd) be enabled?
+            disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "stepDuration" ];        //todo should next (maybe even toEnd) be enabled?
             break;
     }
 
@@ -317,6 +316,8 @@ function loadAlgorithm() {
                 (res) => {
                     preformatAlgorithm();
 
+                    oldInput = q_algo;
+
                     resetHighlighting();
                     updateHighlighting();
 
@@ -359,9 +360,9 @@ $(() =>  {
                     highlightedLines = 0;
                     updateHighlighting();
                 }
+                changeState(STATE_LOADED_START);
             }
         });
-        changeState(STATE_LOADED_START);
     });
     /* ######################################################### */
     $('#prev').on('click', () => {
@@ -392,7 +393,6 @@ $(() =>  {
     $('#next').on('click', () => {
         debugText();
 
-        let endState = STATE_LOADED;
         changeState(STATE_SIMULATING);
         $.ajax({
             url: '/next',
@@ -413,8 +413,6 @@ $(() =>  {
                 } else changeState(STATE_LOADED_END); //should never reach this code because the button should be disabled when we reach the end
             }
         });
-        console.log("EndState = " + endState);
-        changeState(endState);
     });
     /* ######################################################### */
     $('#toEnd').on('click', () => {
@@ -439,16 +437,19 @@ $(() =>  {
                     }
                     updateHighlighting()
                 }
+                changeState(STATE_LOADED_END);
             }
         });
-        changeState(STATE_LOADED_END);
     });
     /* ######################################################### */
     $('#automatic').on('click', () => {
         if(runDia) {
             pauseDia = true;
             runDia = false;
-            document.getElementById("stop").disabled = false;   //enable stop button
+
+            if(highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
+            else changeState(STATE_LOADED);
+            //document.getElementById("stop").disabled = false;   //enable stop button
 
         } else {
             runDia = true;
@@ -459,7 +460,6 @@ $(() =>  {
 
             const func = () => {
                 if(!pauseDia) {
-
                     const startTime = performance.now();
                     $.ajax({
                         url: '/next',
@@ -485,6 +485,7 @@ $(() =>  {
             setTimeout(() => func(), stepDuration);
         }
     });
+    /*
     $('#stop').on('click', () => {
         pauseDia = true;
         runDia = false;
@@ -492,6 +493,7 @@ $(() =>  {
         if(highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
         else changeState(STATE_LOADED);
     });
+     */
 });
 
 function print(svg) {
@@ -537,7 +539,7 @@ function setLineNumbers() {
         numOfOperations >= 10 ? 2 :
         1;
 
-    for(let i = 0; i < lines.length; i++) {
+    for(let i = 0; i < lines.length-1; i++) {
         if(i <= operationOffset) lines[i] = "";
         else {
             const num = (i - operationOffset);
@@ -546,8 +548,9 @@ function setLineNumbers() {
                     num >= 100 ? 3 :
                         num >= 10 ? 2 :
                             1;
-            let space = "";         //todo space seems to be skipped visually
-            for(let j = 0; j < digits - numDigits; j++) space += " ";
+
+            let space = "";
+            for(let j = 0; j < digits - numDigits; j++) space += "_";   //todo space seems to be skipped visually
             lines[i] = space + num.toString();
         }
     }
@@ -561,29 +564,39 @@ function setLineNumbers() {
     lineNumbers.html(text);
 }
 
-//highlighting              ONLY WORKS IF EACH LINE CONTAINS NO MORE THAN 1 OPERATION!!!
+//highlighting and line numbering              ONLY WORKS IF EACH LINE CONTAINS NO MORE THAN 1 OPERATION!!!
 //adapted from: https://codepen.io/lonekorean/pen/gaLEMR
 function handleScroll() {
     const algo = $('#q_algo');
-    const backdrop = $('#backdrop');
-
     const scrollTop = algo.scrollTop();
-    backdrop.scrollTop(scrollTop);
 
+    $('#backdrop').scrollTop(scrollTop);
     $('#line_numbers').scrollTop(scrollTop);
 
     //var scrollLeft = algo.scrollLeft();
     //$backdrop.scrollLeft(scrollLeft);
 }
 
+let oldInput;   //needed to reset input if an illegal change was made
 function handleInput() {
     const algo = $('#q_algo');
     const highlighting = $('#highlighting');
-    const lineNumbers = $('#line_numbers');
 
-    const text = algo.val();
-    const highlightedText = applyHighlights(text);
+    //check if a highlighted line changed, if yes abort the changes
+    const linesNew = algo.val().split('\n');
+    const linesOld = oldInput.split('\n');
+    for(let i = 0; i <= highlightedLines + operationOffset; i++) {
+        if(linesNew.length <= i || linesNew[i] !== linesOld[i]) {   //illegal change!
+            algo.val(oldInput);
+            return;
+        }
+    }
+    oldInput = algo.val();  //changes are legal so they are "saved"
+
+    const highlightedText = applyHighlights(algo.val());
     highlighting.html(highlightedText);
+
+    setLineNumbers();
 }
 
 function resetHighlighting() {
@@ -592,15 +605,12 @@ function resetHighlighting() {
     const algo = $('#q_algo');
     const lines = algo.val().split('\n');
 
-    let regStarted = false;
     for(let i = 0; i < lines.length; i++) {
         if(isOperation(lines[i])) {
             operationOffset = i-1;  //can never be negative because the file has to start with the QASM-header
             break;
         }
     }
-
-    //$('#highlighting').html("\n\n\n\n\n");      //todo calculate operationOffset and enter \n dynamically
 
 }
 
@@ -619,7 +629,7 @@ function updateHighlighting() {
  */
 function isOperation(text) {
     if(text) {
-        //todo implement
+        //todo is this implementation already sufficient?
 
         if( text.trim() === "" ||
             text.includes("OPENQASM") ||
@@ -634,23 +644,18 @@ function isOperation(text) {
 
 let operationOffset = 5;        //on which line the QASM-header ends - next line is the first operation
 let highlightedLines = 0;
+const lineHighlight = "<mark>                                  </mark>";     //todo adjust text content so it matches line-width as good as possible
 function applyHighlights(text) {
     const lines = text.split('\n');
-    /*
-    let ignoredLines = 0;
-    for(let i = operationOffset; i < lines.length; i++) {
-        if(isOperation(lines[i])) {
-            if(i - ignoredLines < operationOffset + highlightedLines)
-                lines[i] = "<mark>                                  </mark>";     //todo adjust text content so it matches line-width as good as possible
-        } else ignoredLines++;
-    }
-    */
-
     let opLines = 0;
-    for(let i = 0; i < lines.length; i++) {
-        if(isOperation(lines[i])) opLines++;
-        if(opLines <= highlightedLines)
-            lines[i] = "<mark>a" + "" + "                                  </mark>";     //todo adjust text content so it matches line-width as good as possible
+    for(let i = 0; i < lines.length-1; i++) {
+        if(isOperation(lines[i])) {
+            if(++opLines === highlightedLines) {
+                lines[i] = lineHighlight;
+                break;  //so no non-operation lines get highlighted after the last (highlighted) operation-line
+            }
+        }
+        if(opLines <= highlightedLines) lines[i] = lineHighlight;
         else break;
     }
 
@@ -690,10 +695,6 @@ function bindEvents() {
         'input': handleInput,
         'scroll': handleScroll
     });
-
-    //$toggle.on('click', function() {
-    //    $container.toggleClass('perspective');
-    //});
 }
 
 bindEvents();
