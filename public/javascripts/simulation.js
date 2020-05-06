@@ -20,42 +20,39 @@ function changeState(state) {
     let disable;
     switch (state) {
         case STATE_NOTHING_LOADED:
-            enable = [];
-            disable = [ "toStart", "prev", "next", "toEnd", "automatic" ];
+            enable = [ "drop_zone", "q_algo", "ex_deutsch", "ex_alu", "stepDuration" ];
+            disable = [ "toStart", "prev", "automatic", "next", "toEnd" ];
             break;
 
         case STATE_LOADED:
-            automatic.text("\u25B6");   //play-symbol in unicode
-            enable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "automatic", "stepDuration" ];
+            enable = [ "drop_zone", "q_algo", "toStart", "prev", "automatic", "next", "toEnd",
+                        "ex_deutsch", "ex_alu", "stepDuration" ];
             disable = [  ];
             break;
 
         case STATE_LOADED_START:
-            //$('#automatic').val("&#9654");
-            //document.getElementById("automatic").value = "&#9654";
-            enable = [ "drop_zone", "q_algo", "next", "toEnd", "automatic", "stepDuration" ];
+            enable = [ "drop_zone", "q_algo", "automatic", "next", "toEnd", "ex_deutsch", "ex_alu", "stepDuration" ];
             disable = [ "toStart", "prev" ];
             break;
 
         case STATE_LOADED_END:
-            //$('#automatic').val("&#9654");
-            //document.getElementById("automatic").value = "&#9654";
-            enable = [ "drop_zone", "q_algo", "toStart", "prev", "stepDuration" ];
-            disable = [ "toEnd", "next", "automatic" ];     //todo disable q_algo because we can't alter any line because we run through all lines? or maybe the user should be able to add additional linee at the end?
+            enable = [ "drop_zone", "q_algo", "toStart", "prev", "ex_deutsch", "ex_alu", "stepDuration" ];
+            disable = [ "toEnd", "next", "automatic" ];     //todo disable q_algo because we can't alter any line because we run through all lines? or maybe the user should be able to add additional lines at the end?
             break;
 
         case STATE_SIMULATING:
             enable = [];
-            disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "automatic", "stepDuration" ];
+            disable = [ "drop_zone", "q_algo", "toStart", "prev", "automatic", "next", "toEnd",
+                        "ex_deutsch", "ex_alu", "stepDuration" ];
             break;
 
         case STATE_DIASHOW:
             runDia = true;
             pauseDia = false;
             automatic.text("||");   //\u23F8
-            //document.getElementById("automatic").value = "||";//"&#9616;&#9616;";
             enable = [ "automatic" ];
-            disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "stepDuration" ];        //todo should next (maybe even toEnd) be enabled?
+            disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd",
+                        "ex_deutsch", "ex_alu", "stepDuration" ];        //todo should next (maybe even toEnd) be enabled?
             break;
     }
 
@@ -284,12 +281,24 @@ function dropHandler(event) {
                     const q_algo = document.getElementById("q_algo");
                     q_algo.value = e.target.result;
 
-                    loadAlgorithm();
+                    loadAlgorithm(1);
                 };
                 reader.readAsBinaryString(file);
 
+            } else if(event.dataTransfer.files[i].name.endsWith(".real")) {
+                let file = event.dataTransfer.files[i];
+                let reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const q_algo = document.getElementById("q_algo");
+                    q_algo.value = e.target.result;
+
+                    loadAlgorithm(2);
+                };
+                reader.readAsBinaryString(file);
+                
             } else {
-                console.log("ERROR");
+                console.log("ERROR! Filetype not supported!");
                 //todo show error
             }
             //}
@@ -299,7 +308,7 @@ function dropHandler(event) {
 //######################################################################################################################
 
 let numOfOperations = 0;
-function loadAlgorithm() {
+function loadAlgorithm(format = 1) {
     $(() => {
         const op = $('#output');
         op.text("");
@@ -312,7 +321,7 @@ function loadAlgorithm() {
         //updateHighlighting();
 
         if(q_algo) {
-            $.post("/load", { basisStates: null, algo: q_algo, opNum: opNum },
+            $.post("/load", { basisStates: null, algo: q_algo, opNum: opNum, format: format },
                 (res) => {
                     preformatAlgorithm();
 
@@ -329,6 +338,8 @@ function loadAlgorithm() {
 
                     changeState(STATE_LOADED_START);
                 }
+
+                //todo on error changeState
             );
         }
     });
@@ -442,14 +453,9 @@ $(() =>  {
         });
     });
     /* ######################################################### */
-    $('#automatic').on('click', () => {
+    automatic.on('click', () => {
         if(runDia) {
-            pauseDia = true;
-            runDia = false;
-
-            if(highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
-            else changeState(STATE_LOADED);
-            //document.getElementById("stop").disabled = false;   //enable stop button
+            endDia();
 
         } else {
             runDia = true;
@@ -476,7 +482,7 @@ $(() =>  {
 
                                 setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
 
-                            } else changeState(STATE_LOADED_END);
+                            } else endDia();
                         }
                         //todo what should we do on error?
                     });
@@ -495,6 +501,16 @@ $(() =>  {
     });
      */
 });
+
+function endDia() {
+    pauseDia = true;
+    runDia = false;
+
+    if(highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
+    else changeState(STATE_LOADED);
+    automatic.text("\u25B6");   //play-symbol in unicode
+    //document.getElementById("stop").disabled = false;   //enable stop button
+}
 
 function print(svg) {
     const div = document.getElementById('svg_div');
@@ -539,7 +555,7 @@ function setLineNumbers() {
         numOfOperations >= 10 ? 2 :
         1;
 
-    for(let i = 0; i < lines.length-1; i++) {
+    for(let i = 0; i < lines.length; i++) {
         if(i <= operationOffset) lines[i] = "";
         else {
             const num = (i - operationOffset);

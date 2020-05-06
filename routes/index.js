@@ -29,6 +29,7 @@ router.post('/load', (req, res) => {
         try {
             const qAlgo = req.body.algo;
             const opNum = parseInt(req.body.opNum);
+            const format = parseInt(req.body.format);
             /*
             let worked;
             let basisStates = req.body.basisStates;
@@ -41,7 +42,7 @@ router.post('/load', (req, res) => {
             } else worked = data.vis.load(qAlgo);
              */
 
-            const numOfOperations = data.vis.load(qAlgo, opNum);
+            const numOfOperations = data.vis.load(qAlgo, opNum, format);
             if(numOfOperations > -1) sendFile(res, data.ip, numOfOperations);
             else res.status(400).json({ msg: "Error while loading the algorithm!" });
 
