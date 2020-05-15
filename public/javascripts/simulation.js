@@ -670,9 +670,18 @@ function isOperation(text) {
 
 let operationOffset = 5;        //on which line the QASM-header ends - next line is the first operation
 let highlightedLines = 0;
-const lineHighlight = "<mark>                                  </mark>";     //todo adjust text content so it matches line-width as good as possible
+const lineHighlight = "<mark>                                         </mark>";     //todo adjust text content so it matches line-width as good as possible
 function applyHighlights(text) {
-    if(highlightedLines === 0) return;
+    if(highlightedLines === 0) {
+        //return text;
+        const lines = text.split('\n');
+        lines[0] = lineHighlight;   //just highlight the first line giving information about the format
+        text = "";
+        lines.forEach(l => {
+            text += l;
+            text += "\n";
+        });
+    }
 
     const lines = text.split('\n');
     let opLines = 0;
