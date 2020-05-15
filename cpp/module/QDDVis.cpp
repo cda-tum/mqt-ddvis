@@ -132,18 +132,23 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     Napi::HandleScope scope(env);
 
     //check if a String and maybe an object representing the basic states has been passed
-    if(info.Length() != 2) {
-        Napi::RangeError::New(env, "Need 2 (String, unsigned int) arguments!").ThrowAsJavaScriptException();
+    if(info.Length() != 3) {
+        Napi::RangeError::New(env, "Need 3 (String, unsigned int, unsigned int) arguments!").ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
     }
     if (!info[0].IsString()) {
-        Napi::TypeError::New(env, "String expected!").ThrowAsJavaScriptException();
+        Napi::TypeError::New(env, "arg1: String expected!").ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
     }
     if (!info[1].IsNumber()) {
-        Napi::TypeError::New(env, "unsigned int expected!").ThrowAsJavaScriptException();
+        Napi::TypeError::New(env, "arg2: unsigned int expected!").ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
     }
+    if (!info[2].IsNumber()) {
+        Napi::TypeError::New(env, "arg3: unsigned int expected!").ThrowAsJavaScriptException();
+        return Napi::Number::New(env, -1);
+    }
+
 
     //the first parameter (algorithm)
     Napi::String arg = info[0].As<Napi::String>();
@@ -190,7 +195,13 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
      */
 
     try {
-        qc->import(ss, qc::OpenQASM);
+        const unsigned int formatCode = (unsigned int)info[2].As<Napi::Number>();
+        if(formatCode == 1)         qc->import(ss, qc::OpenQASM);
+        else if(formatCode == 2)    qc->import(ss, qc::Real);
+        else {
+            Napi::Error::New(env, "Invalid FormatCode!").ThrowAsJavaScriptException();
+            return Napi::Number::New(env, -1);
+        }
 
     } catch(std::exception& e) {
         std::cout << "Exception while loading the algorithm: " << e.what() << std::endl;
@@ -247,6 +258,7 @@ Napi::Value QDDVis::ToStart(const Napi::CallbackInfo& info) {
         } catch(std::exception& e) {
             std::cout << "Exception while getting the current operation {src: prev}!" << std::endl;
             std::cout << e.what() << std::endl;
+            return Napi::Boolean::New(env, false);  //nothing changed
         }
     }
 }

@@ -14,6 +14,9 @@ let stepDuration = 700;   //in ms
 
 changeState(STATE_NOTHING_LOADED);      //initial state
 
+const FORMAT_UNKNOWN = 0;
+const QASM_FORMAT = 1;
+const REAL_FORMAT = 2;
 
 function changeState(state) {
     let enable;
@@ -107,7 +110,7 @@ function loadDeutsch() {
         "h q[0];\n"
     ;
 
-    loadAlgorithm();
+    loadAlgorithm(QASM_FORMAT);
 }
 
 function loadAlu() {
@@ -203,7 +206,7 @@ function loadAlu() {
         "x q[2];\n"
     ;
 
-    loadAlgorithm();
+    loadAlgorithm(QASM_FORMAT);
 }
 
 
@@ -281,7 +284,7 @@ function dropHandler(event) {
                     const q_algo = document.getElementById("q_algo");
                     q_algo.value = e.target.result;
 
-                    loadAlgorithm(1);
+                    loadAlgorithm(QASM_FORMAT);
                 };
                 reader.readAsBinaryString(file);
 
@@ -293,7 +296,8 @@ function dropHandler(event) {
                     const q_algo = document.getElementById("q_algo");
                     q_algo.value = e.target.result;
 
-                    loadAlgorithm(2);
+                    console.log("open real");
+                    loadAlgorithm(REAL_FORMAT);
                 };
                 reader.readAsBinaryString(file);
                 
@@ -307,8 +311,8 @@ function dropHandler(event) {
 }
 //######################################################################################################################
 
-let numOfOperations = 0;
-function loadAlgorithm(format = 1) {
+let numOfOperations = 0;    //number of operations the whole algorithm has
+function loadAlgorithm(format = FORMAT_UNKNOWN) {
     $(() => {
         const op = $('#output');
         op.text("");
@@ -319,6 +323,12 @@ function loadAlgorithm(format = 1) {
         const opNum = $('#startLine').val();
         //highlightedLines = opNum;
         //updateHighlighting();
+
+        if(format === FORMAT_UNKNOWN) {
+            //find out of which format the input text is
+            if(q_algo.startsWith("OPENQASM")) format = QASM_FORMAT;
+            else format = REAL_FORMAT;      //right now only these two formats are supported, so if it is no QASM, it must be Real
+        }
 
         if(q_algo) {
             $.post("/load", { basisStates: null, algo: q_algo, opNum: opNum, format: format },
@@ -662,6 +672,8 @@ let operationOffset = 5;        //on which line the QASM-header ends - next line
 let highlightedLines = 0;
 const lineHighlight = "<mark>                                  </mark>";     //todo adjust text content so it matches line-width as good as possible
 function applyHighlights(text) {
+    if(highlightedLines === 0) return;
+
     const lines = text.split('\n');
     let opLines = 0;
     for(let i = 0; i < lines.length-1; i++) {
