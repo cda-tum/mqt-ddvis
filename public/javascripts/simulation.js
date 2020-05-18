@@ -1,5 +1,13 @@
+//################### J-QUERY ELEMENTS ###############################################################################################################
+
 const automatic = $('#automatic');
 
+
+
+//################### CONFIGURATION ##################################################################################################################
+let stepDuration = 700;   //in ms
+
+//################### STATE MANAGEMENT ##################################################################################################################
 //states of the simulation tab
 const STATE_NOTHING_LOADED = 0;     //initial state, goes to LOADED
 const STATE_LOADED = 1;             //can go to SIMULATING and DIASHOW, both of them can lead to LOADED (somewhere between start and end)
@@ -10,13 +18,6 @@ const STATE_DIASHOW = 5;            //can go to LOADED
 
 let runDia = false;
 let pauseDia = false;
-let stepDuration = 700;   //in ms
-
-changeState(STATE_NOTHING_LOADED);      //initial state
-
-const FORMAT_UNKNOWN = 0;
-const QASM_FORMAT = 1;
-const REAL_FORMAT = 2;
 
 function changeState(state) {
     let enable;
@@ -77,8 +78,7 @@ function disableElementsWithID(ids) {
     });
 }
 
-
-
+//################### UI INITIALIZATION ##################################################################################################################
 //from https://www.w3schools.com/howto/howto_js_accordion.asp
 const acc = document.getElementsByClassName("accordion");
 for (let i = 0; i < acc.length; i++) {
@@ -93,6 +93,16 @@ for (let i = 0; i < acc.length; i++) {
         else panel.style.display = "block";
     });
 }
+
+changeState(STATE_NOTHING_LOADED);      //initial state
+
+
+
+
+//################### ALGORITHM LOADING ##################################################################################################################
+const FORMAT_UNKNOWN = 0;
+const QASM_FORMAT = 1;
+const REAL_FORMAT = 2;
 
 function loadDeutsch() {
     const q_algo = document.getElementById("q_algo");
@@ -209,8 +219,7 @@ function loadAlu() {
     loadAlgorithm(QASM_FORMAT);
 }
 
-
-let basisStates = null;
+//let basisStates = null;
 /*function validate() {
     const basic_states = document.getElementById("basic_states");
     const arr = basic_states.value.split(" ");
@@ -259,23 +268,20 @@ let basisStates = null;
 function validate() {
     $(() => {
         const basis_states = $('#basis_states').val();
-        debugText();
+
 
         $.post("/validate", { basisStates: basis_states },
             (res) => {
-                debugText(res.msg);
             }
         );
     });
 }
 
-//events ###############################################################################################################
 function dropHandler(event) {
     event.preventDefault();     //prevents the browser from opening the file and therefore leaving the website
 
     if(event.dataTransfer.items) {
         for(let i = 0; i < event.dataTransfer.files.length; i++) {
-            //if(event.dataTransfer.items[i].kind === 'file') {
             if(event.dataTransfer.files[i].name.endsWith(".qasm")) {
                 let file = event.dataTransfer.files[i];
                 let reader = new FileReader();
@@ -305,11 +311,9 @@ function dropHandler(event) {
                 console.log("ERROR! Filetype not supported!");
                 //todo show error
             }
-            //}
         }
     }
 }
-//######################################################################################################################
 
 let numOfOperations = 0;    //number of operations the whole algorithm has
 function loadAlgorithm(format = FORMAT_UNKNOWN) {
@@ -318,7 +322,8 @@ function loadAlgorithm(format = FORMAT_UNKNOWN) {
         op.text("");
 
         //const basis_states = $('#basis_states').val();
-        const q_algo = $('#q_algo').val();
+        const q_algo = $('#q_algo');
+        const algo = q_algo.val();
         //console.log("Basis states: " + basis_states);
         const opNum = $('#startLine').val();
         //highlightedLines = opNum;
@@ -326,24 +331,27 @@ function loadAlgorithm(format = FORMAT_UNKNOWN) {
 
         if(format === FORMAT_UNKNOWN) {
             //find out of which format the input text is
-            if(q_algo.startsWith("OPENQASM")) format = QASM_FORMAT;
+            if(algo.startsWith("OPENQASM")) format = QASM_FORMAT;
             else format = REAL_FORMAT;      //right now only these two formats are supported, so if it is no QASM, it must be Real
         }
 
-        if(q_algo) {
-            $.post("/load", { basisStates: null, algo: q_algo, opNum: opNum, format: format },
+        if(algo) {
+            $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format },
                 (res) => {
                     preformatAlgorithm();
 
-                    oldInput = q_algo;
+                    oldInput = algo;
 
                     resetHighlighting();
                     updateHighlighting();
 
-                    numOfOperations = res.msg;
+                    numOfOperations = res.msg;  //number of operations the algorithm has
+                    const digits = _numOfDigits(numOfOperations);
+                    q_algo.css('padding-left', 10 + 10 * digits);   //10px is the padding of lineNumbers
+                    console.log("padding-left = " + q_algo.css('padding-left'));
+
                     setLineNumbers();
 
-                    debugText(res.msg);
                     print(res.svg);
 
                     changeState(STATE_LOADED_START);
@@ -358,14 +366,15 @@ function loadAlgorithm(format = FORMAT_UNKNOWN) {
 function preformatAlgorithm() {
     const algo = $('#q_algo');
 
-    //TODO implement
+    //TODO implement?
     //every operation needs to be in a separate line
 }
 
+//################### API BUTTONS ##################################################################################################################
 $(() =>  {
     /* ######################################################### */
     $('#toStart').on('click', () => {
-        debugText();
+
 
         updateStepDuration();
 
@@ -374,8 +383,6 @@ $(() =>  {
             url: '/tostart',
             contentType: 'application/json',
             success: (res) => {
-                debugText(res.msg);
-
                 if(res.svg) {
                     print(res.svg);
                     highlightedLines = 0;
@@ -387,15 +394,13 @@ $(() =>  {
     });
     /* ######################################################### */
     $('#prev').on('click', () => {
-        debugText();
+
 
         changeState(STATE_SIMULATING);
         $.ajax({
             url: '/prev',
             contentType: 'application/json',
             success: (res) => {
-                debugText(res.msg);
-
                 if(res.svg) {
                     print(res.svg);
 
@@ -412,14 +417,13 @@ $(() =>  {
     });
     /* ######################################################### */
     $('#next').on('click', () => {
-        debugText();
+
 
         changeState(STATE_SIMULATING);
         $.ajax({
             url: '/next',
             contentType: 'application/json',
             success: (res) => {
-                debugText(res.msg);
 
                 if(res.svg) {   //we haven't reached the end yet
                     print(res.svg);
@@ -437,7 +441,7 @@ $(() =>  {
     });
     /* ######################################################### */
     $('#toEnd').on('click', () => {
-        debugText();
+
 
         updateStepDuration();
 
@@ -446,7 +450,6 @@ $(() =>  {
             url: '/toend',
             contentType: 'application/json',
             success: (res) => {
-                debugText(res.msg);
 
                 if(res.svg) {
                     print(res.svg);
@@ -469,7 +472,6 @@ $(() =>  {
 
         } else {
             runDia = true;
-            debugText();
 
             updateStepDuration();
             changeState(STATE_DIASHOW);
@@ -481,7 +483,6 @@ $(() =>  {
                         url: '/next',
                         contentType: 'application/json',
                         success: (res) => {
-                            debugText(res.msg);
 
                             const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
                             if(res.svg) {
@@ -512,6 +513,10 @@ $(() =>  {
      */
 });
 
+
+
+//todo continue structuring the code here
+//###################
 function endDia() {
     pauseDia = true;
     runDia = false;
@@ -534,12 +539,12 @@ function updateStepDuration() {
     if(0 <= newVal) stepDuration = newVal;
 }
 
-
-function debugText(text = "") {
-    //const op = $('#output');
-    //op.text(text);
+/*
+Only works for integers!
+ */
+function _numOfDigits(num) {    //only works for integers!
+    return String(num).length;
 }
-
 
 function setLineNumbers() {
     const algo = $('#q_algo');
@@ -559,21 +564,13 @@ function setLineNumbers() {
     let text = algo.val();
     const lines = text.split('\n');
 
-    const digits =
-        numOfOperations >= 1000 ? 4 :
-        numOfOperations >= 100 ? 3 :
-        numOfOperations >= 10 ? 2 :
-        1;
+    const digits = _numOfDigits(numOfOperations);
 
     for(let i = 0; i < lines.length; i++) {
         if(i <= operationOffset) lines[i] = "";
         else {
             const num = (i - operationOffset);
-            const numDigits =
-                num >= 1000 ? 4 :
-                    num >= 100 ? 3 :
-                        num >= 10 ? 2 :
-                            1;
+            const numDigits = _numOfDigits(num);
 
             let space = "";
             for(let j = 0; j < digits - numDigits; j++) space += "_";   //todo space seems to be skipped visually
@@ -625,6 +622,9 @@ function handleInput() {
     setLineNumbers();
 }
 
+
+
+//################### LINE HIGHLIGHTING ##################################################################################################################
 function resetHighlighting() {
     highlightedLines = 0;
 
@@ -668,12 +668,11 @@ function isOperation(text) {
     } else return false;
 }
 
-let operationOffset = 5;        //on which line the QASM-header ends - next line is the first operation
+let operationOffset = 0;        //on which line the QASM-header ends - next line is the first operation
 let highlightedLines = 0;
 const lineHighlight = "<mark>                                         </mark>";     //todo adjust text content so it matches line-width as good as possible
 function applyHighlights(text) {
     if(highlightedLines === 0) {
-        //return text;
         const lines = text.split('\n');
         lines[0] = lineHighlight;   //just highlight the first line giving information about the format
         text = "";
