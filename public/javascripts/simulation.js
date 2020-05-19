@@ -376,6 +376,7 @@ $(() =>  {
         });
         call.fail((res) => {
            showResponseError(res, "Going back to the start failed!");
+            changeState(STATE_LOADED);
         });
     });
     /* ######################################################### */
@@ -400,6 +401,7 @@ $(() =>  {
         });
         call.fail((res) => {
            showResponseError(res, "Going a step back failed!");
+           changeState(STATE_LOADED);
         });
     });
     /* ######################################################### */
@@ -425,6 +427,7 @@ $(() =>  {
         });
         call.fail((res) => {
             showResponseError(res, "Going a step ahead failed!");
+            changeState(STATE_LOADED);
         });
     });
     /* ######################################################### */
@@ -449,6 +452,7 @@ $(() =>  {
         });
         call.fail((res) => {
             showResponseError(res, "Going back to the start failed!");
+            changeState(STATE_LOADED);
         });
     });
     /* ######################################################### */
@@ -692,7 +696,7 @@ function showError(error) {
 }
 
 $( document ).ajaxError(function( event, request, settings ) {
-    $( "#msg" ).append( "<li>Error requesting page " + settings.url + "</li>" );
+    showError( "Unhandled error occured! Error requesting page " + settings.url);
 });
 
 
@@ -710,9 +714,12 @@ function endDia() {
 }
 
 function updateStepDuration() {
-    const newVal = $("#stepDuration").val();    //update the stepDuration-value
+    const newVal = $("#stepDuration").val();
     if(0 <= newVal) stepDuration = newVal;
-    else showError("Invalid number for step-duration: Only integers allowed!");
+    else {
+        showError("Invalid number for step-duration: Only integers allowed!");
+        $('#stepDuration').val(stepDuration);
+    }
 }
 
 function print(svg) {
