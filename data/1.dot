@@ -3,42 +3,21 @@ graph [center=true, ordering=out];
 node [shape=circle, center=true];
 "T" [ shape = box, label="1" ];
 "R" [label="", shape=point];
-"0" [ label="q4" ,style=filled, fillcolor=lightgray ];
-"0h0"  [label="", shape=point];
-"0h2"  [label="", shape=point , fillcolor=red, color=red];
-"1" [ label="q3" ,style=filled, fillcolor=lightgray ];
-"1h0"  [label="", shape=point];
+"0" [ label="q1" ,style=filled, fillcolor=lightgray ];
+"0h0"  [label="", shape=point , fillcolor=red, color=red];
+"0h2"  [label="", shape=point];
+"1" [ label="q0" ,style=filled, fillcolor=lightgray ];
+"1h0"  [label="", shape=point ];
 "1h2"  [label="", shape=point , fillcolor=red, color=red];
-"2" [ label="q2" ,style=filled, fillcolor=lightgray ];
-"2h0"  [label="", shape=point];
-"2h2"  [label="", shape=point , fillcolor=red, color=red];
-"3" [ label="q1" ,style=filled, fillcolor=lightgray ];
-"3h0"  [label="", shape=point];
-"3h2"  [label="", shape=point , fillcolor=red, color=red];
-"4" [ label="q0" ,style=filled, fillcolor=lightgray ];
-"4h0"  [label="", shape=point ];
-"4h2"  [label="", shape=point , fillcolor=red, color=red];
 
 "R" -> "0"
 {rank=same; "0h0" "0h2"}
 "0" -> "0h0" [arrowhead=none,color=darkgreen];
-"0h0" -> "1";
 "0" -> "0h2" [arrowhead=none,color=red];
+"0h2" -> "1";
 {rank=same; "1h0" "1h2"}
 "1" -> "1h0" [arrowhead=none,color=darkgreen];
-"1h0" -> "2";
+"1h0"-> "T";
 "1" -> "1h2" [arrowhead=none,color=red];
-{rank=same; "2h0" "2h2"}
-"2" -> "2h0" [arrowhead=none,color=darkgreen];
-"2h0" -> "3";
-"2" -> "2h2" [arrowhead=none,color=red];
-{rank=same; "3h0" "3h2"}
-"3" -> "3h0" [arrowhead=none,color=darkgreen];
-"3h0" -> "4";
-"3" -> "3h2" [arrowhead=none,color=red];
-{rank=same; "4h0" "4h2"}
-"4" -> "4h0" [arrowhead=none,color=darkgreen];
-"4h0"-> "T";
-"4" -> "4h2" [arrowhead=none,color=red];
 
 }

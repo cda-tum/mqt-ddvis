@@ -14,6 +14,7 @@ router.get('/', function(req, res, next) {
     //res.render('index', { title: 'QDD Visualizer' });
 });
 
+//not needed at the moment //todo delete?
 router.post('/validate', (req, res) => {
     const compNumbers = parseBasisStates(req.body.basisStates);
 
@@ -30,6 +31,7 @@ router.post('/load', (req, res) => {
         try {
             const qAlgo = req.body.algo;
             const opNum = parseInt(req.body.opNum);
+            const format = parseInt(req.body.format);
             /*
             let worked;
             let basisStates = req.body.basisStates;
@@ -42,7 +44,7 @@ router.post('/load', (req, res) => {
             } else worked = data.vis.load(qAlgo);
              */
 
-            const numOfOperations = data.vis.load(qAlgo, opNum);
+            const numOfOperations = data.vis.load(qAlgo, opNum, format);
             if(numOfOperations > -1) sendFile(res, data.ip, numOfOperations);
             else res.status(400).json({ msg: "Error while loading the algorithm!" });
 
@@ -59,7 +61,7 @@ router.get('/tostart', (req, res) => {
     if(data) {
         const ret = data.vis.toStart();
         if(ret) sendFile(res, data.ip);
-        else res.send({ msg: "you were already at the start" });    //the client will search for res.svg, but it will be null so they won't redraw
+        else res.status(403).json({ msg: "you were already at the start" });    //the client will search for res.svg, but it will be null so they won't redraw
 
     } else {
         console.log("ERROR! Ip not found!");
@@ -71,7 +73,7 @@ router.get('/prev', (req, res) => {
     if(data) {
         const ret = data.vis.prev();
         if(ret) sendFile(res, data.ip);
-        else res.send({ msg: "can't go back because we are at the beginning" });    //the client will search for res.svg, but it will be null so they won't redraw
+        else res.status(403).json({ msg: "can't go back because we are at the beginning" });    //the client will search for res.svg, but it will be null so they won't redraw
 
     } else {
         console.log("ERROR! Ip not found!");
