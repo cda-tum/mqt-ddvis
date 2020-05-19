@@ -2,9 +2,13 @@
 
 const automatic = $('#automatic');
 const q_algo = $('#q_algo');
+//todo also initialize all other selectors once?
 
 
 //################### CONFIGURATION ##################################################################################################################
+const paddingLeftOffset = 10;   //10px is the padding of lineNumbers, so q_algo also needs at least this much padding
+const paddingLeftPerDigit = 10; //padding of q_algo based on the number of digits the line-numbering needs
+
 let stepDuration = 700;   //in ms
 
 //################### STATE MANAGEMENT ##################################################################################################################
@@ -41,7 +45,7 @@ function changeState(state) {
 
         case STATE_LOADED_END:
             enable = [ "drop_zone", "q_algo", "toStart", "prev", "ex_deutsch", "ex_alu", "stepDuration" ];
-            disable = [ "toEnd", "next", "automatic" ];     //todo disable q_algo because we can't alter any line because we run through all lines? or maybe the user should be able to add additional lines at the end?
+            disable = [ "toEnd", "next", "automatic" ];   //don't disable q_algo because the user might want to add lines to the end //todo re-enable #next if lines are added?
             break;
 
         case STATE_SIMULATING:
@@ -265,7 +269,6 @@ function loadAlu() {
 
     basicStates.forEach(value => console.log("bs: " + value));
 }
-*/
 function validate() {
     $(() => {
         const basis_states = $('#basis_states').val();
@@ -274,56 +277,39 @@ function validate() {
         $.post("/validate", { basisStates: basis_states },
             (res) => {
             }
-        );
+        ).fail();
     });
 }
+*/
 
 function dropHandler(event) {
     event.preventDefault();     //prevents the browser from opening the file and therefore leaving the website
 
-    if(event.dataTransfer.items) {
+    if(event.dataTransfer.items) {  //check if a file was transmitted/dropped
         for(let i = 0; i < event.dataTransfer.files.length; i++) {
-            if(event.dataTransfer.files[i].name.endsWith(".qasm")) {
-                let file = event.dataTransfer.files[i];
-                let reader = new FileReader();
-
-                reader.onload = function(e) {
-                    const q_algo = document.getElementById("q_algo");
-                    q_algo.value = e.target.result;
-
-                    loadAlgorithm(QASM_FORMAT);
-                };
-                reader.readAsBinaryString(file);
-
-            } else if(event.dataTransfer.files[i].name.endsWith(".real")) {
-                let file = event.dataTransfer.files[i];
-                let reader = new FileReader();
-
-                reader.onload = function(e) {
-                    const q_algo = document.getElementById("q_algo");
-                    q_algo.value = e.target.result;
-
-                    console.log("open real");
-                    loadAlgorithm(REAL_FORMAT);
-                };
-                reader.readAsBinaryString(file);
-                
-            } else {
-                console.log("ERROR! Filetype not supported!");
-                //todo show error
+            //determine which format to load or show an error
+            let format = FORMAT_UNKNOWN;
+            if(event.dataTransfer.files[i].name.endsWith(".qasm")) format = QASM_FORMAT;
+            else if(event.dataTransfer.files[i].name.endsWith(".real")) format = REAL_FORMAT;
+            else {
+                showError("Filetype not supported!");
+                return;
             }
+
+            const file = event.dataTransfer.files[i];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                q_algo.val(e.target.result);
+                loadAlgorithm(format);
+            };
+            reader.readAsBinaryString(file);
         }
     }
 }
 
 let numOfOperations = 0;    //number of operations the whole algorithm has
-const paddingLeftOffset = 10;   //10px is the padding of lineNumbers, so q_algo also needs at least this much padding
-const paddingLeftPerDigit = 10;
 function loadAlgorithm(format = FORMAT_UNKNOWN) {
-    $(() => {
-        const op = $('#output');
-        op.text("");
-
+    //$(() => {
         //const basis_states = $('#basis_states').val();
         //console.log("Basis states: " + basis_states);
         const algo = q_algo.val();
@@ -338,30 +324,30 @@ function loadAlgorithm(format = FORMAT_UNKNOWN) {
         }
 
         if(algo) {
-            $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format },
-                (res) => {
-                    preformatAlgorithm();
+            const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format });
+            call.done((res) => {
+                preformatAlgorithm();
 
-                    oldInput = algo;
+                oldInput = algo;
 
-                    resetHighlighting();
-                    updateHighlighting();
+                resetHighlighting();
+                updateHighlighting();
 
-                    numOfOperations = res.msg;  //number of operations the algorithm has
-                    const digits = _numOfDigits(numOfOperations);
-                    q_algo.css('padding-left', paddingLeftOffset + paddingLeftPerDigit * digits);
+                numOfOperations = res.msg;  //number of operations the algorithm has
+                const digits = _numOfDigits(numOfOperations);
+                q_algo.css('padding-left', paddingLeftOffset + paddingLeftPerDigit * digits);
 
-                    setLineNumbers();
+                setLineNumbers();
 
-                    print(res.svg);
+                print(res.svg);
 
-                    changeState(STATE_LOADED_START);
-                }
-
-                //todo on error changeState
-            );
+                changeState(STATE_LOADED_START);
+            });
+            call.fail((res) => {
+                showResponseError(res, "Couldn't connect to the server.");
+            });
         }
-    });
+    //});
 }
 
 function preformatAlgorithm() {
@@ -375,12 +361,8 @@ function preformatAlgorithm() {
 $(() =>  {
     /* ######################################################### */
     $('#toStart').on('click', () => {
-
-
-        updateStepDuration();
-
         changeState(STATE_SIMULATING);
-        $.ajax({
+        const call = $.ajax({
             url: '/tostart',
             contentType: 'application/json',
             success: (res) => {
@@ -392,13 +374,14 @@ $(() =>  {
                 changeState(STATE_LOADED_START);
             }
         });
+        call.fail((res) => {
+           showResponseError(res, "Going back to the start failed!");
+        });
     });
     /* ######################################################### */
     $('#prev').on('click', () => {
-
-
         changeState(STATE_SIMULATING);
-        $.ajax({
+        const call = $.ajax({
             url: '/prev',
             contentType: 'application/json',
             success: (res) => {
@@ -415,13 +398,14 @@ $(() =>  {
                 } else changeState(STATE_LOADED_START); //should never reach this code because the button should be disabled when we reach the start
             }
         });
+        call.fail((res) => {
+           showResponseError(res, "Going a step back failed!");
+        });
     });
     /* ######################################################### */
     $('#next').on('click', () => {
-
-
         changeState(STATE_SIMULATING);
-        $.ajax({
+        const call = $.ajax({
             url: '/next',
             contentType: 'application/json',
             success: (res) => {
@@ -439,19 +423,17 @@ $(() =>  {
                 } else changeState(STATE_LOADED_END); //should never reach this code because the button should be disabled when we reach the end
             }
         });
+        call.fail((res) => {
+            showResponseError(res, "Going a step ahead failed!");
+        });
     });
     /* ######################################################### */
     $('#toEnd').on('click', () => {
-
-
-        updateStepDuration();
-
         changeState(STATE_SIMULATING);
-        $.ajax({
+        const call = $.ajax({
             url: '/toend',
             contentType: 'application/json',
             success: (res) => {
-
                 if(res.svg) {
                     print(res.svg);
 
@@ -464,6 +446,9 @@ $(() =>  {
                 }
                 changeState(STATE_LOADED_END);
             }
+        });
+        call.fail((res) => {
+            showResponseError(res, "Going back to the start failed!");
         });
     });
     /* ######################################################### */
@@ -480,7 +465,7 @@ $(() =>  {
             const func = () => {
                 if(!pauseDia) {
                     const startTime = performance.now();
-                    $.ajax({
+                    const call = $.ajax({
                         url: '/next',
                         contentType: 'application/json',
                         success: (res) => {
@@ -496,7 +481,10 @@ $(() =>  {
 
                             } else endDia();
                         }
-                        //todo what should we do on error?
+                    });
+                    call.fail((res) => {
+                        showResponseError(res, "Going a step ahead failed! Aborting Diashow."); //todo notify user that the diashow was aborted if res-msg is shown?
+                        endDia();
                     });
                 }
             };
@@ -521,14 +509,12 @@ function resetHighlighting() {
     highlightedLines = 0;
 
     const lines = q_algo.val().split('\n');
-
     for(let i = 0; i < lines.length; i++) {
         if(isOperation(lines[i])) {
             operationOffset = i-1;  //can never be negative because the file has to start with the QASM-header
             break;
         }
     }
-
 }
 
 function updateHighlighting() {
@@ -545,7 +531,7 @@ function updateHighlighting() {
  */
 function isOperation(text) {
     if(text) {
-        //todo is this implementation already sufficient?
+        //todo adapt to .real-Files
 
         if( text.trim() === "" ||
             text.includes("OPENQASM") ||
@@ -628,18 +614,15 @@ bindEvents();
 /*
 Only works for integers!
  */
-function _numOfDigits(num) {    //only works for integers!
+function _numOfDigits(num) {
     return String(num).length;
 }
 
 function setLineNumbers() {
     const lineNumbers = $('#line_numbers');
-
-    let text = q_algo.val();
-    const lines = text.split('\n');
-
     const digits = _numOfDigits(numOfOperations);
 
+    const lines = q_algo.val().split('\n');
     for(let i = 0; i < lines.length; i++) {
         if(i <= operationOffset) lines[i] = "";
         else {
@@ -652,9 +635,8 @@ function setLineNumbers() {
         }
     }
 
-    text = "";
+    let text = "";
     lines.forEach(l => text += l + "\n");
-
     lineNumbers.html(text);
 }
 
@@ -683,6 +665,7 @@ function handleInput() {
     for(let i = 0; i <= highlightedLines + operationOffset; i++) {
         if(linesNew.length <= i || linesNew[i] !== linesOld[i]) {   //illegal change!
             q_algo.val(oldInput);   //reset algorithm to old input
+            showError("You are not allowed to change already processed lines!");
             return;
         }
     }
@@ -695,6 +678,22 @@ function handleInput() {
 }
 
 
+
+
+
+//################### ERROR HANDLING ##################################################################################################################
+function showResponseError(res, altMsg = "Unknown Error!") {
+    if(res.responseJSON && res.responseJSON.msg) showError(res.responseJSON.msg);
+    else showError(altMsg);
+}
+
+function showError(error) {
+    alert(error);
+}
+
+$( document ).ajaxError(function( event, request, settings ) {
+    $( "#msg" ).append( "<li>Error requesting page " + settings.url + "</li>" );
+});
 
 
 
@@ -713,13 +712,14 @@ function endDia() {
 function updateStepDuration() {
     const newVal = $("#stepDuration").val();    //update the stepDuration-value
     if(0 <= newVal) stepDuration = newVal;
+    else showError("Invalid number for step-duration: Only integers allowed!");
 }
 
 function print(svg) {
     const div = document.getElementById('svg_div');
     const start = svg.indexOf('<svg');
 
-    div.innerHTML = svg.substring(start);   //test();
+    div.innerHTML = svg.substring(start);
 }
 
 function test() {

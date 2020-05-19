@@ -13,6 +13,7 @@ router.get('/', function(req, res, next) {
     //res.render('index', { title: 'QDD Visualizer' });
 });
 
+//not needed at the moment //todo delete?
 router.post('/validate', (req, res) => {
     const compNumbers = parseBasisStates(req.body.basisStates);
 
@@ -59,7 +60,7 @@ router.get('/tostart', (req, res) => {
     if(data) {
         const ret = data.vis.toStart();
         if(ret) sendFile(res, data.ip);
-        else res.send({ msg: "you were already at the start" });    //the client will search for res.svg, but it will be null so they won't redraw
+        else res.status(403).json({ msg: "you were already at the start" });    //the client will search for res.svg, but it will be null so they won't redraw
 
     } else {
         console.log("ERROR! Ip not found!");
@@ -71,7 +72,7 @@ router.get('/prev', (req, res) => {
     if(data) {
         const ret = data.vis.prev();
         if(ret) sendFile(res, data.ip);
-        else res.send({ msg: "can't go back because we are at the beginning" });    //the client will search for res.svg, but it will be null so they won't redraw
+        else res.status(403).json({ msg: "can't go back because we are at the beginning" });    //the client will search for res.svg, but it will be null so they won't redraw
 
     } else {
         console.log("ERROR! Ip not found!");
