@@ -1,7 +1,7 @@
 //################### J-QUERY ELEMENTS ###############################################################################################################
 
 const automatic = $('#automatic');
-
+const q_algo = $('#q_algo');
 
 
 //################### CONFIGURATION ##################################################################################################################
@@ -104,6 +104,7 @@ const FORMAT_UNKNOWN = 0;
 const QASM_FORMAT = 1;
 const REAL_FORMAT = 2;
 
+//let currFormat;
 function loadDeutsch() {
     const q_algo = document.getElementById("q_algo");
     q_algo.value =
@@ -316,15 +317,16 @@ function dropHandler(event) {
 }
 
 let numOfOperations = 0;    //number of operations the whole algorithm has
+const paddingLeftOffset = 10;   //10px is the padding of lineNumbers, so q_algo also needs at least this much padding
+const paddingLeftPerDigit = 10;
 function loadAlgorithm(format = FORMAT_UNKNOWN) {
     $(() => {
         const op = $('#output');
         op.text("");
 
         //const basis_states = $('#basis_states').val();
-        const q_algo = $('#q_algo');
-        const algo = q_algo.val();
         //console.log("Basis states: " + basis_states);
+        const algo = q_algo.val();
         const opNum = $('#startLine').val();
         //highlightedLines = opNum;
         //updateHighlighting();
@@ -347,8 +349,7 @@ function loadAlgorithm(format = FORMAT_UNKNOWN) {
 
                     numOfOperations = res.msg;  //number of operations the algorithm has
                     const digits = _numOfDigits(numOfOperations);
-                    q_algo.css('padding-left', 10 + 10 * digits);   //10px is the padding of lineNumbers
-                    console.log("padding-left = " + q_algo.css('padding-left'));
+                    q_algo.css('padding-left', paddingLeftOffset + paddingLeftPerDigit * digits);
 
                     setLineNumbers();
 
@@ -364,7 +365,7 @@ function loadAlgorithm(format = FORMAT_UNKNOWN) {
 }
 
 function preformatAlgorithm() {
-    const algo = $('#q_algo');
+    //const algo = $('#q_algo');
 
     //TODO implement?
     //every operation needs to be in a separate line
@@ -455,7 +456,7 @@ $(() =>  {
                     print(res.svg);
 
                     highlightedLines = 0;
-                    const lines = $('#q_algo').val().split('\n');
+                    const lines = q_algo.val().split('\n');
                     for(let i = 0; i < lines.length; i++) {
                         if(isOperation(lines[i])) highlightedLines++;
                     }
@@ -515,121 +516,11 @@ $(() =>  {
 
 
 
-//todo continue structuring the code here
-//###################
-function endDia() {
-    pauseDia = true;
-    runDia = false;
-
-    if(highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
-    else changeState(STATE_LOADED);
-    automatic.text("\u25B6");   //play-symbol in unicode
-    //document.getElementById("stop").disabled = false;   //enable stop button
-}
-
-function print(svg) {
-    const div = document.getElementById('svg_div');
-    const start = svg.indexOf('<svg');
-
-    div.innerHTML = svg.substring(start);   //test();
-}
-
-function updateStepDuration() {
-    const newVal = $("#stepDuration").val();    //update the stepDuration-value
-    if(0 <= newVal) stepDuration = newVal;
-}
-
-/*
-Only works for integers!
- */
-function _numOfDigits(num) {    //only works for integers!
-    return String(num).length;
-}
-
-function setLineNumbers() {
-    const algo = $('#q_algo');
-    const lineNumbers = $('#line_numbers');
-
-    /*
-    const numOfLines = algo.val().split("\n").length;
-    let content = "";
-    for(let i = 0; i < numOfLines; i++) {
-        if(i < operationOffset) content += " \n";
-        else {
-            content += (i-operationOffset+1) + "      \n";
-        }
-    }
-    lineNumbers.html(content);
-    */
-    let text = algo.val();
-    const lines = text.split('\n');
-
-    const digits = _numOfDigits(numOfOperations);
-
-    for(let i = 0; i < lines.length; i++) {
-        if(i <= operationOffset) lines[i] = "";
-        else {
-            const num = (i - operationOffset);
-            const numDigits = _numOfDigits(num);
-
-            let space = "";
-            for(let j = 0; j < digits - numDigits; j++) space += "_";   //todo space seems to be skipped visually
-            lines[i] = space + num.toString();
-        }
-    }
-
-    text = "";
-    lines.forEach(l => {
-        text += l;
-        text += "\n";
-    });
-
-    lineNumbers.html(text);
-}
-
-//highlighting and line numbering              ONLY WORKS IF EACH LINE CONTAINS NO MORE THAN 1 OPERATION!!!
-//adapted from: https://codepen.io/lonekorean/pen/gaLEMR
-function handleScroll() {
-    const algo = $('#q_algo');
-    const scrollTop = algo.scrollTop();
-
-    $('#backdrop').scrollTop(scrollTop);
-    $('#line_numbers').scrollTop(scrollTop);
-
-    //var scrollLeft = algo.scrollLeft();
-    //$backdrop.scrollLeft(scrollLeft);
-}
-
-let oldInput;   //needed to reset input if an illegal change was made
-function handleInput() {
-    const algo = $('#q_algo');
-    const highlighting = $('#highlighting');
-
-    //check if a highlighted line changed, if yes abort the changes
-    const linesNew = algo.val().split('\n');
-    const linesOld = oldInput.split('\n');
-    for(let i = 0; i <= highlightedLines + operationOffset; i++) {
-        if(linesNew.length <= i || linesNew[i] !== linesOld[i]) {   //illegal change!
-            algo.val(oldInput);
-            return;
-        }
-    }
-    oldInput = algo.val();  //changes are legal so they are "saved"
-
-    const highlightedText = applyHighlights(algo.val());
-    highlighting.html(highlightedText);
-
-    setLineNumbers();
-}
-
-
-
 //################### LINE HIGHLIGHTING ##################################################################################################################
 function resetHighlighting() {
     highlightedLines = 0;
 
-    const algo = $('#q_algo');
-    const lines = algo.val().split('\n');
+    const lines = q_algo.val().split('\n');
 
     for(let i = 0; i < lines.length; i++) {
         if(isOperation(lines[i])) {
@@ -641,10 +532,9 @@ function resetHighlighting() {
 }
 
 function updateHighlighting() {
-    const algo = $('#q_algo');
     const highlighting = $('#highlighting');
 
-    const text = algo.val();
+    const text = q_algo.val();
     const highlightedText = applyHighlights(text);
     highlighting.html(highlightedText);
 }
@@ -726,8 +616,7 @@ function removeHighlightedLine() {
 */
 
 function bindEvents() {
-    const algo = $('#q_algo');
-    algo.on({
+    q_algo.on({
         'input': handleInput,
         'scroll': handleScroll
     });
@@ -735,7 +624,103 @@ function bindEvents() {
 
 bindEvents();
 
+//################### LINE NUMBERING ##################################################################################################################
+/*
+Only works for integers!
+ */
+function _numOfDigits(num) {    //only works for integers!
+    return String(num).length;
+}
 
+function setLineNumbers() {
+    const lineNumbers = $('#line_numbers');
+
+    let text = q_algo.val();
+    const lines = text.split('\n');
+
+    const digits = _numOfDigits(numOfOperations);
+
+    for(let i = 0; i < lines.length; i++) {
+        if(i <= operationOffset) lines[i] = "";
+        else {
+            const num = (i - operationOffset);
+            const numDigits = _numOfDigits(num);
+
+            let space = "";
+            for(let j = 0; j < digits - numDigits; j++) space += "_";   //todo space seems to be skipped visually
+            lines[i] = space + num.toString();
+        }
+    }
+
+    text = "";
+    lines.forEach(l => text += l + "\n");
+
+    lineNumbers.html(text);
+}
+
+
+//################### HIGHLIGHTING and NUMBERING ##################################################################################################################
+
+//highlighting and line numbering              ONLY WORKS IF EACH LINE CONTAINS NO MORE THAN 1 OPERATION!!!
+//adapted from: https://codepen.io/lonekorean/pen/gaLEMR
+function handleScroll() {
+    const scrollTop = q_algo.scrollTop();
+
+    $('#backdrop').scrollTop(scrollTop);
+    $('#line_numbers').scrollTop(scrollTop);
+
+    //var scrollLeft = algo.scrollLeft();
+    //$backdrop.scrollLeft(scrollLeft);
+}
+
+let oldInput;   //needed to reset input if an illegal change was made
+function handleInput() {
+    const highlighting = $('#highlighting');
+
+    //check if a highlighted line changed, if yes abort the changes
+    const linesNew = q_algo.val().split('\n');
+    const linesOld = oldInput.split('\n');
+    for(let i = 0; i <= highlightedLines + operationOffset; i++) {
+        if(linesNew.length <= i || linesNew[i] !== linesOld[i]) {   //illegal change!
+            q_algo.val(oldInput);   //reset algorithm to old input
+            return;
+        }
+    }
+    oldInput = q_algo.val();  //changes are legal so they are "saved"
+
+    const highlightedText = applyHighlights(q_algo.val());
+    highlighting.html(highlightedText);
+
+    setLineNumbers();
+}
+
+
+
+
+
+//################### MISC ##################################################################################################################
+
+function endDia() {
+    pauseDia = true;
+    runDia = false;
+
+    if(highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
+    else changeState(STATE_LOADED);
+    automatic.text("\u25B6");   //play-symbol in unicode
+    //document.getElementById("stop").disabled = false;   //enable stop button
+}
+
+function updateStepDuration() {
+    const newVal = $("#stepDuration").val();    //update the stepDuration-value
+    if(0 <= newVal) stepDuration = newVal;
+}
+
+function print(svg) {
+    const div = document.getElementById('svg_div');
+    const start = svg.indexOf('<svg');
+
+    div.innerHTML = svg.substring(start);   //test();
+}
 
 function test() {
     const svg_content =
