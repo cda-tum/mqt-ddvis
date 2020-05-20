@@ -65,7 +65,7 @@ QDDVis::QDDVis(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVis>(info) 
         return;
     }
     this->ip = info[0].As<Napi::String>();
-    std::cout << "ID of " << this->ip << " is " << this->id << std::endl;
+    //std::cout << "ID of " << this->ip << " is " << this->id << std::endl;
 
     this->dd = std::make_unique<dd::Package>();
     this->qc = std::make_unique<qc::QuantumComputation>();
@@ -94,16 +94,21 @@ void QDDVis::stepForward() {
 
     const dd::Edge currDD = (*iterator)->getDD(dd, line);    //retrieve the "new" current operation
 
+    std::cout << "got currDD ";
+
     auto temp = dd->multiply(currDD, sim);         //process the current operation by multiplying it with the previous simulation-state
     dd->incRef(temp);
     dd->decRef(sim);
     sim = temp;
     dd->garbageCollect();
 
+    std::cout << "and multiplied it ";
+
     iterator++; // advance iterator
     if (iterator == qc->end()) {    //qc->end() is after the last operation in the iterator
         atEnd = true;
     }
+    std::cout << "- stepForward() success" << std::endl;
 }
 
 void QDDVis::stepBack() {
@@ -124,6 +129,16 @@ void QDDVis::stepBack() {
     dd->garbageCollect();
 }
 
+int QDDVis::operationsLeft() {
+    auto it = iterator;
+    int counter = 0;
+    while(it != qc->end()) {
+        it++;
+        counter++;
+    }
+    return counter;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**Parameters: String algorithm, Object basicStates
@@ -136,7 +151,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     Napi::HandleScope scope(env);
 
     //check if the correct parameters have been passed
-    if(info.Length() != 3) {
+    if(info.Length() != 4) {
         Napi::RangeError::New(env, "Need 3 (String, unsigned int, unsigned int) arguments!").ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
     }
@@ -144,12 +159,16 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         Napi::TypeError::New(env, "arg1: String expected!").ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
     }
-    if (!info[1].IsNumber()) {  //number of operations to immediately process
+    if (!info[1].IsNumber()) {  //format code (1 = QASM, 2 = Real)
+        Napi::TypeError::New(env, "arg3: unsigned int expected!").ThrowAsJavaScriptException();
+        return Napi::Number::New(env, -1);
+    }
+    if (!info[2].IsNumber()) {  //number of operations to immediately process
         Napi::TypeError::New(env, "arg2: unsigned int expected!").ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
     }
-    if (!info[2].IsNumber()) {  //format code (1 = QASM, 2 = Real)
-        Napi::TypeError::New(env, "arg3: unsigned int expected!").ThrowAsJavaScriptException();
+    if (!info[3].IsBoolean()) { //whether operations should be processed while advancing the iterator to opNum or not (true = new simulation; false = continue simulation)
+        Napi::TypeError::New(env, "arg3: boolean expected!").ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
     }
 
@@ -158,11 +177,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     const std::string algo = arg.Utf8Value();
     std::stringstream ss{algo};
 
-
-    //the second parameter (how many operations to apply immediately)
-    const unsigned int opNum = (unsigned int)info[1].As<Napi::Number>();
-
-    //basis state functionality not a priority and therefore further work on it is delayed - additionally glitch seemed to have a problem with this code, because before commenting it deployment failed
+    //basis state functionality not a priority and therefore further work on it is delayed
     /*
     if(info.Length() == 2) {      //also basic states have been passed
         if(info[1].IsArray()) {
@@ -198,7 +213,8 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
      */
 
     try {
-        const unsigned int formatCode = (unsigned int)info[2].As<Napi::Number>();
+        //second parameter describes the format of the algorithm
+        const unsigned int formatCode = (unsigned int)info[1].As<Napi::Number>();
         if(formatCode == 1)         qc->import(ss, qc::OpenQASM);
         else if(formatCode == 2)    qc->import(ss, qc::Real);
         else {
@@ -209,27 +225,46 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     } catch(std::exception& e) {
         std::cout << "Exception while loading the algorithm: " << e.what() << std::endl;
         reset();
-        Napi::Error::New(env, "Invalid Algorithm!").ThrowAsJavaScriptException();
+        std::string err = "Invalid Algorithm! ";// + e.what();
+        Napi::Error::New(env, err).ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
     }
-    sim = dd->makeZeroState(qc->getNqubits());
-	dd->incRef(sim);
-	ready = true;
+
+    ready = true;
     atInitial = true;
     atEnd = false;
     iterator = qc->begin();
 
+    std::cout << "[Load] Operations left: " << operationsLeft() << std::endl;   //#debug
+
+    //the third parameter (how many operations to apply immediately)
+    const unsigned int opNum = (unsigned int)info[2].As<Napi::Number>();
     if(opNum > 0) {
+        std::cout << "reached opNum code" << std::endl;
         //todo check if iterator has elements? because if not we will get a segmentation fault because iterator++ points to memory of something else
         atInitial = false;
-        for(unsigned int i = 0; i < opNum; i++) {    //apply some operations
-            stepForward();
+        const bool process = (bool)info[3].As<Napi::Boolean>(); //the fourth parameter tells us to process iterated operations or not
+        if(process) {
+            std::cout << "processing operations up to " << opNum << std::endl;
+            //todo dereference old sim?
+            sim = dd->makeZeroState(qc->getNqubits());
+            dd->incRef(sim);
+            for(unsigned int i = 0; i < opNum; i++) {    //apply some operations
+                stepForward();
+            }
+        } else {
+            std::cout << "advancing iterator up to " << opNum << std::endl;
+            for(unsigned int i = 0; i < opNum; i++) iterator++; //just advance the iterator so it points to the operations where we stopped before the edit
         }
-        iterator--;     //todo why iterator--???
+        //iterator--;     //todo why iterator--???
         //dd->garbageCollect();
+    } else {    //sim needs to be initialized in some cases
+        //todo dereference old sim?
+        sim = dd->makeZeroState(qc->getNqubits());
+        dd->incRef(sim);
     }
 
-    exportDD(this->ip);
+    //exportDD(this->ip);
 
     return Napi::Number::New(env, qc->getNops());
 }
@@ -244,6 +279,7 @@ Napi::Value QDDVis::ToStart(const Napi::CallbackInfo& info) {
         return Napi::Boolean::New(env, false);
     }
 
+
     if(atInitial) return Napi::Boolean::New(env, false);  //nothing changed
     else {
         try {
@@ -255,6 +291,8 @@ Napi::Value QDDVis::ToStart(const Napi::CallbackInfo& info) {
             iterator = qc->begin();
 
             exportDD(this->ip);
+
+            std::cout << "[ToStart] Operations left: " << operationsLeft() << std::endl;    //#debug
             return Napi::Boolean::New(env, true);   //something changed
 
         } catch(std::exception& e) {
@@ -284,6 +322,8 @@ Napi::Value QDDVis::Prev(const Napi::CallbackInfo& info) {
     try {
         stepBack();     //go back to the start before the last processed operation
         exportDD(this->ip);
+
+        std::cout << "[Prev] Operations left: " << operationsLeft() << std::endl;    //#debug
         return Napi::Boolean::New(env, true);   //something changed
 
     } catch(std::exception& e) {
@@ -312,6 +352,8 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
     try {
         stepForward();          //process the next operation
         exportDD(this->ip);
+
+        std::cout << "[Next] Operations left: " << operationsLeft() << std::endl;    //#debug
         return Napi::Boolean::New(env, true);   //something changed
 
     } catch(std::exception& e) {
@@ -340,6 +382,8 @@ Napi::Value QDDVis::ToEnd(const Napi::CallbackInfo& info) {
             //now atEnd is true, exactly as it should be
 
             exportDD(this->ip);
+
+            std::cout << "[ToEnd] Operations left: " << operationsLeft() << std::endl;    //#debug
             return Napi::Boolean::New(env, true);   //something changed
 
         } catch(std::exception& e) {

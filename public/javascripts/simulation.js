@@ -123,7 +123,7 @@ function loadDeutsch() {
         "h q[0];\n"
     );
 
-    loadAlgorithm(QASM_FORMAT);
+    loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
 
 function loadAlu() {
@@ -218,7 +218,7 @@ function loadAlu() {
         "x q[2];\n"
     );
 
-    loadAlgorithm(QASM_FORMAT);
+    loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
 
 //let basisStates = null;
@@ -297,7 +297,7 @@ function dropHandler(event) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 q_algo.val(e.target.result);
-                loadAlgorithm(format);
+                loadAlgorithm(format, true);    //since a completely new algorithm has been uploaded we have to throw away the old simulation data
             };
             reader.readAsBinaryString(file);
         }
@@ -306,31 +306,40 @@ function dropHandler(event) {
 
 let algoFormat = FORMAT_UNKNOWN;
 let numOfOperations = 0;    //number of operations the whole algorithm has
-function loadAlgorithm(format = FORMAT_UNKNOWN) {
+/**Loads the algorithm placed inside the textArea #q_algo
+ *
+ * @param format the format in which the algorithm is written; the only occasion where this parameter is not set
+ *        is when leaving the textArea after editing, but in this case the format didn't change so the old algoFormat is used
+ * @param reset whether a new simulation needs to be started after loading; default false because again the only occasion
+ *        it is not set is after editing, but there we especially don't want to reset
+ */
+function loadAlgorithm(format = algoFormat, reset = false) {
     //$(() => {
         //const basis_states = $('#basis_states').val();
         //console.log("Basis states: " + basis_states);
         const algo = q_algo.val();
-        const opNum = $('#startLine').val();
+        const opNum = reset ?
+            $('#startLine').val() :
+            highlightedLines;   //we want to continue simulating after the last processed line, which is after the highlighted ones
         //highlightedLines = opNum;
         //updateHighlighting();
 
         if(format === FORMAT_UNKNOWN) {
             //find out of which format the input text is
             if(algo.startsWith("OPENQASM")) format = QASM_FORMAT;
-            else format = REAL_FORMAT;      //right now only these two formats are supported, so if it is no QASM, it must be Real
+            else format = REAL_FORMAT;      //right now only these two formats are supported, so if it is not QASM, it must be Real
         }
 
         if(algo) {
-            const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format });
+            const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
             call.done((res) => {
                 algoFormat = format;
                 preformatAlgorithm();
 
                 oldInput = algo;
 
-                resetHighlighting();
-                updateHighlighting();
+                if(reset) resetHighlighting();
+                updateHighlighting();   //todo does this need to be called when we didn't reset?
 
                 numOfOperations = res.msg;  //number of operations the algorithm has
                 const digits = _numOfDigits(numOfOperations);

@@ -31,6 +31,7 @@ router.post('/load', (req, res) => {
             const qAlgo = req.body.algo;
             const opNum = parseInt(req.body.opNum);
             const format = parseInt(req.body.format);
+            const reset = req.body.reset === "true";   //whether the algorithm should be reset to the start or if iterator and current DD should stay as they are
             /*
             let worked;
             let basisStates = req.body.basisStates;
@@ -43,7 +44,7 @@ router.post('/load', (req, res) => {
             } else worked = data.vis.load(qAlgo);
              */
 
-            const numOfOperations = data.vis.load(qAlgo, opNum, format);
+            const numOfOperations = data.vis.load(qAlgo, format, opNum, reset);
             if(numOfOperations > -1) sendFile(res, data.ip, numOfOperations);
             else res.status(400).json({ msg: "Error while loading the algorithm!" });
 

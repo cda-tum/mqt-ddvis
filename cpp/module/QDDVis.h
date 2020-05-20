@@ -23,6 +23,7 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
         void exportDD(const std::string& ipaddr);
         void stepForward();
         void stepBack();
+        int operationsLeft(); //for debugging; calculates how many times the iterator can go to a next element before reaching end()
 
         //exported ("public") methods       - return type must be Napi::Value or void!
         Napi::Value Load(const Napi::CallbackInfo& info);
