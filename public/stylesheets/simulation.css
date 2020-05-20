@@ -1,4 +1,5 @@
 
+
 /* Create two columns/boxes that floats next to each other */
 #algo_div {
     float: left;
@@ -70,7 +71,7 @@
 #drop_zone {
     width: 300px;
     height: 300px;
-
+    border: 2px solid #685972;
     display: block;
     margin: 0 auto;
     transform: translateZ(0);
@@ -90,7 +91,7 @@
 .backdrop {
     position: absolute;
     z-index: 1;
-    border: 2px solid #685972;
+    /*border: 2px solid #685972;*/
     background-color: transparent;
     overflow: auto;
     pointer-events: none;
@@ -118,12 +119,14 @@
     position: absolute;
     z-index: 3;
     margin: 0;
-    /*border: 2px solid #74637f;*/
+    border: none;
+    outline: none;
     border-radius: 0;
     color: #000;
     background-color: transparent;
     overflow: auto;
     resize: none;
+    white-space: pre;
 }
 
 mark {

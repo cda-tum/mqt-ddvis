@@ -108,29 +108,26 @@ const FORMAT_UNKNOWN = 0;
 const QASM_FORMAT = 1;
 const REAL_FORMAT = 2;
 
-//let currFormat;
 function loadDeutsch() {
-    const q_algo = document.getElementById("q_algo");
-    q_algo.value =
-        "OPENQASM 2.0;\n" +
-        "include \"qelib1.inc\";\n" +
-        "\n" +
-        "qreg q[2];\n" +
-        "creg c[2];\n" +
+    q_algo.val(
+        "OPENQASM 2.0;" +
+        "include \"qelib1.inc\";" +
+        "" +
+        "qreg q[2];" +
+        "creg c[2];" +
         "\n" +
         "x q[1];\n" +
         "h q[0];\n" +
         "h q[1];\n" +
         "cx q[0],q[1];\n" +
         "h q[0];\n"
-    ;
+    );
 
     loadAlgorithm(QASM_FORMAT);
 }
 
 function loadAlu() {
-    const q_algo = document.getElementById("q_algo");
-    q_algo.value =
+    q_algo.val(
         "OPENQASM 2.0;\n" +
         "include \"qelib1.inc\";\n" +
         "qreg q[5];\n" +
@@ -219,7 +216,7 @@ function loadAlu() {
         "cx q[3],q[0];\n" +
         "h q[2];\n" +
         "x q[2];\n"
-    ;
+    );
 
     loadAlgorithm(QASM_FORMAT);
 }
@@ -307,6 +304,7 @@ function dropHandler(event) {
     }
 }
 
+let algoFormat = FORMAT_UNKNOWN;
 let numOfOperations = 0;    //number of operations the whole algorithm has
 function loadAlgorithm(format = FORMAT_UNKNOWN) {
     //$(() => {
@@ -326,6 +324,7 @@ function loadAlgorithm(format = FORMAT_UNKNOWN) {
         if(algo) {
             const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format });
             call.done((res) => {
+                algoFormat = format;
                 preformatAlgorithm();
 
                 oldInput = algo;
@@ -335,7 +334,9 @@ function loadAlgorithm(format = FORMAT_UNKNOWN) {
 
                 numOfOperations = res.msg;  //number of operations the algorithm has
                 const digits = _numOfDigits(numOfOperations);
-                q_algo.css('padding-left', paddingLeftOffset + paddingLeftPerDigit * digits);
+                const val = paddingLeftOffset + paddingLeftPerDigit * digits;
+                q_algo.css('margin-left', val);
+                q_algo.css('width', 290 - val);
 
                 setLineNumbers();
 
@@ -529,22 +530,29 @@ function updateHighlighting() {
     highlighting.html(highlightedText);
 }
 
-/**Checks if the given QASM-line is an operation
+/**Checks if the given QASM- or Real-line is an operation
  *
  * @param text
  */
 function isOperation(text) {
     if(text) {
-        //todo adapt to .real-Files
+        if(algoFormat === QASM_FORMAT) {
+            if( text.trim() === "" ||
+                text.includes("OPENQASM") ||
+                text.includes("include") ||
+                text.includes("reg"))
+                return false;
 
-        if( text.trim() === "" ||
-            text.includes("OPENQASM") ||
-            text.includes("include") ||
-            text.includes("reg"))
+            return true;
+
+        } else if(algoFormat === REAL_FORMAT) {
+            return !text.startsWith(".");   //all non-operation lines start with "."
+
+        } else {
+            //showError("Format not recognized. Please try again.");  //todo change message?
+            console.log("Format not recognized");
             return false;
-
-        return true;
-
+        }
     } else return false;
 }
 
@@ -655,8 +663,9 @@ function handleScroll() {
     $('#backdrop').scrollTop(scrollTop);
     $('#line_numbers').scrollTop(scrollTop);
 
-    //var scrollLeft = algo.scrollLeft();
-    //$backdrop.scrollLeft(scrollLeft);
+    //const scrollLeft = q_algo.scrollLeft();
+    //console.log(scrollLeft);
+    //$('#backdrop').scrollLeft(scrollLeft);
 }
 
 let oldInput;   //needed to reset input if an illegal change was made
