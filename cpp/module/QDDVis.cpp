@@ -86,7 +86,7 @@ void QDDVis::reset() {
 void QDDVis::exportDD(const std::string& ipaddr) {
     std::string file = "data/" + ipaddr + ".dot";
     std::cout << file << std::endl;
-    dd->export2Dot(sim, file.c_str(), true);
+    dd->export2Dot(sim, file.c_str(), true, false);
 }
 
 void QDDVis::stepForward() {
@@ -94,21 +94,16 @@ void QDDVis::stepForward() {
 
     const dd::Edge currDD = (*iterator)->getDD(dd, line);    //retrieve the "new" current operation
 
-    std::cout << "got currDD ";
-
     auto temp = dd->multiply(currDD, sim);         //process the current operation by multiplying it with the previous simulation-state
     dd->incRef(temp);
     dd->decRef(sim);
     sim = temp;
     dd->garbageCollect();
 
-    std::cout << "and multiplied it ";
-
     iterator++; // advance iterator
     if (iterator == qc->end()) {    //qc->end() is after the last operation in the iterator
         atEnd = true;
     }
-    std::cout << "- stepForward() success" << std::endl;
 }
 
 void QDDVis::stepBack() {
@@ -235,17 +230,13 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     atEnd = false;
     iterator = qc->begin();
 
-    std::cout << "[Load] Operations left: " << operationsLeft() << std::endl;   //#debug
-
     //the third parameter (how many operations to apply immediately)
     const unsigned int opNum = (unsigned int)info[2].As<Napi::Number>();
     if(opNum > 0) {
-        std::cout << "reached opNum code" << std::endl;
         //todo check if iterator has elements? because if not we will get a segmentation fault because iterator++ points to memory of something else
         atInitial = false;
         const bool process = (bool)info[3].As<Napi::Boolean>(); //the fourth parameter tells us to process iterated operations or not
         if(process) {
-            std::cout << "processing operations up to " << opNum << std::endl;
             //todo dereference old sim?
             sim = dd->makeZeroState(qc->getNqubits());
             dd->incRef(sim);
@@ -253,7 +244,6 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
                 stepForward();
             }
         } else {
-            std::cout << "advancing iterator up to " << opNum << std::endl;
             for(unsigned int i = 0; i < opNum; i++) iterator++; //just advance the iterator so it points to the operations where we stopped before the edit
         }
         //iterator--;     //todo why iterator--???
@@ -262,6 +252,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         //todo dereference old sim?
         sim = dd->makeZeroState(qc->getNqubits());
         dd->incRef(sim);
+        exportDD(this->ip);
     }
 
     //exportDD(this->ip);
@@ -292,7 +283,6 @@ Napi::Value QDDVis::ToStart(const Napi::CallbackInfo& info) {
 
             exportDD(this->ip);
 
-            std::cout << "[ToStart] Operations left: " << operationsLeft() << std::endl;    //#debug
             return Napi::Boolean::New(env, true);   //something changed
 
         } catch(std::exception& e) {
@@ -323,7 +313,6 @@ Napi::Value QDDVis::Prev(const Napi::CallbackInfo& info) {
         stepBack();     //go back to the start before the last processed operation
         exportDD(this->ip);
 
-        std::cout << "[Prev] Operations left: " << operationsLeft() << std::endl;    //#debug
         return Napi::Boolean::New(env, true);   //something changed
 
     } catch(std::exception& e) {
@@ -353,7 +342,6 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
         stepForward();          //process the next operation
         exportDD(this->ip);
 
-        std::cout << "[Next] Operations left: " << operationsLeft() << std::endl;    //#debug
         return Napi::Boolean::New(env, true);   //something changed
 
     } catch(std::exception& e) {
@@ -383,7 +371,6 @@ Napi::Value QDDVis::ToEnd(const Napi::CallbackInfo& info) {
 
             exportDD(this->ip);
 
-            std::cout << "[ToEnd] Operations left: " << operationsLeft() << std::endl;    //#debug
             return Napi::Boolean::New(env, true);   //something changed
 
         } catch(std::exception& e) {

@@ -109,9 +109,9 @@ router.get('/toend', (req, res) => {
 module.exports = router;
 
 function sendFile(res, ip, msg = "") {
-    fs.readFile("data/" + ip + ".dot.svg", "utf8", (error, file) => {
-        if(error) res.send({ msg: msg + " failed with " + error.message, ip: ip, svg: null });
-        else res.send({ msg: msg, ip: ip, svg: file });
+    fs.readFile("data/" + ip + ".dot", "utf8", (error, file) => {
+        if(error) res.send({ msg: msg + " failed with " + error.message, svg: null });
+        else res.send({ msg: msg, svg: file });
     });
 }
 

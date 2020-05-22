@@ -110,11 +110,11 @@ const REAL_FORMAT = 2;
 
 function loadDeutsch() {
     q_algo.val(
-        "OPENQASM 2.0;" +
-        "include \"qelib1.inc\";" +
-        "" +
-        "qreg q[2];" +
-        "creg c[2];" +
+        "OPENQASM 2.0;\n" +
+        "include \"qelib1.inc\";\n" +
+        "\n" +
+        "qreg q[2];\n" +
+        "creg c[2];\n" +
         "\n" +
         "x q[1];\n" +
         "h q[0];\n" +
@@ -741,10 +741,11 @@ function updateStepDuration() {
 }
 
 function print(svg) {
-    const div = document.getElementById('svg_div');
-    const start = svg.indexOf('<svg');
-
-    div.innerHTML = svg.substring(start);
+    const graph = d3.select("#qdd_div").graphviz({
+        width: "100%",     //stating this in % logs an error on the console, but it seems to work nonetheless (and 50% results in have the size of 100%)
+        height: "100%",
+        fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
+    }).renderDot(svg);
 }
 
 function test() {

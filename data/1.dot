@@ -3,21 +3,63 @@ graph [center=true, ordering=out];
 node [shape=circle, center=true];
 "T" [ shape = box, label="1" ];
 "R" [label="", shape=point];
-"0" [ label="q4" ,style=filled, fillcolor=lightgray ];
+"0" [ label="q18" ,style=filled, fillcolor=lightgray ];
 "0h0"  [label="", shape=point];
 "0h2"  [label="", shape=point , fillcolor=red, color=red];
-"1" [ label="q3" ,style=filled, fillcolor=lightgray ];
+"1" [ label="q17" ,style=filled, fillcolor=lightgray ];
 "1h0"  [label="", shape=point];
 "1h2"  [label="", shape=point , fillcolor=red, color=red];
-"2" [ label="q2" ,style=filled, fillcolor=lightgray ];
+"2" [ label="q16" ,style=filled, fillcolor=lightgray ];
 "2h0"  [label="", shape=point];
 "2h2"  [label="", shape=point , fillcolor=red, color=red];
-"3" [ label="q1" ,style=filled, fillcolor=lightgray ];
+"3" [ label="q15" ,style=filled, fillcolor=lightgray ];
 "3h0"  [label="", shape=point];
 "3h2"  [label="", shape=point , fillcolor=red, color=red];
-"4" [ label="q0" ,style=filled, fillcolor=lightgray ];
-"4h0"  [label="", shape=point ];
+"4" [ label="q14" ,style=filled, fillcolor=lightgray ];
+"4h0"  [label="", shape=point];
 "4h2"  [label="", shape=point , fillcolor=red, color=red];
+"5" [ label="q13" ,style=filled, fillcolor=lightgray ];
+"5h0"  [label="", shape=point];
+"5h2"  [label="", shape=point , fillcolor=red, color=red];
+"6" [ label="q12" ,style=filled, fillcolor=lightgray ];
+"6h0"  [label="", shape=point];
+"6h2"  [label="", shape=point , fillcolor=red, color=red];
+"7" [ label="q11" ,style=filled, fillcolor=lightgray ];
+"7h0"  [label="", shape=point];
+"7h2"  [label="", shape=point , fillcolor=red, color=red];
+"8" [ label="q10" ,style=filled, fillcolor=lightgray ];
+"8h0"  [label="", shape=point];
+"8h2"  [label="", shape=point , fillcolor=red, color=red];
+"9" [ label="q9" ,style=filled, fillcolor=lightgray ];
+"9h0"  [label="", shape=point];
+"9h2"  [label="", shape=point , fillcolor=red, color=red];
+"10" [ label="q8" ,style=filled, fillcolor=lightgray ];
+"10h0"  [label="", shape=point];
+"10h2"  [label="", shape=point , fillcolor=red, color=red];
+"11" [ label="q7" ,style=filled, fillcolor=lightgray ];
+"11h0"  [label="", shape=point];
+"11h2"  [label="", shape=point , fillcolor=red, color=red];
+"12" [ label="q6" ,style=filled, fillcolor=lightgray ];
+"12h0"  [label="", shape=point];
+"12h2"  [label="", shape=point , fillcolor=red, color=red];
+"13" [ label="q5" ,style=filled, fillcolor=lightgray ];
+"13h0"  [label="", shape=point];
+"13h2"  [label="", shape=point , fillcolor=red, color=red];
+"14" [ label="q4" ,style=filled, fillcolor=lightgray ];
+"14h0"  [label="", shape=point];
+"14h2"  [label="", shape=point , fillcolor=red, color=red];
+"15" [ label="q3" ,style=filled, fillcolor=lightgray ];
+"15h0"  [label="", shape=point];
+"15h2"  [label="", shape=point , fillcolor=red, color=red];
+"16" [ label="q2" ,style=filled, fillcolor=lightgray ];
+"16h0"  [label="", shape=point];
+"16h2"  [label="", shape=point , fillcolor=red, color=red];
+"17" [ label="q1" ,style=filled, fillcolor=lightgray ];
+"17h0"  [label="", shape=point];
+"17h2"  [label="", shape=point , fillcolor=red, color=red];
+"18" [ label="q0" ,style=filled, fillcolor=lightgray ];
+"18h0"  [label="", shape=point ];
+"18h2"  [label="", shape=point , fillcolor=red, color=red];
 
 "R" -> "0"
 {rank=same; "0h0" "0h2"}
@@ -38,7 +80,63 @@ node [shape=circle, center=true];
 "3" -> "3h2" [arrowhead=none,color=red];
 {rank=same; "4h0" "4h2"}
 "4" -> "4h0" [arrowhead=none,color=darkgreen];
-"4h0"-> "T";
+"4h0" -> "5";
 "4" -> "4h2" [arrowhead=none,color=red];
+{rank=same; "5h0" "5h2"}
+"5" -> "5h0" [arrowhead=none,color=darkgreen];
+"5h0" -> "6";
+"5" -> "5h2" [arrowhead=none,color=red];
+{rank=same; "6h0" "6h2"}
+"6" -> "6h0" [arrowhead=none,color=darkgreen];
+"6h0" -> "7";
+"6" -> "6h2" [arrowhead=none,color=red];
+{rank=same; "7h0" "7h2"}
+"7" -> "7h0" [arrowhead=none,color=darkgreen];
+"7h0" -> "8";
+"7" -> "7h2" [arrowhead=none,color=red];
+{rank=same; "8h0" "8h2"}
+"8" -> "8h0" [arrowhead=none,color=darkgreen];
+"8h0" -> "9";
+"8" -> "8h2" [arrowhead=none,color=red];
+{rank=same; "9h0" "9h2"}
+"9" -> "9h0" [arrowhead=none,color=darkgreen];
+"9h0" -> "10";
+"9" -> "9h2" [arrowhead=none,color=red];
+{rank=same; "10h0" "10h2"}
+"10" -> "10h0" [arrowhead=none,color=darkgreen];
+"10h0" -> "11";
+"10" -> "10h2" [arrowhead=none,color=red];
+{rank=same; "11h0" "11h2"}
+"11" -> "11h0" [arrowhead=none,color=darkgreen];
+"11h0" -> "12";
+"11" -> "11h2" [arrowhead=none,color=red];
+{rank=same; "12h0" "12h2"}
+"12" -> "12h0" [arrowhead=none,color=darkgreen];
+"12h0" -> "13";
+"12" -> "12h2" [arrowhead=none,color=red];
+{rank=same; "13h0" "13h2"}
+"13" -> "13h0" [arrowhead=none,color=darkgreen];
+"13h0" -> "14";
+"13" -> "13h2" [arrowhead=none,color=red];
+{rank=same; "14h0" "14h2"}
+"14" -> "14h0" [arrowhead=none,color=darkgreen];
+"14h0" -> "15";
+"14" -> "14h2" [arrowhead=none,color=red];
+{rank=same; "15h0" "15h2"}
+"15" -> "15h0" [arrowhead=none,color=darkgreen];
+"15h0" -> "16";
+"15" -> "15h2" [arrowhead=none,color=red];
+{rank=same; "16h0" "16h2"}
+"16" -> "16h0" [arrowhead=none,color=darkgreen];
+"16h0" -> "17";
+"16" -> "16h2" [arrowhead=none,color=red];
+{rank=same; "17h0" "17h2"}
+"17" -> "17h0" [arrowhead=none,color=darkgreen];
+"17h0" -> "18";
+"17" -> "17h2" [arrowhead=none,color=red];
+{rank=same; "18h0" "18h2"}
+"18" -> "18h0" [arrowhead=none,color=darkgreen];
+"18h0"-> "T";
+"18" -> "18h2" [arrowhead=none,color=red];
 
 }
