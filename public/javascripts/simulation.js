@@ -108,6 +108,38 @@ const FORMAT_UNKNOWN = 0;
 const QASM_FORMAT = 1;
 const REAL_FORMAT = 2;
 
+/**Load empty QASM-Format
+ *
+ */
+function loadQASM() {
+    q_algo.val(
+        "OPENQASM 2.0;\n" +
+        "include \"qelib1.inc\";\n" +
+        "\n" +
+        "qreg q[];\n" +
+        "creg c[];\n" +
+        "\n"
+    );
+    algoFormat = QASM_FORMAT;
+}
+
+/**Load empty Real-Format
+ *
+ */
+function loadReal() {
+    q_algo.val(
+        ".version 2.0\n" +
+        ".numvars \n" +
+        ".variables \n" +
+        ".inputs \n" +
+        ".outputs \n" +
+        ".constants \n" +
+        ".garbage \n" +
+        ".begin \n"
+    );
+    algoFormat = REAL_FORMAT;
+}
+
 function loadDeutsch() {
     q_algo.val(
         "OPENQASM 2.0;\n" +
