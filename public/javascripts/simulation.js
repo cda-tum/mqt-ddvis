@@ -1,7 +1,10 @@
 //################### J-QUERY ELEMENTS ###############################################################################################################
 
 const automatic = $('#automatic');
+const drop_zone = $('#drop_zone');
+const backdrop = $('#backdrop');
 const q_algo = $('#q_algo');
+const algo_div = $('#algo_div');
 //todo also initialize all other selectors once?
 
 
@@ -97,6 +100,15 @@ for (let i = 0; i < acc.length; i++) {
         else panel.style.display = "block";
     });
 }
+
+
+window.addEventListener('resize', (event) => {
+    console.log(screen.availHeight);
+    //backdrop.css('width', drop_zone.css('width')) - 2 * parseInt(drop_zone.css('border'));
+    //console.log(backdrop.css('width'));
+});
+
+
 
 changeState(STATE_NOTHING_LOADED);      //initial state
 
@@ -375,9 +387,11 @@ function loadAlgorithm(format = algoFormat, reset = false) {
 
                 numOfOperations = res.msg;  //number of operations the algorithm has
                 const digits = _numOfDigits(numOfOperations);
-                const val = paddingLeftOffset + paddingLeftPerDigit * digits;
-                q_algo.css('margin-left', val);
-                q_algo.css('width', 290 - val);
+                const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
+                q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
+
+                const width = parseInt(drop_zone.css('width')) - margin - 2 * parseInt(drop_zone.css('border'));
+                q_algo.css('width', width);
 
                 setLineNumbers();
 
@@ -683,7 +697,7 @@ function setLineNumbers() {
             const numDigits = _numOfDigits(num);
 
             let space = "";
-            for(let j = 0; j < digits - numDigits; j++) space += "_";   //todo space seems to be skipped visually
+            for(let j = 0; j < digits - numDigits; j++) space += "  ";
             lines[i] = space + num.toString();
         }
     }
@@ -774,7 +788,7 @@ function updateStepDuration() {
 
 function print(svg) {
     const graph = d3.select("#qdd_div").graphviz({
-        width: "100%",     //stating this in % logs an error on the console, but it seems to work nonetheless (and 50% results in have the size of 100%)
+        width: "70%",     //make it smaller so we have space around where we can scroll through the page - also the graphs are more high than wide so is shouldn't be a problem
         height: "100%",
         fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
     }).renderDot(svg);
