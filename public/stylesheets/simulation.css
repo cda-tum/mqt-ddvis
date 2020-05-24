@@ -86,9 +86,9 @@
 }
 
 #backdrop, #line_numbers {
-    width: 100%;
 }
 #backdrop, #q_algo, #line_numbers {
+    width: 100%;
     height: 100%;
 }
 

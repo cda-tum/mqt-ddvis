@@ -363,10 +363,8 @@ function loadAlgorithm(format = algoFormat, reset = false) {
         //console.log("Basis states: " + basis_states);
         const algo = q_algo.val();
         const opNum = reset ?
-            $('#startLine').val() :
+            parseInt($('#startLine').val()) :
             highlightedLines;   //we want to continue simulating after the last processed line, which is after the highlighted ones
-        //highlightedLines = opNum;
-        //updateHighlighting();
 
         if(format === FORMAT_UNKNOWN) {
             //find out of which format the input text is
@@ -382,8 +380,11 @@ function loadAlgorithm(format = algoFormat, reset = false) {
 
                 oldInput = algo;
 
-                if(reset) resetHighlighting();
-                updateHighlighting();   //todo does this need to be called when we didn't reset?
+                if(reset) {
+                    resetHighlighting();
+                    highlightedLines = opNum;
+                    updateHighlighting();   //todo does this need to be called when we didn't reset?
+                }
 
                 numOfOperations = res.msg;  //number of operations the algorithm has
                 const digits = _numOfDigits(numOfOperations);
@@ -397,7 +398,12 @@ function loadAlgorithm(format = algoFormat, reset = false) {
 
                 print(res.svg);
 
-                changeState(STATE_LOADED_START);
+                //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
+                if(opNum > numOfOperations) $('#startLine').val(numOfOperations);
+
+                if(opNum === 0) changeState(STATE_LOADED_START);
+                else if(opNum === numOfOperations) changeState(STATE_LOADED_END);
+                else changeState(STATE_LOADED);
             });
             call.fail((res) => {
                 showResponseError(res, "Couldn't connect to the server.");
