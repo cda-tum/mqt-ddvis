@@ -19,6 +19,8 @@ et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata san
 <!--   Accordion     -->
 <button class="accordion" >Example Algorithms</button>
 <div class="panel">
+    <button id="ex_qasm" class="example-algo" onclick="loadQASM()">Empty QASM</button>
+    <button id="ex_real" class="example-algo" onclick="loadReal()">Empty Real</button>
     <button id="ex_deutsch" class="example-algo" onclick="loadDeutsch()">Deutsch</button>
     <button id="ex_alu" class="example-algo" onclick="loadAlu()">Alu</button>
 </div>
@@ -50,29 +52,28 @@ et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata san
         </div>
         <textarea id="q_algo" type="text" onfocusout="loadAlgorithm()" placeholder="Enter Algorithm or drop .qasm-File here."></textarea>
     </div>
-    <p></p>
 
-    <!-- <button type="button" id="load" class="btn btn-primary">Load</button> -->
-    <button type="button" id="toStart">&#8606</button>
-    <button type="button" id="prev">&#8592</button>
-    <button type="button" id="automatic">&#9654</button>
-    <button type="button" id="next">&#8594</button>
-    <button type="button" id="toEnd">&#8608</button>
+    <div id="nav_div">
+        <!-- <button type="button" id="load" class="btn btn-primary">Load</button> -->
+        <button type="button" id="toStart">&#8606</button>
+        <button type="button" id="prev">&#8592</button>
+        <button type="button" id="automatic">&#9654</button>
+        <button type="button" id="next">&#8594</button>
+        <button type="button" id="toEnd">&#8608</button>
 
-<!--
-    <p></p>
-    <button type="button" id="stop">O</button>
--->
+        <!--
+            <p></p>
+            <button type="button" id="stop">O</button>
+        -->
 
-    <p></p>
-    <label for="startLine">Start at line </label>
-    <input type="number" min="0" id="startLine" value="0"/>
+        <p></p>
+        <label for="startLine">Start at line </label>
+        <input type="number" min="0" id="startLine" value="0"/>
+
+    </div>
 
 </div>
 
 <div id="qdd_div">
-    <h3>Quantum Decision Diagram</h3>
-    <div id="svg_div">
-        <p>Here will be the Quantum Decision Diagram</p>
-    </div>
+    <h3 id="qdd_text">Quantum Decision Diagram</h3>
 </div>

@@ -1,7 +1,11 @@
 //################### J-QUERY ELEMENTS ###############################################################################################################
 
 const automatic = $('#automatic');
+const drop_zone = $('#drop_zone');
+const backdrop = $('#backdrop');
 const q_algo = $('#q_algo');
+const algo_div = $('#algo_div');
+const qddText = $('#qdd_text');
 //todo also initialize all other selectors once?
 
 
@@ -98,6 +102,17 @@ for (let i = 0; i < acc.length; i++) {
     });
 }
 
+window.addEventListener('resize', (event) => {
+    console.log(screen.availHeight);
+    //backdrop.css('width', drop_zone.css('width')) - 2 * parseInt(drop_zone.css('border'));
+    //console.log(backdrop.css('width'));
+
+    const width = parseInt(drop_zone.css('width')) - q_algo.css('margin-left') - 2 * parseInt(drop_zone.css('border'));
+    q_algo.css('width', width);
+});
+
+
+
 changeState(STATE_NOTHING_LOADED);      //initial state
 
 
@@ -108,10 +123,40 @@ const FORMAT_UNKNOWN = 0;
 const QASM_FORMAT = 1;
 const REAL_FORMAT = 2;
 
-//let currFormat;
+/**Load empty QASM-Format
+ *
+ */
+function loadQASM() {
+    q_algo.val(
+        "OPENQASM 2.0;\n" +
+        "include \"qelib1.inc\";\n" +
+        "\n" +
+        "qreg q[];\n" +
+        "creg c[];\n" +
+        "\n"
+    );
+    algoFormat = QASM_FORMAT;
+}
+
+/**Load empty Real-Format
+ *
+ */
+function loadReal() {
+    q_algo.val(
+        ".version 2.0\n" +
+        ".numvars \n" +
+        ".variables \n" +
+        ".inputs \n" +
+        ".outputs \n" +
+        ".constants \n" +
+        ".garbage \n" +
+        ".begin \n"
+    );
+    algoFormat = REAL_FORMAT;
+}
+
 function loadDeutsch() {
-    const q_algo = document.getElementById("q_algo");
-    q_algo.value =
+    q_algo.val(
         "OPENQASM 2.0;\n" +
         "include \"qelib1.inc\";\n" +
         "\n" +
@@ -123,14 +168,13 @@ function loadDeutsch() {
         "h q[1];\n" +
         "cx q[0],q[1];\n" +
         "h q[0];\n"
-    ;
+    );
 
-    loadAlgorithm(QASM_FORMAT);
+    loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
 
 function loadAlu() {
-    const q_algo = document.getElementById("q_algo");
-    q_algo.value =
+    q_algo.val(
         "OPENQASM 2.0;\n" +
         "include \"qelib1.inc\";\n" +
         "qreg q[5];\n" +
@@ -219,9 +263,9 @@ function loadAlu() {
         "cx q[3],q[0];\n" +
         "h q[2];\n" +
         "x q[2];\n"
-    ;
+    );
 
-    loadAlgorithm(QASM_FORMAT);
+    loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
 
 //let basisStates = null;
@@ -300,48 +344,69 @@ function dropHandler(event) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 q_algo.val(e.target.result);
-                loadAlgorithm(format);
+                loadAlgorithm(format, true);    //since a completely new algorithm has been uploaded we have to throw away the old simulation data
             };
             reader.readAsBinaryString(file);
         }
     }
 }
 
+let algoFormat = FORMAT_UNKNOWN;
 let numOfOperations = 0;    //number of operations the whole algorithm has
-function loadAlgorithm(format = FORMAT_UNKNOWN) {
+/**Loads the algorithm placed inside the textArea #q_algo
+ *
+ * @param format the format in which the algorithm is written; the only occasion where this parameter is not set
+ *        is when leaving the textArea after editing, but in this case the format didn't change so the old algoFormat is used
+ * @param reset whether a new simulation needs to be started after loading; default false because again the only occasion
+ *        it is not set is after editing, but there we especially don't want to reset
+ */
+function loadAlgorithm(format = algoFormat, reset = false) {
     //$(() => {
         //const basis_states = $('#basis_states').val();
         //console.log("Basis states: " + basis_states);
         const algo = q_algo.val();
-        const opNum = $('#startLine').val();
-        //highlightedLines = opNum;
-        //updateHighlighting();
+        const opNum = reset ?
+            parseInt($('#startLine').val()) :
+            highlightedLines;   //we want to continue simulating after the last processed line, which is after the highlighted ones
 
         if(format === FORMAT_UNKNOWN) {
             //find out of which format the input text is
             if(algo.startsWith("OPENQASM")) format = QASM_FORMAT;
-            else format = REAL_FORMAT;      //right now only these two formats are supported, so if it is no QASM, it must be Real
+            else format = REAL_FORMAT;      //right now only these two formats are supported, so if it is not QASM, it must be Real
         }
 
         if(algo) {
-            const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format });
+            const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
             call.done((res) => {
+                algoFormat = format;
                 preformatAlgorithm();
 
                 oldInput = algo;
 
-                resetHighlighting();
-                updateHighlighting();
+                if(reset) {
+                    resetHighlighting();
+                    highlightedLines = opNum;
+                    updateHighlighting();   //todo does this need to be called when we didn't reset?
+                }
 
                 numOfOperations = res.msg;  //number of operations the algorithm has
                 const digits = _numOfDigits(numOfOperations);
-                q_algo.css('padding-left', paddingLeftOffset + paddingLeftPerDigit * digits);
+                const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
+                q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
+
+                const width = parseInt(drop_zone.css('width')) - margin - 2 * parseInt(drop_zone.css('border'));
+                q_algo.css('width', width);
 
                 setLineNumbers();
 
                 print(res.svg);
 
-                changeState(STATE_LOADED_START);
+                //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
+                if(opNum > numOfOperations) $('#startLine').val(numOfOperations);
+
+                if(opNum === 0) changeState(STATE_LOADED_START);
+                else if(opNum === numOfOperations) changeState(STATE_LOADED_END);
+                else changeState(STATE_LOADED);
             });
             call.fail((res) => {
                 showResponseError(res, "Couldn't connect to the server.");
@@ -529,22 +594,29 @@ function updateHighlighting() {
     highlighting.html(highlightedText);
 }
 
-/**Checks if the given QASM-line is an operation
+/**Checks if the given QASM- or Real-line is an operation
  *
  * @param text
  */
 function isOperation(text) {
     if(text) {
-        //todo adapt to .real-Files
+        if(algoFormat === QASM_FORMAT) {
+            if( text.trim() === "" ||
+                text.includes("OPENQASM") ||
+                text.includes("include") ||
+                text.includes("reg"))
+                return false;
 
-        if( text.trim() === "" ||
-            text.includes("OPENQASM") ||
-            text.includes("include") ||
-            text.includes("reg"))
+            return true;
+
+        } else if(algoFormat === REAL_FORMAT) {
+            return !text.startsWith(".");   //all non-operation lines start with "."
+
+        } else {
+            //showError("Format not recognized. Please try again.");  //todo change message?
+            console.log("Format not recognized");
             return false;
-
-        return true;
-
+        }
     } else return false;
 }
 
@@ -634,7 +706,7 @@ function setLineNumbers() {
             const numDigits = _numOfDigits(num);
 
             let space = "";
-            for(let j = 0; j < digits - numDigits; j++) space += "_";   //todo space seems to be skipped visually
+            for(let j = 0; j < digits - numDigits; j++) space += "  ";
             lines[i] = space + num.toString();
         }
     }
@@ -655,8 +727,9 @@ function handleScroll() {
     $('#backdrop').scrollTop(scrollTop);
     $('#line_numbers').scrollTop(scrollTop);
 
-    //var scrollLeft = algo.scrollLeft();
-    //$backdrop.scrollLeft(scrollLeft);
+    //const scrollLeft = q_algo.scrollLeft();
+    //console.log(scrollLeft);
+    //$('#backdrop').scrollLeft(scrollLeft);
 }
 
 let oldInput;   //needed to reset input if an illegal change was made
@@ -722,205 +795,18 @@ function updateStepDuration() {
     }
 }
 
+let svgHeight = 0;  //can't be initialized beforehand
 function print(svg) {
-    const div = document.getElementById('svg_div');
-    const start = svg.indexOf('<svg');
+    if(svgHeight === 0) {
+        //subtract the whole height of the qdd-text from the height of qdd-div to get the space that is available for the graph
+        svgHeight = parseInt($('#qdd_div').css('height')) - (
+            parseInt(parseInt(qddText.css('height'))) + parseInt(qddText.css('margin-top')) + parseInt(qddText.css('margin-bottom'))    //height of the qdd-text
+        );
+    }
 
-    div.innerHTML = svg.substring(start);
-}
-
-function test() {
-    const svg_content =
-        //"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
-        //"<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"\n" +
-        //" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n" +
-        //"<!-- Generated by graphviz version 2.40.1 (20161225.0304)\n" +
-        //" -->\n" +
-        //"<!-- Title: DD Pages: 1 -->\n" +
-        "<svg\n" +
-        " viewBox=\"0.00 0.00 109.50 656.58\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n" +
-        "<g id=\"graph0\" class=\"graph\" transform=\"scale(1 1) rotate(0) translate(4 652.5827)\">\n" +
-        "<title>DD</title>\n" +
-        "<polygon fill=\"#ffffff\" stroke=\"transparent\" points=\"-4,4 -4,-652.5827 105.4983,-652.5827 105.4983,4 -4,4\"/>\n" +
-        "<!-- T -->\n" +
-        "<g id=\"node1\" class=\"node\">\n" +
-        "<title>T</title>\n" +
-        "<polygon fill=\"none\" stroke=\"#000000\" points=\"54,-36 0,-36 0,0 54,0 54,-36\"/>\n" +
-        "<text text-anchor=\"middle\" x=\"27\" y=\"-14.3\" font-family=\"Times,serif\" font-size=\"14.00\" fill=\"#000000\">1</text>\n" +
-        "</g>\n" +
-        "<!-- R -->\n" +
-        "<g id=\"node2\" class=\"node\">\n" +
-        "<title>R</title>\n" +
-        "<ellipse fill=\"#000000\" stroke=\"#000000\" cx=\"82\" cy=\"-646.7827\" rx=\"1.8\" ry=\"1.8\"/>\n" +
-        "</g>\n" +
-        "<!-- 0 -->\n" +
-        "<g id=\"node3\" class=\"node\">\n" +
-        "<title>0</title>\n" +
-        "<ellipse fill=\"#d3d3d3\" stroke=\"#000000\" cx=\"82\" cy=\"-589.4844\" rx=\"19.4965\" ry=\"19.4965\"/>\n" +
-        "<text text-anchor=\"middle\" x=\"82\" y=\"-585.7844\" font-family=\"Times,serif\" font-size=\"14.00\" fill=\"#000000\">q4</text>\n" +
-        "</g>\n" +
-        "<!-- R&#45;&gt;0 -->\n" +
-        "<g id=\"edge1\" class=\"edge\">\n" +
-        "<title>R&#45;&gt;0</title>\n" +
-        "<path fill=\"none\" stroke=\"#000000\" d=\"M82,-644.8763C82,-640.6677 82,-630.0965 82,-619.3035\"/>\n" +
-        "<polygon fill=\"#000000\" stroke=\"#000000\" points=\"85.5001,-619.088 82,-609.088 78.5001,-619.0881 85.5001,-619.088\"/>\n" +
-        "</g>\n" +
-        "<!-- 0h0 -->\n" +
-        "<g id=\"node4\" class=\"node\">\n" +
-        "<title>0h0</title>\n" +
-        "<ellipse fill=\"#000000\" stroke=\"#000000\" cx=\"71\" cy=\"-532.1862\" rx=\"1.8\" ry=\"1.8\"/>\n" +
-        "</g>\n" +
-        "<!-- 0&#45;&gt;0h0 -->\n" +
-        "<g id=\"edge2\" class=\"edge\">\n" +
-        "<title>0&#45;&gt;0h0</title>\n" +
-        "<path fill=\"none\" stroke=\"#006400\" d=\"M78.2759,-570.0858C75.6831,-556.5799 72.5004,-540.0014 71.398,-534.2593\"/>\n" +
-        "</g>\n" +
-        "<!-- 0h2 -->\n" +
-        "<g id=\"node5\" class=\"node\">\n" +
-        "<title>0h2</title>\n" +
-        "<ellipse fill=\"#ff0000\" stroke=\"#ff0000\" cx=\"93\" cy=\"-532.1862\" rx=\"1.8\" ry=\"1.8\"/>\n" +
-        "</g>\n" +
-        "<!-- 0&#45;&gt;0h2 -->\n" +
-        "<g id=\"edge4\" class=\"edge\">\n" +
-        "<title>0&#45;&gt;0h2</title>\n" +
-        "<path fill=\"none\" stroke=\"#ff0000\" d=\"M85.7241,-570.0858C88.3169,-556.5799 91.4996,-540.0014 92.602,-534.2593\"/>\n" +
-        "</g>\n" +
-        "<!-- 1 -->\n" +
-        "<g id=\"node6\" class=\"node\">\n" +
-        "<title>1</title>\n" +
-        "<ellipse fill=\"#d3d3d3\" stroke=\"#000000\" cx=\"71\" cy=\"-474.8879\" rx=\"19.4965\" ry=\"19.4965\"/>\n" +
-        "<text text-anchor=\"middle\" x=\"71\" y=\"-471.1879\" font-family=\"Times,serif\" font-size=\"14.00\" fill=\"#000000\">q3</text>\n" +
-        "</g>\n" +
-        "<!-- 0h0&#45;&gt;1 -->\n" +
-        "<g id=\"edge3\" class=\"edge\">\n" +
-        "<title>0h0&#45;&gt;1</title>\n" +
-        "<path fill=\"none\" stroke=\"#000000\" d=\"M71,-530.2797C71,-526.0711 71,-515.4999 71,-504.7069\"/>\n" +
-        "<polygon fill=\"#000000\" stroke=\"#000000\" points=\"74.5001,-504.4915 71,-494.4915 67.5001,-504.4915 74.5001,-504.4915\"/>\n" +
-        "</g>\n" +
-        "<!-- 1h0 -->\n" +
-        "<g id=\"node7\" class=\"node\">\n" +
-        "<title>1h0</title>\n" +
-        "<ellipse fill=\"#000000\" stroke=\"#000000\" cx=\"60\" cy=\"-417.5896\" rx=\"1.8\" ry=\"1.8\"/>\n" +
-        "</g>\n" +
-        "<!-- 1&#45;&gt;1h0 -->\n" +
-        "<g id=\"edge5\" class=\"edge\">\n" +
-        "<title>1&#45;&gt;1h0</title>\n" +
-        "<path fill=\"none\" stroke=\"#006400\" d=\"M67.2759,-455.4893C64.6831,-441.9834 61.5004,-425.4049 60.398,-419.6627\"/>\n" +
-        "</g>\n" +
-        "<!-- 1h2 -->\n" +
-        "<g id=\"node8\" class=\"node\">\n" +
-        "<title>1h2</title>\n" +
-        "<ellipse fill=\"#ff0000\" stroke=\"#ff0000\" cx=\"82\" cy=\"-417.5896\" rx=\"1.8\" ry=\"1.8\"/>\n" +
-        "</g>\n" +
-        "<!-- 1&#45;&gt;1h2 -->\n" +
-        "<g id=\"edge7\" class=\"edge\">\n" +
-        "<title>1&#45;&gt;1h2</title>\n" +
-        "<path fill=\"none\" stroke=\"#ff0000\" d=\"M74.7241,-455.4893C77.3169,-441.9834 80.4996,-425.4049 81.602,-419.6627\"/>\n" +
-        "</g>\n" +
-        "<!-- 2 -->\n" +
-        "<g id=\"node9\" class=\"node\">\n" +
-        "<title>2</title>\n" +
-        "<ellipse fill=\"#d3d3d3\" stroke=\"#000000\" cx=\"60\" cy=\"-360.2913\" rx=\"19.4965\" ry=\"19.4965\"/>\n" +
-        "<text text-anchor=\"middle\" x=\"60\" y=\"-356.5913\" font-family=\"Times,serif\" font-size=\"14.00\" fill=\"#000000\">q2</text>\n" +
-        "</g>\n" +
-        "<!-- 1h0&#45;&gt;2 -->\n" +
-        "<g id=\"edge6\" class=\"edge\">\n" +
-        "<title>1h0&#45;&gt;2</title>\n" +
-        "<path fill=\"none\" stroke=\"#000000\" d=\"M60,-415.6832C60,-411.4746 60,-400.9034 60,-390.1104\"/>\n" +
-        "<polygon fill=\"#000000\" stroke=\"#000000\" points=\"63.5001,-389.8949 60,-379.895 56.5001,-389.895 63.5001,-389.8949\"/>\n" +
-        "</g>\n" +
-        "<!-- 2h0 -->\n" +
-        "<g id=\"node10\" class=\"node\">\n" +
-        "<title>2h0</title>\n" +
-        "<ellipse fill=\"#000000\" stroke=\"#000000\" cx=\"49\" cy=\"-302.9931\" rx=\"1.8\" ry=\"1.8\"/>\n" +
-        "</g>\n" +
-        "<!-- 2&#45;&gt;2h0 -->\n" +
-        "<g id=\"edge8\" class=\"edge\">\n" +
-        "<title>2&#45;&gt;2h0</title>\n" +
-        "<path fill=\"none\" stroke=\"#006400\" d=\"M56.2759,-340.8928C53.6831,-327.3868 50.5004,-310.8083 49.398,-305.0662\"/>\n" +
-        "</g>\n" +
-        "<!-- 2h2 -->\n" +
-        "<g id=\"node11\" class=\"node\">\n" +
-        "<title>2h2</title>\n" +
-        "<ellipse fill=\"#ff0000\" stroke=\"#ff0000\" cx=\"71\" cy=\"-302.9931\" rx=\"1.8\" ry=\"1.8\"/>\n" +
-        "</g>\n" +
-        "<!-- 2&#45;&gt;2h2 -->\n" +
-        "<g id=\"edge10\" class=\"edge\">\n" +
-        "<title>2&#45;&gt;2h2</title>\n" +
-        "<path fill=\"none\" stroke=\"#ff0000\" d=\"M63.7241,-340.8928C66.3169,-327.3868 69.4996,-310.8083 70.602,-305.0662\"/>\n" +
-        "</g>\n" +
-        "<!-- 3 -->\n" +
-        "<g id=\"node12\" class=\"node\">\n" +
-        "<title>3</title>\n" +
-        "<ellipse fill=\"#d3d3d3\" stroke=\"#000000\" cx=\"49\" cy=\"-245.6948\" rx=\"19.4965\" ry=\"19.4965\"/>\n" +
-        "<text text-anchor=\"middle\" x=\"49\" y=\"-241.9948\" font-family=\"Times,serif\" font-size=\"14.00\" fill=\"#000000\">q1</text>\n" +
-        "</g>\n" +
-        "<!-- 2h0&#45;&gt;3 -->\n" +
-        "<g id=\"edge9\" class=\"edge\">\n" +
-        "<title>2h0&#45;&gt;3</title>\n" +
-        "<path fill=\"none\" stroke=\"#000000\" d=\"M49,-301.0867C49,-296.8781 49,-286.3068 49,-275.5138\"/>\n" +
-        "<polygon fill=\"#000000\" stroke=\"#000000\" points=\"52.5001,-275.2984 49,-265.2984 45.5001,-275.2984 52.5001,-275.2984\"/>\n" +
-        "</g>\n" +
-        "<!-- 3h0 -->\n" +
-        "<g id=\"node13\" class=\"node\">\n" +
-        "<title>3h0</title>\n" +
-        "<ellipse fill=\"#000000\" stroke=\"#000000\" cx=\"38\" cy=\"-188.3965\" rx=\"1.8\" ry=\"1.8\"/>\n" +
-        "</g>\n" +
-        "<!-- 3&#45;&gt;3h0 -->\n" +
-        "<g id=\"edge11\" class=\"edge\">\n" +
-        "<title>3&#45;&gt;3h0</title>\n" +
-        "<path fill=\"none\" stroke=\"#006400\" d=\"M45.2759,-226.2962C42.6831,-212.7903 39.5004,-196.2118 38.398,-190.4697\"/>\n" +
-        "</g>\n" +
-        "<!-- 3h2 -->\n" +
-        "<g id=\"node14\" class=\"node\">\n" +
-        "<title>3h2</title>\n" +
-        "<ellipse fill=\"#ff0000\" stroke=\"#ff0000\" cx=\"60\" cy=\"-188.3965\" rx=\"1.8\" ry=\"1.8\"/>\n" +
-        "</g>\n" +
-        "<!-- 3&#45;&gt;3h2 -->\n" +
-        "<g id=\"edge13\" class=\"edge\">\n" +
-        "<title>3&#45;&gt;3h2</title>\n" +
-        "<path fill=\"none\" stroke=\"#ff0000\" d=\"M52.7241,-226.2962C55.3169,-212.7903 58.4996,-196.2118 59.602,-190.4697\"/>\n" +
-        "</g>\n" +
-        "<!-- 4 -->\n" +
-        "<g id=\"node15\" class=\"node\">\n" +
-        "<title>4</title>\n" +
-        "<ellipse fill=\"#d3d3d3\" stroke=\"#000000\" cx=\"38\" cy=\"-131.0983\" rx=\"19.4965\" ry=\"19.4965\"/>\n" +
-        "<text text-anchor=\"middle\" x=\"38\" y=\"-127.3983\" font-family=\"Times,serif\" font-size=\"14.00\" fill=\"#000000\">q0</text>\n" +
-        "</g>\n" +
-        "<!-- 3h0&#45;&gt;4 -->\n" +
-        "<g id=\"edge12\" class=\"edge\">\n" +
-        "<title>3h0&#45;&gt;4</title>\n" +
-        "<path fill=\"none\" stroke=\"#000000\" d=\"M38,-186.4901C38,-182.2815 38,-171.7103 38,-160.9173\"/>\n" +
-        "<polygon fill=\"#000000\" stroke=\"#000000\" points=\"41.5001,-160.7018 38,-150.7019 34.5001,-160.7019 41.5001,-160.7018\"/>\n" +
-        "</g>\n" +
-        "<!-- 4h0 -->\n" +
-        "<g id=\"node16\" class=\"node\">\n" +
-        "<title>4h0</title>\n" +
-        "<ellipse fill=\"#000000\" stroke=\"#000000\" cx=\"27\" cy=\"-73.8\" rx=\"1.8\" ry=\"1.8\"/>\n" +
-        "</g>\n" +
-        "<!-- 4&#45;&gt;4h0 -->\n" +
-        "<g id=\"edge14\" class=\"edge\">\n" +
-        "<title>4&#45;&gt;4h0</title>\n" +
-        "<path fill=\"none\" stroke=\"#006400\" d=\"M34.2759,-111.6997C31.6831,-98.1938 28.5004,-81.6153 27.398,-75.8731\"/>\n" +
-        "</g>\n" +
-        "<!-- 4h2 -->\n" +
-        "<g id=\"node17\" class=\"node\">\n" +
-        "<title>4h2</title>\n" +
-        "<ellipse fill=\"#ff0000\" stroke=\"#ff0000\" cx=\"49\" cy=\"-73.8\" rx=\"1.8\" ry=\"1.8\"/>\n" +
-        "</g>\n" +
-        "<!-- 4&#45;&gt;4h2 -->\n" +
-        "<g id=\"edge16\" class=\"edge\">\n" +
-        "<title>4&#45;&gt;4h2</title>\n" +
-        "<path fill=\"none\" stroke=\"#ff0000\" d=\"M41.7241,-111.6997C44.3169,-98.1938 47.4996,-81.6153 48.602,-75.8731\"/>\n" +
-        "</g>\n" +
-        "<!-- 4h0&#45;&gt;T -->\n" +
-        "<g id=\"edge15\" class=\"edge\">\n" +
-        "<title>4h0&#45;&gt;T</title>\n" +
-        "<path fill=\"none\" stroke=\"#000000\" d=\"M27,-71.9434C27,-67.7589 27,-57.1154 27,-46.3776\"/>\n" +
-        "<polygon fill=\"#000000\" stroke=\"#000000\" points=\"30.5001,-46.2613 27,-36.2614 23.5001,-46.2614 30.5001,-46.2613\"/>\n" +
-        "</g>\n" +
-        "</g>\n" +
-        "</svg>\n";
-
-    return svg_content;
+    const graph = d3.select("#qdd_div").graphviz({
+        width: "70%",     //make it smaller so we have space around where we can scroll through the page - also the graphs are more high than wide so is shouldn't be a problem
+        height: svgHeight,
+        fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
+    }).renderDot(svg);
 }

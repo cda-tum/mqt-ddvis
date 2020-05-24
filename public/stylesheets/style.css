@@ -103,10 +103,10 @@ h4 {
 /* Style the tab content */
 .tabcontent {
     display: none;
-    padding: 6px 12px;
+    padding: 5px 10px 10px;
     /*border: 1px solid #ccc;*/
     border-top: none;
-    animation: fadeEffect 0.7s; /* Fading effect takes 1 second */
+    animation: fadeEffect 0.7s; /* Fading effect takes 0.7 second */
 }
 
 /* Go from zero to full opacity */
