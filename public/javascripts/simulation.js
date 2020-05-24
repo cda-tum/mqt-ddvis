@@ -106,6 +106,9 @@ window.addEventListener('resize', (event) => {
     console.log(screen.availHeight);
     //backdrop.css('width', drop_zone.css('width')) - 2 * parseInt(drop_zone.css('border'));
     //console.log(backdrop.css('width'));
+
+    const width = parseInt(drop_zone.css('width')) - q_algo.css('margin-left') - 2 * parseInt(drop_zone.css('border'));
+    q_algo.css('width', width);
 });
 
 
@@ -796,14 +799,14 @@ let svgHeight = 0;  //can't be initialized beforehand
 function print(svg) {
     if(svgHeight === 0) {
         //subtract the whole height of the qdd-text from the height of qdd-div to get the space that is available for the graph
-        const height = parseInt($('#qdd_div').css('height')) - (
+        svgHeight = parseInt($('#qdd_div').css('height')) - (
             parseInt(parseInt(qddText.css('height'))) + parseInt(qddText.css('margin-top')) + parseInt(qddText.css('margin-bottom'))    //height of the qdd-text
         );
     }
 
     const graph = d3.select("#qdd_div").graphviz({
         width: "70%",     //make it smaller so we have space around where we can scroll through the page - also the graphs are more high than wide so is shouldn't be a problem
-        height: height,
+        height: svgHeight,
         fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
     }).renderDot(svg);
 }
