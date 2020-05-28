@@ -103,14 +103,24 @@ for (let i = 0; i < acc.length; i++) {
     });
 }
 
-window.addEventListener('resize', (event) => {
-    console.log(screen.availHeight);
+window.addEventListener('resize', (event) => updateSizes());
+function updateSizes() {
+    //console.log(screen.availHeight);
     //backdrop.css('width', drop_zone.css('width')) - 2 * parseInt(drop_zone.css('border'));
     //console.log(backdrop.css('width'));
 
-    const width = parseInt(drop_zone.css('width')) - q_algo.css('margin-left') - 2 * parseInt(drop_zone.css('border'));
+    const dzInnerWidth = parseInt(drop_zone.css('width')) - 2 * parseInt(drop_zone.css('border'));  //inner width of drop_zone
+    const width = dzInnerWidth - q_algo.css('margin-left');
     q_algo.css('width', width);
-});
+
+    if(dzInnerWidth > 0) {
+        lineHighlight = "<mark>";
+        for(let i = 0; i < dzInnerWidth / 4; i++) lineHighlight += " ";
+        lineHighlight += "</mark>";
+    }
+}
+let lineHighlight = "<mark>                                                                                                   </mark>";
+updateSizes();
 
 
 function validateStepDuration() {
@@ -404,7 +414,6 @@ function loadAlgorithm(format = algoFormat, reset = false) {
                 }
 
                 numOfOperations = res.data;  //number of operations the algorithm has
-                console.log("NumOps: " + numOfOperations);
                 const digits = _numOfDigits(numOfOperations);
                 const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
                 q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
@@ -644,7 +653,6 @@ function isOperation(line) {
 
 let operationOffset = 0;        //on which line the QASM-header ends - next line is the first operation
 let highlightedLines = 0;
-const lineHighlight = "<mark>                                         </mark>";     //todo adjust text content so it matches line-width as good as possible
 function applyHighlights(text) {
     if(highlightedLines === 0) {
         const lines = text.split('\n');
