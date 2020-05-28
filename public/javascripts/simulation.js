@@ -1,5 +1,6 @@
 //################### J-QUERY ELEMENTS ###############################################################################################################
 
+const step_duration = $('#stepDuration');
 const automatic = $('#automatic');
 const drop_zone = $('#drop_zone');
 const backdrop = $('#backdrop');
@@ -111,6 +112,20 @@ window.addEventListener('resize', (event) => {
     q_algo.css('width', width);
 });
 
+
+function validateStepDuration() {
+    const newVal = parseInt(step_duration.val());
+    console.log(newVal);
+    if(0 <= newVal) {
+        stepDuration = newVal;
+        step_duration.val(newVal);  //needs to be done because of parseInt possible Floats are cut off
+
+    } else {
+        showError("Invalid number for step-duration: Only integers allowed!");
+        step_duration.val(stepDuration);
+        return false;
+    }
+}
 
 
 changeState(STATE_NOTHING_LOADED);      //initial state
@@ -533,8 +548,6 @@ $(() =>  {
 
         } else {
             runDia = true;
-
-            updateStepDuration();
             changeState(STATE_DIASHOW);
 
             const func = () => {
@@ -692,7 +705,6 @@ function bindEvents() {
         'scroll': handleScroll
     });
 }
-
 bindEvents();
 
 //################### LINE NUMBERING ##################################################################################################################
@@ -800,15 +812,6 @@ function endDia() {
     else changeState(STATE_LOADED);
     automatic.text("\u25B6");   //play-symbol in unicode
     //document.getElementById("stop").disabled = false;   //enable stop button
-}
-
-function updateStepDuration() {
-    const newVal = $("#stepDuration").val();
-    if(0 <= newVal) stepDuration = newVal;
-    else {
-        showError("Invalid number for step-duration: Only integers allowed!");
-        $('#stepDuration').val(stepDuration);
-    }
 }
 
 let svgHeight = 0;  //can't be initialized beforehand
