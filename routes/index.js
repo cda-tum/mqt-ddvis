@@ -47,7 +47,7 @@ router.post('/load', (req, res) => {
             const numOfOperations = data.vis.load(qAlgo, format, opNum, reset);
             if(numOfOperations > -1) {
                 //sendFile(res, data.ip, numOfOperations);
-                sendDD(res, data.vis.getDD());
+                sendDD(res, data.vis.getDD(), numOfOperations);
             }
             else res.status(400).json({ msg: "Error while loading the algorithm!" });
 
@@ -111,8 +111,9 @@ router.get('/toend', (req, res) => {
 
 module.exports = router;
 
-function sendDD(res, dd) {
-    res.status(200).json({ dot: dd });
+function sendDD(res, dd, data) {
+    if(data) res.status(200).json({ dot: dd, data: data });
+    else res.status(200).json({ dot: dd });
 }
 
 function sendFile(res, ip, msg = "") {

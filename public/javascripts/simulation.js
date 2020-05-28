@@ -388,7 +388,8 @@ function loadAlgorithm(format = algoFormat, reset = false) {
                     updateHighlighting();   //todo does this need to be called when we didn't reset?
                 }
 
-                numOfOperations = res.msg;  //number of operations the algorithm has
+                numOfOperations = res.data;  //number of operations the algorithm has
+                console.log("NumOps: " + numOfOperations);
                 const digits = _numOfDigits(numOfOperations);
                 const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
                 q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
@@ -707,15 +708,20 @@ function setLineNumbers() {
     const digits = _numOfDigits(numOfOperations);
 
     const lines = q_algo.val().split('\n');
+    let num = 0;
     for(let i = 0; i < lines.length; i++) {
         if(i <= operationOffset) lines[i] = "";
         else {
-            const num = (i - operationOffset);
-            const numDigits = _numOfDigits(num);
+            if(isOperation(lines[i])) {
+                num++;
+                //const num = (i - operationOffset);
+                const numDigits = _numOfDigits(num);
 
-            let space = "";
-            for(let j = 0; j < digits - numDigits; j++) space += "  ";
-            lines[i] = space + num.toString();
+                let space = "";
+                for(let j = 0; j < digits - numDigits; j++) space += "  ";
+                lines[i] = space + num.toString();
+
+            } else lines[i] = "";
         }
     }
 
