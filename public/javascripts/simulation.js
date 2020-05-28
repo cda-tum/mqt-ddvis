@@ -364,7 +364,7 @@ function loadAlgorithm(format = algoFormat, reset = false) {
     //$(() => {
         //const basis_states = $('#basis_states').val();
         //console.log("Basis states: " + basis_states);
-        const algo = q_algo.val();
+        let algo = q_algo.val();
         const opNum = reset ?
             parseInt($('#startLine').val()) :
             highlightedLines;   //we want to continue simulating after the last processed line, which is after the highlighted ones
@@ -376,11 +376,10 @@ function loadAlgorithm(format = algoFormat, reset = false) {
         }
 
         if(algo) {
+            algo = preformatAlgorithm(algo, format);
             const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
             call.done((res) => {
                 algoFormat = format;
-                preformatAlgorithm();
-
                 oldInput = algo;
 
                 if(reset) {
@@ -399,7 +398,7 @@ function loadAlgorithm(format = algoFormat, reset = false) {
 
                 setLineNumbers();
 
-                print(res.svg);
+                print(res.dot);
 
                 //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
                 if(opNum > numOfOperations) $('#startLine').val(numOfOperations);
@@ -415,11 +414,17 @@ function loadAlgorithm(format = algoFormat, reset = false) {
     //});
 }
 
-function preformatAlgorithm() {
-    //const algo = $('#q_algo');
+function preformatAlgorithm(algo, format) {
 
-    //TODO implement?
-    //every operation needs to be in a separate line
+    if(!algo.endsWith("\n")) {
+       algo = algo + "\n";
+       q_algo.val(algo);
+    }
+
+    //todo? every operation needs to be in a separate line
+    //if(format === ...
+
+    return algo;
 }
 
 //################### API BUTTONS ##################################################################################################################
@@ -431,8 +436,8 @@ $(() =>  {
             url: '/tostart',
             contentType: 'application/json',
             success: (res) => {
-                if(res.svg) {
-                    print(res.svg);
+                if(res.dot) {
+                    print(res.dot);
                     highlightedLines = 0;
                     updateHighlighting();
                 }
@@ -451,8 +456,8 @@ $(() =>  {
             url: '/prev',
             contentType: 'application/json',
             success: (res) => {
-                if(res.svg) {
-                    print(res.svg);
+                if(res.dot) {
+                    print(res.dot);
 
                     highlightedLines--;
                     updateHighlighting();
@@ -477,8 +482,8 @@ $(() =>  {
             contentType: 'application/json',
             success: (res) => {
 
-                if(res.svg) {   //we haven't reached the end yet
-                    print(res.svg);
+                if(res.dot) {   //we haven't reached the end yet
+                    print(res.dot);
 
                     highlightedLines++;
                     updateHighlighting();
@@ -502,8 +507,8 @@ $(() =>  {
             url: '/toend',
             contentType: 'application/json',
             success: (res) => {
-                if(res.svg) {
-                    print(res.svg);
+                if(res.dot) {
+                    print(res.dot);
 
                     highlightedLines = 0;
                     const lines = q_algo.val().split('\n');
@@ -540,8 +545,8 @@ $(() =>  {
                         success: (res) => {
 
                             const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
-                            if(res.svg) {
-                                print(res.svg);
+                            if(res.dot) {
+                                print(res.dot);
 
                                 highlightedLines++;
                                 updateHighlighting();
@@ -796,7 +801,7 @@ function updateStepDuration() {
 }
 
 let svgHeight = 0;  //can't be initialized beforehand
-function print(svg) {
+function print(dot) {
     if(svgHeight === 0) {
         //subtract the whole height of the qdd-text from the height of qdd-div to get the space that is available for the graph
         svgHeight = parseInt($('#qdd_div').css('height')) - (
@@ -808,5 +813,5 @@ function print(svg) {
         width: "70%",     //make it smaller so we have space around where we can scroll through the page - also the graphs are more high than wide so is shouldn't be a problem
         height: svgHeight,
         fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
-    }).renderDot(svg);
+    }).renderDot(dot);
 }

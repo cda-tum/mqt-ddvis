@@ -38,7 +38,8 @@ Napi::Object QDDVis::Init(Napi::Env env, Napi::Object exports) {
                             InstanceMethod("toStart", &QDDVis::ToStart),
                             InstanceMethod("prev", &QDDVis::Prev),
                             InstanceMethod("next", &QDDVis::Next),
-                            InstanceMethod("toEnd", &QDDVis::ToEnd)
+                            InstanceMethod("toEnd", &QDDVis::ToEnd),
+                            InstanceMethod("getDD", &QDDVis::GetDD)
                         }
                     );
 
@@ -84,9 +85,8 @@ void QDDVis::reset() {
 }
 
 void QDDVis::exportDD(const std::string& ipaddr) {
-    std::string file = "data/" + ipaddr + ".dot";
-    std::cout << file << std::endl;
-    dd->export2Dot(sim, file.c_str(), true, false);
+    //std::string file = "data/" + ipaddr + ".dot";
+    //dd->export2Dot(sim, file.c_str(), true, false);
 }
 
 void QDDVis::stepForward() {
@@ -364,7 +364,7 @@ Napi::Value QDDVis::ToEnd(const Napi::CallbackInfo& info) {
     if(atEnd) return Napi::Boolean::New(env, false); //nothing changed
     else {
         atInitial = false;  //now we are definitely not at the beginning (if there were no operation, so atInitial and atEnd could be true at the same time, if(qc-empty)
-                            // would already have returned
+        // would already have returned
         try {
             while(!atEnd) stepForward();    //process one step at a time until all operations have been considered (atEnd is set to true in stepForward())
             //now atEnd is true, exactly as it should be
@@ -379,4 +379,20 @@ Napi::Value QDDVis::ToEnd(const Napi::CallbackInfo& info) {
             return Napi::Boolean::New(env, false);
         }
     }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    if(!ready) {
+        Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
+        return Napi::Boolean::New(env, false);
+    } else if (qc->empty()) {   //todo should never be reached since ready must be false if there is no algorithm (or is an empty algorithm valid and normally loaded?)
+        return Napi::Boolean::New(env, false);  //todo ask if in this case any error should be thrown or if an empty algorithm is okay
+    }
+
+    std::stringstream ss{};
+    dd->toDot2(sim, ss, true, true);
+
+    return Napi::String::New(env, ss.str());
 }

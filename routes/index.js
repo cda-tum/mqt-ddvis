@@ -45,7 +45,10 @@ router.post('/load', (req, res) => {
              */
 
             const numOfOperations = data.vis.load(qAlgo, format, opNum, reset);
-            if(numOfOperations > -1) sendFile(res, data.ip, numOfOperations);
+            if(numOfOperations > -1) {
+                //sendFile(res, data.ip, numOfOperations);
+                sendDD(res, data.vis.getDD());
+            }
             else res.status(400).json({ msg: "Error while loading the algorithm!" });
 
         } catch(err) {
@@ -60,7 +63,7 @@ router.get('/tostart', (req, res) => {
     const data = dm.get(req);
     if(data) {
         const ret = data.vis.toStart();
-        if(ret) sendFile(res, data.ip);
+        if(ret) sendDD(res, data.vis.getDD());  //sendFile(res, data.ip);
         else res.status(403).json({ msg: "you were already at the start" });    //the client will search for res.svg, but it will be null so they won't redraw
 
     } else {
@@ -72,7 +75,7 @@ router.get('/prev', (req, res) => {
     const data = dm.get(req);
     if(data) {
         const ret = data.vis.prev();
-        if(ret) sendFile(res, data.ip);
+        if(ret) sendDD(res, data.vis.getDD());  //sendFile(res, data.ip);
         else res.status(403).json({ msg: "can't go back because we are at the beginning" });    //the client will search for res.svg, but it will be null so they won't redraw
 
     } else {
@@ -84,7 +87,7 @@ router.get('/next', (req, res) => {
     const data = dm.get(req);
     if(data) {
         const ret = data.vis.next();
-        if(ret) sendFile(res, data.ip);     //something changes so we update the shown dd
+        if(ret) sendDD(res, data.vis.getDD());  //sendFile(res, data.ip);     //something changes so we update the shown dd
         else res.send({ msg: "can't go ahead because we are at the end", reload: "false" });
 
     } else {
@@ -96,7 +99,7 @@ router.get('/toend', (req, res) => {
     const data = dm.get(req);
     if(data) {
         const ret = data.vis.toEnd();
-        if(ret) sendFile(res, data.ip); //something changes so we update the shown dd
+        if(ret) sendDD(res, data.vis.getDD());  //sendFile(res, data.ip); //something changes so we update the shown dd
         else res.send({ msg: "you were already at the end", reload: "false" });
 
     } else {
@@ -107,6 +110,10 @@ router.get('/toend', (req, res) => {
 //####################################################################################################################################################################
 
 module.exports = router;
+
+function sendDD(res, dd) {
+    res.status(200).json({ dot: dd });
+}
 
 function sendFile(res, ip, msg = "") {
     fs.readFile("data/" + ip + ".dot", "utf8", (error, file) => {
