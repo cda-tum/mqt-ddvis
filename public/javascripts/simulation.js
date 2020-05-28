@@ -601,21 +601,24 @@ function updateHighlighting() {
 
 /**Checks if the given QASM- or Real-line is an operation
  *
- * @param text
+ * @param line of an algorithm
  */
-function isOperation(text) {
-    if(text) {
+function isOperation(line) {
+    if(line) {
         if(algoFormat === QASM_FORMAT) {
-            if( text.trim() === "" ||
-                text.includes("OPENQASM") ||
-                text.includes("include") ||
-                text.includes("reg"))
-                return false;
-
+            if( line.trim() === "" ||
+                line.includes("OPENQASM") ||
+                line.includes("include") ||
+                line.includes("reg") ||
+                line.startsWith("//")   //comment
+            ) return false;
             return true;
 
         } else if(algoFormat === REAL_FORMAT) {
-            return !text.startsWith(".");   //all non-operation lines start with "."
+            if( line.startsWith(".") ||   //all non-operation lines start with "."
+                line.startsWith("#")    //comment
+            ) return false;
+            return true;
 
         } else {
             //showError("Format not recognized. Please try again.");  //todo change message?
