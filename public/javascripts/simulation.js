@@ -741,14 +741,16 @@ let oldInput;   //needed to reset input if an illegal change was made
 function handleInput() {
     const highlighting = $('#highlighting');
 
-    //check if a highlighted line changed, if yes abort the changes
-    const linesNew = q_algo.val().split('\n');
-    const linesOld = oldInput.split('\n');
-    for(let i = 0; i <= highlightedLines + operationOffset; i++) {
-        if(linesNew.length <= i || linesNew[i] !== linesOld[i]) {   //illegal change!
-            q_algo.val(oldInput);   //reset algorithm to old input
-            showError("You are not allowed to change already processed lines!");
-            return;
+    if(highlightedLines > 0) {  //if nothing is highlighted yet, the user may also edit the lines before the first operation
+        //check if a highlighted line changed, if yes abort the changes
+        const linesNew = q_algo.val().split('\n');
+        const linesOld = oldInput.split('\n');
+        for(let i = 0; i <= highlightedLines + operationOffset; i++) {
+            if(linesNew.length <= i || linesNew[i] !== linesOld[i]) {   //illegal change!
+                q_algo.val(oldInput);   //reset algorithm to old input
+                showError("You are not allowed to change already processed lines!");
+                return;
+            }
         }
     }
     oldInput = q_algo.val();  //changes are legal so they are "saved"
