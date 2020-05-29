@@ -119,7 +119,7 @@ function updateSizes() {
         lineHighlight += "</mark>";
     }
 }
-let lineHighlight = "<mark>                                                                                                   </mark>";
+let lineHighlight = "<mark>                                                                                                                                  </mark>";
 updateSizes();
 
 
