@@ -168,14 +168,12 @@ function loadQASM() {
  */
 function loadReal() {
     q_algo.val(
-        ".version 2.0\n" +
-        ".numvars \n" +
+        ".version 2.0 \n" +
+        ".numvars 0 \n" +
         ".variables \n" +
-        ".inputs \n" +
-        ".outputs \n" +
-        ".constants \n" +
-        ".garbage \n" +
-        ".begin \n"
+        ".begin \n" +
+        "\n" +
+        ".end \n"
     );
     algoFormat = REAL_FORMAT;
 }
@@ -804,9 +802,9 @@ function showError(error) {
     alert(error);
 }
 
-$( document ).ajaxError(function( event, request, settings ) {
-    showError( "Unhandled error occured! Error requesting page " + settings.url);
-});
+//$( document ).ajaxError(function( event, request, settings ) {
+//    showError( "Unhandled error occured! Error requesting page " + settings.url);
+//});
 
 
 
