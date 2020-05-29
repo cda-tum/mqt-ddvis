@@ -384,6 +384,7 @@ let numOfOperations = 0;    //number of operations the whole algorithm has
  *        it is not set is after editing, but there we especially don't want to reset
  */
 function loadAlgorithm(format = algoFormat, reset = false) {
+        const startTimeStemp = performance.now();
     //$(() => {
         //const basis_states = $('#basis_states').val();
         //console.log("Basis states: " + basis_states);
@@ -406,10 +407,10 @@ function loadAlgorithm(format = algoFormat, reset = false) {
             const waitFunc = () => {
                 if(flag) {
                     console.log("still waiting");
-                    setTimeout(() => waitFunc(), 500);
+                    setTimeout(() => waitFunc(), 100);
                 }
             };
-            setTimeout(() => waitFunc(), 500);
+            setTimeout(() => waitFunc(), 100);
 
             call.done((res) => {
                 flag = false;   //todo also set on error
@@ -420,7 +421,7 @@ function loadAlgorithm(format = algoFormat, reset = false) {
                 if(reset) {
                     resetHighlighting();
                     highlightedLines = opNum;
-                    updateHighlighting();   //todo does this need to be called when we didn't reset?
+                    updateHighlighting();
                 }
 
                 numOfOperations = res.data;  //number of operations the algorithm has
@@ -445,6 +446,7 @@ function loadAlgorithm(format = algoFormat, reset = false) {
             call.fail((res) => {
                 showResponseError(res, "Couldn't connect to the server.");
             });
+            console.log("Loading and processing " + opNum + " lines took " + (performance.now() - startTimeStemp) + "ms");
         }
     //});
 }
@@ -579,13 +581,14 @@ $(() =>  {
                         contentType: 'application/json',
                         success: (res) => {
 
-                            const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
                             if(res.dot) {
                                 print(res.dot);
 
                                 highlightedLines++;
                                 updateHighlighting();
 
+                                const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
+                                console.log(duration);
                                 setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
 
                             } else endDia();
