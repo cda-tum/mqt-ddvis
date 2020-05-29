@@ -32,7 +32,7 @@ et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata san
     <button onclick="validate()">Validate Input</button>
     -->
     <label for="stepDuration">Step Duration in ms: </label>
-    <input type="number" min="0" id="stepDuration" value="700"/>
+    <input type="number" min="0" id="stepDuration" onchange="validateStepDuration()" value="700"/>
 </div>
 
 <div id="algo_div">
@@ -50,7 +50,7 @@ et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata san
         <div id="backdrop" class="backdrop">
             <div id="highlighting" class="highlights"></div>
         </div>
-        <textarea id="q_algo" type="text" onfocusout="loadAlgorithm()" placeholder="Enter Algorithm or drop .qasm-File here."></textarea>
+        <textarea id="q_algo" type="text" onfocusout="loadAlgorithm()" placeholder="Enter Algorithm or drop .qasm-/.real-File here."></textarea>
     </div>
 
     <div id="nav_div">

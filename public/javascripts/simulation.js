@@ -1,5 +1,6 @@
 //################### J-QUERY ELEMENTS ###############################################################################################################
 
+const step_duration = $('#stepDuration');
 const automatic = $('#automatic');
 const drop_zone = $('#drop_zone');
 const backdrop = $('#backdrop');
@@ -102,15 +103,39 @@ for (let i = 0; i < acc.length; i++) {
     });
 }
 
-window.addEventListener('resize', (event) => {
-    console.log(screen.availHeight);
+window.addEventListener('resize', (event) => updateSizes());
+function updateSizes() {
+    //console.log(screen.availHeight);
     //backdrop.css('width', drop_zone.css('width')) - 2 * parseInt(drop_zone.css('border'));
     //console.log(backdrop.css('width'));
 
-    const width = parseInt(drop_zone.css('width')) - q_algo.css('margin-left') - 2 * parseInt(drop_zone.css('border'));
+    const dzInnerWidth = parseInt(drop_zone.css('width')) - 2 * parseInt(drop_zone.css('border'));  //inner width of drop_zone
+    const width = dzInnerWidth - q_algo.css('margin-left');
     q_algo.css('width', width);
-});
 
+    if(dzInnerWidth > 0) {
+        lineHighlight = "<mark>";
+        for(let i = 0; i < dzInnerWidth / 4; i++) lineHighlight += " ";
+        lineHighlight += "</mark>";
+    }
+}
+let lineHighlight = "<mark>                                                                                                   </mark>";
+updateSizes();
+
+
+function validateStepDuration() {
+    const newVal = parseInt(step_duration.val());
+    console.log(newVal);
+    if(0 <= newVal) {
+        stepDuration = newVal;
+        step_duration.val(newVal);  //needs to be done because of parseInt possible Floats are cut off
+
+    } else {
+        showError("Invalid number for step-duration: Only integers allowed!");
+        step_duration.val(stepDuration);
+        return false;
+    }
+}
 
 
 changeState(STATE_NOTHING_LOADED);      //initial state
@@ -143,14 +168,12 @@ function loadQASM() {
  */
 function loadReal() {
     q_algo.val(
-        ".version 2.0\n" +
-        ".numvars \n" +
+        ".version 2.0 \n" +
+        ".numvars 0 \n" +
         ".variables \n" +
-        ".inputs \n" +
-        ".outputs \n" +
-        ".constants \n" +
-        ".garbage \n" +
-        ".begin \n"
+        ".begin \n" +
+        "\n" +
+        ".end \n"
     );
     algoFormat = REAL_FORMAT;
 }
@@ -364,7 +387,7 @@ function loadAlgorithm(format = algoFormat, reset = false) {
     //$(() => {
         //const basis_states = $('#basis_states').val();
         //console.log("Basis states: " + basis_states);
-        const algo = q_algo.val();
+        let algo = q_algo.val();
         const opNum = reset ?
             parseInt($('#startLine').val()) :
             highlightedLines;   //we want to continue simulating after the last processed line, which is after the highlighted ones
@@ -376,11 +399,10 @@ function loadAlgorithm(format = algoFormat, reset = false) {
         }
 
         if(algo) {
+            algo = preformatAlgorithm(algo, format);
             const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
             call.done((res) => {
                 algoFormat = format;
-                preformatAlgorithm();
-
                 oldInput = algo;
 
                 if(reset) {
@@ -389,7 +411,7 @@ function loadAlgorithm(format = algoFormat, reset = false) {
                     updateHighlighting();   //todo does this need to be called when we didn't reset?
                 }
 
-                numOfOperations = res.msg;  //number of operations the algorithm has
+                numOfOperations = res.data;  //number of operations the algorithm has
                 const digits = _numOfDigits(numOfOperations);
                 const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
                 q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
@@ -399,7 +421,7 @@ function loadAlgorithm(format = algoFormat, reset = false) {
 
                 setLineNumbers();
 
-                print(res.svg);
+                print(res.dot);
 
                 //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
                 if(opNum > numOfOperations) $('#startLine').val(numOfOperations);
@@ -415,11 +437,17 @@ function loadAlgorithm(format = algoFormat, reset = false) {
     //});
 }
 
-function preformatAlgorithm() {
-    //const algo = $('#q_algo');
+function preformatAlgorithm(algo, format) {
 
-    //TODO implement?
-    //every operation needs to be in a separate line
+    if(!algo.endsWith("\n")) {
+       algo = algo + "\n";
+       q_algo.val(algo);
+    }
+
+    //todo? every operation needs to be in a separate line
+    //if(format === ...
+
+    return algo;
 }
 
 //################### API BUTTONS ##################################################################################################################
@@ -431,8 +459,8 @@ $(() =>  {
             url: '/tostart',
             contentType: 'application/json',
             success: (res) => {
-                if(res.svg) {
-                    print(res.svg);
+                if(res.dot) {
+                    print(res.dot);
                     highlightedLines = 0;
                     updateHighlighting();
                 }
@@ -451,8 +479,8 @@ $(() =>  {
             url: '/prev',
             contentType: 'application/json',
             success: (res) => {
-                if(res.svg) {
-                    print(res.svg);
+                if(res.dot) {
+                    print(res.dot);
 
                     highlightedLines--;
                     updateHighlighting();
@@ -477,8 +505,8 @@ $(() =>  {
             contentType: 'application/json',
             success: (res) => {
 
-                if(res.svg) {   //we haven't reached the end yet
-                    print(res.svg);
+                if(res.dot) {   //we haven't reached the end yet
+                    print(res.dot);
 
                     highlightedLines++;
                     updateHighlighting();
@@ -502,8 +530,8 @@ $(() =>  {
             url: '/toend',
             contentType: 'application/json',
             success: (res) => {
-                if(res.svg) {
-                    print(res.svg);
+                if(res.dot) {
+                    print(res.dot);
 
                     highlightedLines = 0;
                     const lines = q_algo.val().split('\n');
@@ -527,8 +555,6 @@ $(() =>  {
 
         } else {
             runDia = true;
-
-            updateStepDuration();
             changeState(STATE_DIASHOW);
 
             const func = () => {
@@ -540,8 +566,8 @@ $(() =>  {
                         success: (res) => {
 
                             const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
-                            if(res.svg) {
-                                print(res.svg);
+                            if(res.dot) {
+                                print(res.dot);
 
                                 highlightedLines++;
                                 updateHighlighting();
@@ -596,21 +622,24 @@ function updateHighlighting() {
 
 /**Checks if the given QASM- or Real-line is an operation
  *
- * @param text
+ * @param line of an algorithm
  */
-function isOperation(text) {
-    if(text) {
+function isOperation(line) {
+    if(line) {
         if(algoFormat === QASM_FORMAT) {
-            if( text.trim() === "" ||
-                text.includes("OPENQASM") ||
-                text.includes("include") ||
-                text.includes("reg"))
-                return false;
-
+            if( line.trim() === "" ||
+                line.includes("OPENQASM") ||
+                line.includes("include") ||
+                line.includes("reg") ||
+                line.startsWith("//")   //comment
+            ) return false;
             return true;
 
         } else if(algoFormat === REAL_FORMAT) {
-            return !text.startsWith(".");   //all non-operation lines start with "."
+            if( line.startsWith(".") ||   //all non-operation lines start with "."
+                line.startsWith("#")    //comment
+            ) return false;
+            return true;
 
         } else {
             //showError("Format not recognized. Please try again.");  //todo change message?
@@ -622,7 +651,6 @@ function isOperation(text) {
 
 let operationOffset = 0;        //on which line the QASM-header ends - next line is the first operation
 let highlightedLines = 0;
-const lineHighlight = "<mark>                                         </mark>";     //todo adjust text content so it matches line-width as good as possible
 function applyHighlights(text) {
     if(highlightedLines === 0) {
         const lines = text.split('\n');
@@ -683,7 +711,6 @@ function bindEvents() {
         'scroll': handleScroll
     });
 }
-
 bindEvents();
 
 //################### LINE NUMBERING ##################################################################################################################
@@ -699,15 +726,20 @@ function setLineNumbers() {
     const digits = _numOfDigits(numOfOperations);
 
     const lines = q_algo.val().split('\n');
+    let num = 0;
     for(let i = 0; i < lines.length; i++) {
         if(i <= operationOffset) lines[i] = "";
         else {
-            const num = (i - operationOffset);
-            const numDigits = _numOfDigits(num);
+            if(isOperation(lines[i])) {
+                num++;
+                //const num = (i - operationOffset);
+                const numDigits = _numOfDigits(num);
 
-            let space = "";
-            for(let j = 0; j < digits - numDigits; j++) space += "  ";
-            lines[i] = space + num.toString();
+                let space = "";
+                for(let j = 0; j < digits - numDigits; j++) space += "  ";
+                lines[i] = space + num.toString();
+
+            } else lines[i] = "";
         }
     }
 
@@ -736,14 +768,16 @@ let oldInput;   //needed to reset input if an illegal change was made
 function handleInput() {
     const highlighting = $('#highlighting');
 
-    //check if a highlighted line changed, if yes abort the changes
-    const linesNew = q_algo.val().split('\n');
-    const linesOld = oldInput.split('\n');
-    for(let i = 0; i <= highlightedLines + operationOffset; i++) {
-        if(linesNew.length <= i || linesNew[i] !== linesOld[i]) {   //illegal change!
-            q_algo.val(oldInput);   //reset algorithm to old input
-            showError("You are not allowed to change already processed lines!");
-            return;
+    if(highlightedLines > 0) {  //if nothing is highlighted yet, the user may also edit the lines before the first operation
+        //check if a highlighted line changed, if yes abort the changes
+        const linesNew = q_algo.val().split('\n');
+        const linesOld = oldInput.split('\n');
+        for(let i = 0; i <= highlightedLines + operationOffset; i++) {
+            if(linesNew.length <= i || linesNew[i] !== linesOld[i]) {   //illegal change!
+                q_algo.val(oldInput);   //reset algorithm to old input
+                showError("You are not allowed to change already processed lines!");
+                return;
+            }
         }
     }
     oldInput = q_algo.val();  //changes are legal so they are "saved"
@@ -768,9 +802,9 @@ function showError(error) {
     alert(error);
 }
 
-$( document ).ajaxError(function( event, request, settings ) {
-    showError( "Unhandled error occured! Error requesting page " + settings.url);
-});
+//$( document ).ajaxError(function( event, request, settings ) {
+//    showError( "Unhandled error occured! Error requesting page " + settings.url);
+//});
 
 
 
@@ -786,17 +820,8 @@ function endDia() {
     //document.getElementById("stop").disabled = false;   //enable stop button
 }
 
-function updateStepDuration() {
-    const newVal = $("#stepDuration").val();
-    if(0 <= newVal) stepDuration = newVal;
-    else {
-        showError("Invalid number for step-duration: Only integers allowed!");
-        $('#stepDuration').val(stepDuration);
-    }
-}
-
 let svgHeight = 0;  //can't be initialized beforehand
-function print(svg) {
+function print(dot) {
     if(svgHeight === 0) {
         //subtract the whole height of the qdd-text from the height of qdd-div to get the space that is available for the graph
         svgHeight = parseInt($('#qdd_div').css('height')) - (
@@ -808,5 +833,5 @@ function print(svg) {
         width: "70%",     //make it smaller so we have space around where we can scroll through the page - also the graphs are more high than wide so is shouldn't be a problem
         height: svgHeight,
         fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
-    }).renderDot(svg);
+    }).renderDot(dot);
 }

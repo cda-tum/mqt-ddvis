@@ -31,6 +31,7 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
         Napi::Value Next(const Napi::CallbackInfo& info);
         Napi::Value Prev(const Napi::CallbackInfo& info);
         Napi::Value ToEnd(const Napi::CallbackInfo& info);
+        Napi::Value GetDD(const Napi::CallbackInfo& info);
 
         //fields
         const long id = NextID++;
