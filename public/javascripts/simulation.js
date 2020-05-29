@@ -401,7 +401,19 @@ function loadAlgorithm(format = algoFormat, reset = false) {
         if(algo) {
             algo = preformatAlgorithm(algo, format);
             const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
+
+            let flag = true;
+            const waitFunc = () => {
+                if(flag) {
+                    console.log("still waiting");
+                    setTimeout(() => waitFunc(), 500);
+                }
+            };
+            setTimeout(() => waitFunc(), 500);
+
             call.done((res) => {
+                flag = false;   //todo also set on error
+
                 algoFormat = format;
                 oldInput = algo;
 
@@ -499,12 +511,12 @@ $(() =>  {
     });
     /* ######################################################### */
     $('#next').on('click', () => {
+        const startTimeStemp = performance.now();
         changeState(STATE_SIMULATING);
         const call = $.ajax({
             url: '/next',
             contentType: 'application/json',
             success: (res) => {
-
                 if(res.dot) {   //we haven't reached the end yet
                     print(res.dot);
 
@@ -516,6 +528,8 @@ $(() =>  {
                     else changeState(STATE_LOADED);
 
                 } else changeState(STATE_LOADED_END); //should never reach this code because the button should be disabled when we reach the end
+
+                console.log("Time spent: " + (performance.now() - startTimeStemp) + "ms");
             }
         });
         call.fail((res) => {
