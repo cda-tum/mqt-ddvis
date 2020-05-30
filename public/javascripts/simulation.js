@@ -126,7 +126,6 @@ updateSizes();
 
 function validateStepDuration() {
     const newVal = parseInt(step_duration.val());
-    console.log(newVal);
     if(0 <= newVal) {
         stepDuration = newVal;
         step_duration.val(newVal);  //needs to be done because of parseInt possible Floats are cut off
@@ -405,6 +404,7 @@ function loadAlgorithm(format = algoFormat, reset = false) {
             const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
 
             let flag = true;
+            /*
             const waitFunc = () => {
                 if(flag) {
                     console.log("still waiting");
@@ -412,6 +412,7 @@ function loadAlgorithm(format = algoFormat, reset = false) {
                 }
             };
             setTimeout(() => waitFunc(), 100);
+            */
 
             call.done((res) => {
                 flag = false;   //todo also set on error
@@ -589,7 +590,6 @@ $(() =>  {
                                 updateHighlighting();
 
                                 const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
-                                console.log(duration);
                                 setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
 
                             } else endDia();
