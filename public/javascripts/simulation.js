@@ -4,6 +4,7 @@ const step_duration = $('#stepDuration');
 const automatic = $('#automatic');
 const drop_zone = $('#drop_zone');
 const backdrop = $('#backdrop');
+const highlighting = $('#highlighting');
 const q_algo = $('#q_algo');
 const algo_div = $('#algo_div');
 const qddText = $('#qdd_text');
@@ -617,20 +618,23 @@ $(() =>  {
 
 
 //################### LINE HIGHLIGHTING ##################################################################################################################
+let linesForHighllighting = [];
+let operationOffset = 0;        //on which line the QASM-header ends - next line is the first operation
+let highlightedLines = 0;
+
 function resetHighlighting() {
     highlightedLines = 0;
 
-    const lines = q_algo.val().split('\n');
-    for(let i = 0; i < lines.length; i++) {
-        if(isOperation(lines[i])) {
-            operationOffset = i-1;  //can never be negative because the file has to start with the QASM-header
-            break;
-        }
+    linesForHighllighting = q_algo.val().split('\n');
+    for(let i = 0; i < linesForHighllighting.length; i++) {
+        if(isOperation(linesForHighllighting[i])) {
+            linesForHighllighting[i] = lineHighlight;
+            if(operationOffset < 0) operationOffset = i-1;  //can never be negative because the file has to start with the QASM- or Real-header
+        } else linesForHighllighting[i] = "";
     }
 }
 
 function updateHighlighting() {
-    const highlighting = $('#highlighting');
 
     const text = q_algo.val();
     const highlightedText = applyHighlights(text);
@@ -666,8 +670,6 @@ function isOperation(line) {
     } else return false;
 }
 
-let operationOffset = 0;        //on which line the QASM-header ends - next line is the first operation
-let highlightedLines = 0;
 function applyHighlights(text) {
     if(highlightedLines === 0) {
         const lines = text.split('\n');
