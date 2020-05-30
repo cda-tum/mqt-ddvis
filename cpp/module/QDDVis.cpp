@@ -16,13 +16,6 @@
 
 #include "QDDVis.h"
 
-
-struct Comp {
-    double re = 0.0;
-    double im = 0.0;
-};
-
-
 long QDDVis::NextID = 1;
 
 Napi::FunctionReference QDDVis::constructor;
@@ -66,7 +59,6 @@ QDDVis::QDDVis(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVis>(info) 
         return;
     }
     this->ip = info[0].As<Napi::String>();
-    //std::cout << "ID of " << this->ip << " is " << this->id << std::endl;
 
     this->dd = std::make_unique<dd::Package>();
     this->qc = std::make_unique<qc::QuantumComputation>();
@@ -82,11 +74,6 @@ void QDDVis::reset() {
     ready = false;
     atInitial = true;
     atEnd = false;
-}
-
-void QDDVis::exportDD(const std::string& ipaddr) {
-    //std::string file = "data/" + ipaddr + ".dot";
-    //dd->export2Dot(sim, file.c_str(), true, false);
 }
 
 void QDDVis::stepForward() {
@@ -122,16 +109,6 @@ void QDDVis::stepBack() {
     dd->decRef(sim);
     sim = temp;
     dd->garbageCollect();
-}
-
-int QDDVis::operationsLeft() {
-    auto it = iterator;
-    int counter = 0;
-    while(it != qc->end()) {
-        it++;
-        counter++;
-    }
-    return counter;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -246,16 +223,12 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         } else {
             for(unsigned int i = 0; i < opNum; i++) iterator++; //just advance the iterator so it points to the operations where we stopped before the edit
         }
-        //iterator--;     //todo why iterator--???
-        //dd->garbageCollect();
+
     } else {    //sim needs to be initialized in some cases
         //todo dereference old sim?
         sim = dd->makeZeroState(qc->getNqubits());
         dd->incRef(sim);
-        exportDD(this->ip);
     }
-
-    //exportDD(this->ip);
 
     return Napi::Number::New(env, qc->getNops());
 }
@@ -270,7 +243,6 @@ Napi::Value QDDVis::ToStart(const Napi::CallbackInfo& info) {
         return Napi::Boolean::New(env, false);
     }
 
-
     if(atInitial) return Napi::Boolean::New(env, false);  //nothing changed
     else {
         try {
@@ -280,8 +252,6 @@ Napi::Value QDDVis::ToStart(const Napi::CallbackInfo& info) {
             atInitial = true;
             atEnd = false;
             iterator = qc->begin();
-
-            exportDD(this->ip);
 
             return Napi::Boolean::New(env, true);   //something changed
 
@@ -311,7 +281,6 @@ Napi::Value QDDVis::Prev(const Napi::CallbackInfo& info) {
 
     try {
         stepBack();     //go back to the start before the last processed operation
-        exportDD(this->ip);
 
         return Napi::Boolean::New(env, true);   //something changed
 
@@ -340,7 +309,6 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
 
     try {
         stepForward();          //process the next operation
-        exportDD(this->ip);
 
         return Napi::Boolean::New(env, true);   //something changed
 
@@ -369,8 +337,6 @@ Napi::Value QDDVis::ToEnd(const Napi::CallbackInfo& info) {
             while(!atEnd) stepForward();    //process one step at a time until all operations have been considered (atEnd is set to true in stepForward())
             //now atEnd is true, exactly as it should be
 
-            exportDD(this->ip);
-
             return Napi::Boolean::New(env, true);   //something changed
 
         } catch(std::exception& e) {
@@ -392,7 +358,7 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
     }
 
     std::stringstream ss{};
-    dd->toDot2(sim, ss, true, true);
+    dd->toDot(sim, ss, true);
 
     return Napi::String::New(env, ss.str());
 }

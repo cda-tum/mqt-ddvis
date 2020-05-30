@@ -4,6 +4,7 @@ const step_duration = $('#stepDuration');
 const automatic = $('#automatic');
 const drop_zone = $('#drop_zone');
 const backdrop = $('#backdrop');
+const highlighting = $('#highlighting');
 const q_algo = $('#q_algo');
 const algo_div = $('#algo_div');
 const qddText = $('#qdd_text');
@@ -125,7 +126,6 @@ updateSizes();
 
 function validateStepDuration() {
     const newVal = parseInt(step_duration.val());
-    console.log(newVal);
     if(0 <= newVal) {
         stepDuration = newVal;
         step_duration.val(newVal);  //needs to be done because of parseInt possible Floats are cut off
@@ -384,6 +384,7 @@ let numOfOperations = 0;    //number of operations the whole algorithm has
  *        it is not set is after editing, but there we especially don't want to reset
  */
 function loadAlgorithm(format = algoFormat, reset = false) {
+        const startTimeStemp = performance.now();
     //$(() => {
         //const basis_states = $('#basis_states').val();
         //console.log("Basis states: " + basis_states);
@@ -401,14 +402,28 @@ function loadAlgorithm(format = algoFormat, reset = false) {
         if(algo) {
             algo = preformatAlgorithm(algo, format);
             const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
+
+            let flag = true;
+            /*
+            const waitFunc = () => {
+                if(flag) {
+                    console.log("still waiting");
+                    setTimeout(() => waitFunc(), 100);
+                }
+            };
+            setTimeout(() => waitFunc(), 100);
+            */
+
             call.done((res) => {
+                flag = false;   //todo also set on error
+
                 algoFormat = format;
                 oldInput = algo;
 
                 if(reset) {
                     resetHighlighting();
                     highlightedLines = opNum;
-                    updateHighlighting();   //todo does this need to be called when we didn't reset?
+                    updateHighlighting();
                 }
 
                 numOfOperations = res.data;  //number of operations the algorithm has
@@ -433,6 +448,7 @@ function loadAlgorithm(format = algoFormat, reset = false) {
             call.fail((res) => {
                 showResponseError(res, "Couldn't connect to the server.");
             });
+            console.log("Loading and processing " + opNum + " lines took " + (performance.now() - startTimeStemp) + "ms");
         }
     //});
 }
@@ -499,12 +515,12 @@ $(() =>  {
     });
     /* ######################################################### */
     $('#next').on('click', () => {
+        const startTimeStemp = performance.now();
         changeState(STATE_SIMULATING);
         const call = $.ajax({
             url: '/next',
             contentType: 'application/json',
             success: (res) => {
-
                 if(res.dot) {   //we haven't reached the end yet
                     print(res.dot);
 
@@ -516,6 +532,8 @@ $(() =>  {
                     else changeState(STATE_LOADED);
 
                 } else changeState(STATE_LOADED_END); //should never reach this code because the button should be disabled when we reach the end
+
+                console.log("Time spent: " + (performance.now() - startTimeStemp) + "ms");
             }
         });
         call.fail((res) => {
@@ -565,13 +583,13 @@ $(() =>  {
                         contentType: 'application/json',
                         success: (res) => {
 
-                            const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
                             if(res.dot) {
                                 print(res.dot);
 
                                 highlightedLines++;
                                 updateHighlighting();
 
+                                const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
                                 setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
 
                             } else endDia();
@@ -600,20 +618,23 @@ $(() =>  {
 
 
 //################### LINE HIGHLIGHTING ##################################################################################################################
+let linesForHighllighting = [];
+let operationOffset = 0;        //on which line the QASM-header ends - next line is the first operation
+let highlightedLines = 0;
+
 function resetHighlighting() {
     highlightedLines = 0;
 
-    const lines = q_algo.val().split('\n');
-    for(let i = 0; i < lines.length; i++) {
-        if(isOperation(lines[i])) {
-            operationOffset = i-1;  //can never be negative because the file has to start with the QASM-header
-            break;
-        }
+    linesForHighllighting = q_algo.val().split('\n');
+    for(let i = 0; i < linesForHighllighting.length; i++) {
+        if(isOperation(linesForHighllighting[i])) {
+            linesForHighllighting[i] = lineHighlight;
+            if(operationOffset < 0) operationOffset = i-1;  //can never be negative because the file has to start with the QASM- or Real-header
+        } else linesForHighllighting[i] = "";
     }
 }
 
 function updateHighlighting() {
-    const highlighting = $('#highlighting');
 
     const text = q_algo.val();
     const highlightedText = applyHighlights(text);
@@ -649,8 +670,6 @@ function isOperation(line) {
     } else return false;
 }
 
-let operationOffset = 0;        //on which line the QASM-header ends - next line is the first operation
-let highlightedLines = 0;
 function applyHighlights(text) {
     if(highlightedLines === 0) {
         const lines = text.split('\n');
