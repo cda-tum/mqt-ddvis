@@ -4,6 +4,7 @@ const step_duration = $('#stepDuration');
 const automatic = $('#automatic');
 const drop_zone = $('#drop_zone');
 const backdrop = $('#backdrop');
+const line_numbers = $('#line_numbers');
 const highlighting = $('#highlighting');
 const q_algo = $('#q_algo');
 const algo_div = $('#algo_div');
@@ -115,12 +116,13 @@ function updateSizes() {
     q_algo.css('width', width);
 
     if(dzInnerWidth > 0) {
-        lineHighlight = "<mark>";
-        for(let i = 0; i < dzInnerWidth / 4; i++) lineHighlight += " ";
-        lineHighlight += "</mark>";
+        let lh = "<mark>";
+        for(let i = 0; i < dzInnerWidth / 4; i++) lh += " ";
+        lh += "</mark>";
+        updateLineHighlight(lh);
     }
 }
-let lineHighlight = "<mark>                                                                                                                                  </mark>";
+//let lineHighlight = "<mark>                                                                                                                                  </mark>";
 updateSizes();
 
 
@@ -391,7 +393,7 @@ function loadAlgorithm(format = algoFormat, reset = false) {
         let algo = q_algo.val();
         const opNum = reset ?
             parseInt($('#startLine').val()) :
-            highlightedLines;   //we want to continue simulating after the last processed line, which is after the highlighted ones
+            hlManager.highlightedLines;   //we want to continue simulating after the last processed line, which is after the highlighted ones
 
         if(format === FORMAT_UNKNOWN) {
             //find out of which format the input text is
@@ -421,8 +423,8 @@ function loadAlgorithm(format = algoFormat, reset = false) {
                 oldInput = algo;
 
                 if(reset) {
-                    resetHighlighting();
-                    highlightedLines = opNum;
+                    hlManager.resetHighlighting(q_algo.val());
+                    hlManager.highlightedLines = opNum;
                     updateHighlighting();
                 }
 
@@ -477,7 +479,7 @@ $(() =>  {
             success: (res) => {
                 if(res.dot) {
                     print(res.dot);
-                    highlightedLines = 0;
+                    hlManager.highlightedLines = 0;
                     updateHighlighting();
                 }
                 changeState(STATE_LOADED_START);
@@ -498,11 +500,11 @@ $(() =>  {
                 if(res.dot) {
                     print(res.dot);
 
-                    highlightedLines--;
+                    hlManager.highlightedLines--;
                     updateHighlighting();
                     //removeHighlightedLine();
 
-                    if(highlightedLines <= 0) changeState(STATE_LOADED_START);
+                    if(hlManager.highlightedLines <= 0) changeState(STATE_LOADED_START);
                     else changeState(STATE_LOADED);
 
                 } else changeState(STATE_LOADED_START); //should never reach this code because the button should be disabled when we reach the start
@@ -524,11 +526,11 @@ $(() =>  {
                 if(res.dot) {   //we haven't reached the end yet
                     print(res.dot);
 
-                    highlightedLines++;
+                    hlManager.highlightedLines++;
                     updateHighlighting();
                     //addHighlightedLine();
 
-                    if(highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
+                    if(hlManager.highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
                     else changeState(STATE_LOADED);
 
                 } else changeState(STATE_LOADED_END); //should never reach this code because the button should be disabled when we reach the end
@@ -551,10 +553,10 @@ $(() =>  {
                 if(res.dot) {
                     print(res.dot);
 
-                    highlightedLines = 0;
+                    hlManager.highlightedLines = 0;
                     const lines = q_algo.val().split('\n');
                     for(let i = 0; i < lines.length; i++) {
-                        if(isOperation(lines[i])) highlightedLines++;
+                        if(isOperation(lines[i])) hlManager.highlightedLines++;
                     }
                     updateHighlighting()
                 }
@@ -586,7 +588,7 @@ $(() =>  {
                             if(res.dot) {
                                 print(res.dot);
 
-                                highlightedLines++;
+                                hlManager.highlightedLines++;
                                 updateHighlighting();
 
                                 const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
@@ -609,7 +611,7 @@ $(() =>  {
         pauseDia = true;
         runDia = false;
 
-        if(highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
+        if(hlManager.highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
         else changeState(STATE_LOADED);
     });
      */
@@ -618,27 +620,11 @@ $(() =>  {
 
 
 //################### LINE HIGHLIGHTING ##################################################################################################################
-let linesForHighllighting = [];
-let operationOffset = 0;        //on which line the QASM-header ends - next line is the first operation
-let highlightedLines = 0;
-
-function resetHighlighting() {
-    highlightedLines = 0;
-
-    linesForHighllighting = q_algo.val().split('\n');
-    for(let i = 0; i < linesForHighllighting.length; i++) {
-        if(isOperation(linesForHighllighting[i])) {
-            linesForHighllighting[i] = lineHighlight;
-            if(operationOffset < 0) operationOffset = i-1;  //can never be negative because the file has to start with the QASM- or Real-header
-        } else linesForHighllighting[i] = "";
-    }
-}
+const hlManager = new HighlightManager(highlighting, isOperation);
 
 function updateHighlighting() {
-
-    const text = q_algo.val();
-    const highlightedText = applyHighlights(text);
-    highlighting.html(highlightedText);
+    //hlManager.updateHighlighting();
+    hlManager.setHighlights();
 }
 
 /**Checks if the given QASM- or Real-line is an operation
@@ -668,44 +654,6 @@ function isOperation(line) {
             return false;
         }
     } else return false;
-}
-
-function applyHighlights(text) {
-    if(highlightedLines === 0) {
-        const lines = text.split('\n');
-        lines[0] = lineHighlight;   //just highlight the first line giving information about the format
-        text = "";
-        lines.forEach(l => {
-            text += l;
-            text += "\n";
-        });
-    }
-
-    const lines = text.split('\n');
-    let opLines = 0;
-    for(let i = 0; i < lines.length-1; i++) {
-        if(isOperation(lines[i])) {
-            if(++opLines === highlightedLines) {
-                lines[i] = lineHighlight;
-                break;  //so no non-operation lines get highlighted after the last (highlighted) operation-line
-            }
-        }
-        if(opLines <= highlightedLines) lines[i] = lineHighlight;
-        else break;
-    }
-
-    text = "";
-    lines.forEach(l => {
-       text += l;
-       text += "\n";
-    });
-
-    //if (isIE) {
-    //    // IE wraps whitespace differently in a div vs textarea, this fixes it
-    //    text = text.replace(/ /g, ' <wbr>');
-    //}
-
-    return text;
 }
 
 /*
@@ -741,17 +689,15 @@ function _numOfDigits(num) {
 }
 
 function setLineNumbers() {
-    const lineNumbers = $('#line_numbers');
     const digits = _numOfDigits(numOfOperations);
 
     const lines = q_algo.val().split('\n');
     let num = 0;
     for(let i = 0; i < lines.length; i++) {
-        if(i <= operationOffset) lines[i] = "";
+        if(i <= hlManager.offset) lines[i] = "";
         else {
             if(isOperation(lines[i])) {
                 num++;
-                //const num = (i - operationOffset);
                 const numDigits = _numOfDigits(num);
 
                 let space = "";
@@ -764,7 +710,7 @@ function setLineNumbers() {
 
     let text = "";
     lines.forEach(l => text += l + "\n");
-    lineNumbers.html(text);
+    line_numbers.html(text);
 }
 
 
@@ -775,35 +721,42 @@ function setLineNumbers() {
 function handleScroll() {
     const scrollTop = q_algo.scrollTop();
 
-    $('#backdrop').scrollTop(scrollTop);
-    $('#line_numbers').scrollTop(scrollTop);
+    backdrop.scrollTop(scrollTop);
+    line_numbers.scrollTop(scrollTop);
 
     //const scrollLeft = q_algo.scrollLeft();
     //console.log(scrollLeft);
     //$('#backdrop').scrollLeft(scrollLeft);
 }
 
-let oldInput;   //needed to reset input if an illegal change was made
+let oldInput;   //needed to reset input if an illegal change was made   //todo can be removed if hlManager works
 function handleInput() {
-    const highlighting = $('#highlighting');
-
-    if(highlightedLines > 0) {  //if nothing is highlighted yet, the user may also edit the lines before the first operation
+    //todo algorithm no longer works because of comments
+    if(hlManager.highlightedLines > 0) {  //if nothing is highlighted yet, the user may also edit the lines before the first operation
         //check if a highlighted line changed, if yes abort the changes
-        const linesNew = q_algo.val().split('\n');
-        const linesOld = oldInput.split('\n');
-        for(let i = 0; i <= highlightedLines + operationOffset; i++) {
-            if(linesNew.length <= i || linesNew[i] !== linesOld[i]) {   //illegal change!
+        const curLines = q_algo.val().split('\n');
+        const lastLineWithHighlighting = hlManager.offset + hlManager.highlightedLines + hlManager.nopsInHighlighting;
+        if(curLines.length < lastLineWithHighlighting) { //illegal change because at least the last line has been deleted
+            q_algo.val(oldInput);   //reset algorithm to old input
+            showError("You are not allowed to change already processed lines!");
+            return;
+        }
+
+        const oldLines = oldInput.split('\n');
+        for(let i = hlManager.offset; i <= lastLineWithHighlighting; i++) {
+            //non-highlighted lines may change, because they are no operations
+            if(hlManager.isHighlighted(i) && curLines[i] !== oldLines[i]) {   //illegal change!
                 q_algo.val(oldInput);   //reset algorithm to old input
                 showError("You are not allowed to change already processed lines!");
                 return;
             }
         }
     }
+
     oldInput = q_algo.val();  //changes are legal so they are "saved"
 
-    const highlightedText = applyHighlights(q_algo.val());
-    highlighting.html(highlightedText);
-
+    hlManager.text = oldInput;
+    updateHighlighting();
     setLineNumbers();
 }
 
@@ -833,7 +786,7 @@ function endDia() {
     pauseDia = true;
     runDia = false;
 
-    if(highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
+    if(hlManager.highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
     else changeState(STATE_LOADED);
     automatic.text("\u25B6");   //play-symbol in unicode
     //document.getElementById("stop").disabled = false;   //enable stop button
@@ -848,9 +801,11 @@ function print(dot) {
         );
     }
 
+    /*
     const graph = d3.select("#qdd_div").graphviz({
         width: "70%",     //make it smaller so we have space around where we can scroll through the page - also the graphs are more high than wide so is shouldn't be a problem
         height: svgHeight,
         fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
     }).renderDot(dot);
+    */
 }
