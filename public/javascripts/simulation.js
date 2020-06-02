@@ -425,7 +425,7 @@ function loadAlgorithm(format = algoFormat, reset = false) {
                 if(reset) {
                     hlManager.resetHighlighting(q_algo.val());
                     hlManager.highlightedLines = opNum;
-                    updateHighlighting();
+                    hlManager.setHighlights();
                 }
 
                 numOfOperations = res.data;  //number of operations the algorithm has
@@ -479,7 +479,7 @@ $(() =>  {
             success: (res) => {
                 if(res.dot) {
                     print(res.dot);
-                    hlManager.highlightOnlyStart();
+                    hlManager.initialHighlighting();
                 }
                 changeState(STATE_LOADED_START);
             }
@@ -609,10 +609,6 @@ $(() =>  {
 //################### LINE HIGHLIGHTING ##################################################################################################################
 const hlManager = new HighlightManager(highlighting, isOperation);
 
-function updateHighlighting() {
-    hlManager.setHighlights();
-}
-
 /**Checks if the given QASM- or Real-line is an operation
  *
  * @param line of an algorithm
@@ -641,22 +637,6 @@ function isOperation(line) {
         }
     } else return false;
 }
-
-/*
-function addHighlightedLine() {
-    const highlighting = $('#highlighting');
-    highlighting.html(highlighting.html() + "\n<mark>      a            </mark>");
-
-    console.log("Log: " + highlighting.html());
-}
-
-function removeHighlightedLine() {
-    const highlighting = $('#highlighting');
-    const lines = highlighting.html().split('\n');
-    const end = lines.lastIndexOf("\n");
-    highlighting.html(lines.substring(0, end));
-}
-*/
 
 function bindEvents() {
     q_algo.on({

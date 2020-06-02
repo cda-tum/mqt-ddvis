@@ -84,9 +84,13 @@ class HighlightManager {
         //todo reset content of div?
     }
 
-    highlightOnlyStart() {
+    initialHighlighting() {
         this._highlightedOps = 0;
-        this.setHighlights();
+        this._processedText = "";   //just highlight the first line giving information about the format
+        this._pendingText = "";
+        this._hl.forEach(l => this._pendingText += "\n");
+        this._nopsInHighlighting = 0;
+        this._div.html(lineHighlight + this._pendingText);  //special case so not the usual updateDiv()
     }
 
     increaseHighlighting() {
@@ -124,7 +128,15 @@ class HighlightManager {
         this._addPendingLine();
         this._highlightedOps--;
 
-        this._updateDiv();
+        if(this._highlightedOps === 0) {
+            this.initialHighlighting();
+            /* //more efficient approach, because we don't have to iterate over the whole hl, but it would need more testing I think
+            this._nopsInHighlighting = 0;
+            this._pendingText += this._processedText;
+            this._processedText = "";
+            this._div.html(lineHighlight + this._pendingText);  //special case so not the usual updateDiv()
+            */
+        } else this._updateDiv();
     }
 
     highlightEverything() {
@@ -141,17 +153,11 @@ class HighlightManager {
 
         this._pendingText = "";
         this._updateDiv();
-        console.log(this._highlightedOps + " | " + this._nopsInHighlighting);
     }
 
     setHighlights() {
         if(this._highlightedOps === 0) {  //special case for "no highlighting yet"
-            this._processedText = "";   //just highlight the first line giving information about the format
-            this._hl.forEach(l => {
-                this._pendingText += "\n";
-            });
-            this._nopsInHighlighting = 0;    //todo or should it be 1? it is a nop-line, but it is highlighted nonetheless
-            this._div.html(lineHighlight + this._pendingText);  //special case so not the usual updateDiv()
+            this.initialHighlighting();
 
         } else {
             this._processedText = "";
