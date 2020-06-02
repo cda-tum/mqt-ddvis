@@ -197,8 +197,8 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     } catch(std::exception& e) {
         std::cout << "Exception while loading the algorithm: " << e.what() << std::endl;
         //reset();  //todo reload old input
-        std::string err = "Invalid Algorithm! ";// + e.what();
-        Napi::Error::New(env, err).ThrowAsJavaScriptException();
+        std::string err("");//e.what());    //todo e.what() gives unreadable characters?
+        Napi::Error::New(env, "Invalid Algorithm! " + err).ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
     }
 
@@ -325,8 +325,8 @@ Napi::Value QDDVis::ToEnd(const Napi::CallbackInfo& info) {
     if(!ready) {
         Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
         return Napi::Boolean::New(env, false);
-    } else if (qc->empty()) {   //todo should never be reached since ready must be false if there is no algorithm (or is an empty algorithm valid and normally loaded?)
-        return Napi::Boolean::New(env, false);  //todo ask if in this case any error should be thrown or if an empty algorithm is okay
+    } else if (qc->empty()) {
+        return Napi::Boolean::New(env, false);
     }
 
     if(atEnd) return Napi::Boolean::New(env, false); //nothing changed
@@ -352,9 +352,9 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     if(!ready) {
         Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
-        return Napi::Boolean::New(env, false);
-    } else if (qc->empty()) {   //todo should never be reached since ready must be false if there is no algorithm (or is an empty algorithm valid and normally loaded?)
-        return Napi::Boolean::New(env, false);  //todo ask if in this case any error should be thrown or if an empty algorithm is okay
+        return Napi::String::New(env, "-1");
+    } else if (qc->empty()) {
+        return Napi::String::New(env, "");
     }
 
     std::stringstream ss{};

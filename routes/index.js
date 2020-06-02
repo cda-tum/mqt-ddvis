@@ -55,7 +55,8 @@ router.post('/load', (req, res) => {
             else res.status(400).json({ msg: "Error while loading the algorithm!" });
 
         } catch(err) {
-            res.status(400).json({ msg: err.message });
+            const retry = err.message.startsWith("Invalid Algorithm!"); //if the algorithm is invalid, we need to send the last valid algorithm
+            res.status(400).json({ msg: err.message, retry: retry});
         }
     } else {
         console.log("ERROR! Ip not found!");

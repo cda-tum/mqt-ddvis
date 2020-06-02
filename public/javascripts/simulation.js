@@ -182,20 +182,19 @@ function loadReal() {
     algoFormat = REAL_FORMAT;
 }
 
+const deutschAlgorithm =    "OPENQASM 2.0;\n" +
+                            "include \"qelib1.inc\";\n" +
+                            "\n" +
+                            "qreg q[2];\n" +
+                            "creg c[2];\n" +
+                            "\n" +
+                            "x q[1];\n" +
+                            "h q[0];\n" +
+                            "h q[1];\n" +
+                            "cx q[0],q[1];\n" +
+                            "h q[0];\n";
 function loadDeutsch() {
-    q_algo.val(
-        "OPENQASM 2.0;\n" +
-        "include \"qelib1.inc\";\n" +
-        "\n" +
-        "qreg q[2];\n" +
-        "creg c[2];\n" +
-        "\n" +
-        "x q[1];\n" +
-        "h q[0];\n" +
-        "h q[1];\n" +
-        "cx q[0],q[1];\n" +
-        "h q[0];\n"
-    );
+    q_algo.val(deutschAlgorithm);
 
     loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
@@ -380,81 +379,85 @@ function dropHandler(event) {
 
 let algoFormat = FORMAT_UNKNOWN;
 let numOfOperations = 0;    //number of operations the whole algorithm has
+let lastValidAlgorithm = deutschAlgorithm;  //initialized with an arbitrary valid algorithm (deutsch: because it was available and it is short)
 /**Loads the algorithm placed inside the textArea #q_algo
  *
  * @param format the format in which the algorithm is written; the only occasion where this parameter is not set
  *        is when leaving the textArea after editing, but in this case the format didn't change so the old algoFormat is used
  * @param reset whether a new simulation needs to be started after loading; default false because again the only occasion
  *        it is not set is after editing, but there we especially don't want to reset
+ * @param algorithm only needed if the lastValidAlgorithm should be sent again because the algorithm in q_algo is invalid
  */
-function loadAlgorithm(format = algoFormat, reset = false) {
-        const startTimeStemp = performance.now();
-    //$(() => {
-        //const basis_states = $('#basis_states').val();
-        //console.log("Basis states: " + basis_states);
-        let algo = q_algo.val();
-        const opNum = reset ?
-            parseInt($('#startLine').val()) :
-            hlManager.highlightedLines;   //we want to continue simulating after the last processed line, which is after the highlighted ones
+function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
+    const startTimeStemp = performance.now();
+    let algo = algorithm || q_algo.val();   //usually q_algo.val() is taken
+    const opNum = reset ?
+        parseInt($('#startLine').val()) :
+        hlManager.highlightedLines;   //we want to continue simulating after the last processed line, which is after the highlighted ones
 
-        if(format === FORMAT_UNKNOWN) {
-            //find out of which format the input text is
-            if(algo.startsWith("OPENQASM")) format = QASM_FORMAT;
-            else format = REAL_FORMAT;      //right now only these two formats are supported, so if it is not QASM, it must be Real
-        }
+    if(format === FORMAT_UNKNOWN) {
+        //find out of which format the input text is
+        if(algo.startsWith("OPENQASM")) format = QASM_FORMAT;
+        else format = REAL_FORMAT;      //right now only these two formats are supported, so if it is not QASM, it must be Real
+    }
 
-        if(algo) {
-            algo = preformatAlgorithm(algo, format);
-            const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
+    if(algo) {
+        algo = preformatAlgorithm(algo, format);
+        const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
 
-            let flag = true;
-            /*
-            const waitFunc = () => {
-                if(flag) {
-                    console.log("still waiting");
-                    setTimeout(() => waitFunc(), 100);
-                }
-            };
-            setTimeout(() => waitFunc(), 100);
-            */
+        let flag = true;
+        /*
+        const waitFunc = () => {
+            if(flag) {
+                console.log("still waiting");
+                setTimeout(() => waitFunc(), 100);
+            }
+        };
+        setTimeout(() => waitFunc(), 100);
+        */
 
-            call.done((res) => {
-                flag = false;   //todo also set on error if used
+        call.done((res) => {
+            flag = false;   //todo also set on error if used
 
-                algoFormat = format;
-                oldInput = algo;
+            algoFormat = format;
+            oldInput = algo;
+            lastValidAlgorithm = algo;  //algorithm in q_algo was valid if no error occured
 
-                if(reset) {
-                    hlManager.resetHighlighting(q_algo.val());
-                    hlManager.highlightedLines = opNum;
-                    hlManager.setHighlights();
-                } else hlManager.text = q_algo.val();
+            if(reset) {
+                hlManager.resetHighlighting(q_algo.val());
+                hlManager.highlightedLines = opNum;
+                hlManager.setHighlights();
+            } else hlManager.text = q_algo.val();
 
-                numOfOperations = res.data;  //number of operations the algorithm has
-                const digits = _numOfDigits(numOfOperations);
-                const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
-                q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
+            numOfOperations = res.data;  //number of operations the algorithm has
+            const digits = _numOfDigits(numOfOperations);
+            const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
+            q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
 
-                const width = parseInt(drop_zone.css('width')) - margin - 2 * parseInt(drop_zone.css('border'));
-                q_algo.css('width', width);
+            const width = parseInt(drop_zone.css('width')) - margin - 2 * parseInt(drop_zone.css('border'));
+            q_algo.css('width', width);
 
-                setLineNumbers();
+            setLineNumbers();
 
-                print(res.dot);
+            print(res.dot);
 
-                //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
-                if(opNum > numOfOperations) $('#startLine').val(numOfOperations);
 
-                if(opNum === 0) changeState(STATE_LOADED_START);
-                else if(opNum === numOfOperations) changeState(STATE_LOADED_END);
-                else changeState(STATE_LOADED);
-            });
-            call.fail((res) => {
-                showResponseError(res, "Couldn't connect to the server.");
-            });
-            console.log("Loading and processing " + opNum + " lines took " + (performance.now() - startTimeStemp) + "ms");
-        }
-    //});
+            //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
+            if(opNum > numOfOperations) $('#startLine').val(numOfOperations);
+
+            if(opNum === 0) changeState(STATE_LOADED_START);
+            else if(opNum === numOfOperations) changeState(STATE_LOADED_END);
+            else changeState(STATE_LOADED);
+        });
+        call.fail((res) => {
+            if(res.responseJSON && res.responseJSON.retry && !algorithm) {
+                console.log("TesT");
+                loadAlgorithm(format, reset, lastValidAlgorithm);
+            }
+            showResponseError(res, "Couldn't connect to the server.");
+        });
+        console.log("Loading and processing " + opNum + " lines took " + (performance.now() - startTimeStemp) + "ms");
+    }
 }
 
 function preformatAlgorithm(algo, format) {
