@@ -461,15 +461,62 @@ function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
 }
 
 function preformatAlgorithm(algo, format) {
-
+    let setQAlgo = false;
     if(!algo.endsWith("\n")) {
-       algo = algo + "\n";
-       q_algo.val(algo);
+        algo = algo + "\n";
+        setQAlgo = true;
     }
 
-    //todo? every operation needs to be in a separate line
-    //if(format === ...
+    //make sure every operation is in a separate line
+    if(format === QASM_FORMAT) {
+        let temp = "";
+        const lines = algo.split('\n');
+        for(const line of lines) {
+            //"\n" needs to be added separately because it was removed while splitting
 
+            if(isOperation(line, format)) {
+                let l = line;
+                while(l.length !== 0) {
+                    const i = l.indexOf(';') + 1; //we need the index after the first semicolon
+                    const op =  l.substring(0, i);
+                    l = l.substring(i);
+
+                    //special case for comments in the same line as an operation
+                    if(isComment(l, format)) {
+                        temp += op + l + "\n";  //the comment is allowed to stay in the same line
+                        break;
+                    } else temp += op + "\n";    //insert the operation with the added newLine
+                    l = l.trim();
+                }
+            } else {
+                temp += line + "\n";
+            }
+            /*
+            if(isComment(line, format)) temp += line + "\n"; //comments may have ; in the middle - it would even break the algorithm if a comment would be separated
+            else if(line.trim().length === 0) temp += line + "\n";
+            else {
+                let l = line;
+                while(l.length !== 0) {
+                    const i = l.indexOf(';') + 1; //we need the index after the first semicolon
+                    temp += l.substring(0, i) + "\n";
+                    l = l.substring(i).trim();
+                    if(isComment(l, format)) {
+                        
+                        break;
+                    }
+                    //if(sub.length === 0) break; //stop if no more
+                    //else l = sub;
+                }
+            }
+
+             */
+        }
+        algo = temp;
+        setQAlgo = true;
+    }
+    //for REAL_FORMAT this is inherently the case, because \n is used to separate operations
+
+    if(setQAlgo) q_algo.val(algo);
     return algo;
 }
 
@@ -617,21 +664,22 @@ const hlManager = new HighlightManager(highlighting, isOperation);
 /**Checks if the given QASM- or Real-line is an operation
  *
  * @param line of an algorithm
+ * @param format of the line we check
  */
-function isOperation(line) {
+function isOperation(line, format = algoFormat) {
     if(line) {
-        if(algoFormat === QASM_FORMAT) {
+        if(format === QASM_FORMAT) {
             if( line.trim() === "" ||
                 line.includes("OPENQASM") ||
                 line.includes("include") ||
                 line.includes("reg") ||
-                line.startsWith("//")   //comment
+                isComment(line, format)
             ) return false;
             return true;
 
-        } else if(algoFormat === REAL_FORMAT) {
+        } else if(format === REAL_FORMAT) {
             if( line.startsWith(".") ||   //all non-operation lines start with "."
-                line.startsWith("#")    //comment
+                isComment(line, format)
             ) return false;
             return true;
 
@@ -641,6 +689,15 @@ function isOperation(line) {
             return false;
         }
     } else return false;
+}
+
+function isComment(line, format) {
+    if(format === QASM_FORMAT) return line.trimStart().startsWith("//");
+    else if(format === REAL_FORMAT) return line.trimStart().startsWith("#");
+    else {
+        console.log("Format not recognized");
+        return true;
+    }
 }
 
 function bindEvents() {
