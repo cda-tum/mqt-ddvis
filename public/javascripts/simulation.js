@@ -479,8 +479,7 @@ $(() =>  {
             success: (res) => {
                 if(res.dot) {
                     print(res.dot);
-                    hlManager.highlightedLines = 0;
-                    updateHighlighting();
+                    hlManager.highlightOnlyStart();
                 }
                 changeState(STATE_LOADED_START);
             }
@@ -500,10 +499,7 @@ $(() =>  {
                 if(res.dot) {
                     print(res.dot);
 
-                    hlManager.highlightedLines--;
-                    updateHighlighting();
-                    //removeHighlightedLine();
-
+                    hlManager.decreaseHighlighting();
                     if(hlManager.highlightedLines <= 0) changeState(STATE_LOADED_START);
                     else changeState(STATE_LOADED);
 
@@ -526,9 +522,7 @@ $(() =>  {
                 if(res.dot) {   //we haven't reached the end yet
                     print(res.dot);
 
-                    hlManager.highlightedLines++;
-                    updateHighlighting();
-                    //addHighlightedLine();
+                    hlManager.increaseHighlighting();
 
                     if(hlManager.highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
                     else changeState(STATE_LOADED);
@@ -552,13 +546,7 @@ $(() =>  {
             success: (res) => {
                 if(res.dot) {
                     print(res.dot);
-
-                    hlManager.highlightedLines = 0;
-                    const lines = q_algo.val().split('\n');
-                    for(let i = 0; i < lines.length; i++) {
-                        if(isOperation(lines[i])) hlManager.highlightedLines++;
-                    }
-                    updateHighlighting()
+                    hlManager.highlightEverything();
                 }
                 changeState(STATE_LOADED_END);
             }
@@ -588,8 +576,7 @@ $(() =>  {
                             if(res.dot) {
                                 print(res.dot);
 
-                                hlManager.highlightedLines++;
-                                updateHighlighting();
+                                hlManager.increaseHighlighting();
 
                                 const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
                                 setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
@@ -623,7 +610,6 @@ $(() =>  {
 const hlManager = new HighlightManager(highlighting, isOperation);
 
 function updateHighlighting() {
-    //hlManager.updateHighlighting();
     hlManager.setHighlights();
 }
 
@@ -729,13 +715,12 @@ function handleScroll() {
     //$('#backdrop').scrollLeft(scrollLeft);
 }
 
-let oldInput;   //needed to reset input if an illegal change was made   //todo can be removed if hlManager works
+let oldInput;   //needed to reset input if an illegal change was made
 function handleInput() {
-    //todo algorithm no longer works because of comments
     if(hlManager.highlightedLines > 0) {  //if nothing is highlighted yet, the user may also edit the lines before the first operation
         //check if a highlighted line changed, if yes abort the changes
         const curLines = q_algo.val().split('\n');
-        const lastLineWithHighlighting = hlManager.offset + hlManager.highlightedLines + hlManager.nopsInHighlighting;
+        const lastLineWithHighlighting = hlManager.highlightedLines + hlManager.nopsInHighlighting;
         if(curLines.length < lastLineWithHighlighting) { //illegal change because at least the last line has been deleted
             q_algo.val(oldInput);   //reset algorithm to old input
             showError("You are not allowed to change already processed lines!");
@@ -755,8 +740,8 @@ function handleInput() {
 
     oldInput = q_algo.val();  //changes are legal so they are "saved"
 
-    hlManager.text = oldInput;
-    updateHighlighting();
+    hlManager.text = q_algo.val();
+    //updateHighlighting();
     setLineNumbers();
 }
 

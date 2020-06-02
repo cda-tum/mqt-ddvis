@@ -1,8 +1,11 @@
 
 let lineHighlight = "<mark>                                                                                                                                  </mark>";
+//let lineHighlight = "<mark>      </mark>";
+
 function updateLineHighlight(newLH) {
     lineHighlight = newLH;
 }
+
 
 class HighlightManager {
     _div;
@@ -10,8 +13,10 @@ class HighlightManager {
     _hl;    //an array that tells us for each line if it is an operation or not
     _operationOffset = 0;
     _highlightedOps = 0;      //how many lines with Operations are highlighted
-    _nopsInHighlighing = 0;   //how many lines of Non-Operations (comments, header) are between the first line
+    _nopsInHighlighting = 0;   //how many lines of Non-Operations (comments, header) are between the first line
                               // and the last highlighted one
+    _processedText = "";
+    _pendingText = "";
 
     constructor(highlightDiv, isOperation) {
         if(highlightDiv) this._div = highlightDiv;
@@ -27,6 +32,7 @@ class HighlightManager {
         this._operationOffset = -1;
         const lines = text.split('\n');
         this._hl = [];
+        this._p
         for(let i = 0; i < lines.length; i++) {
             if(this._operationOffset < 0) {             //operation offset hasn't been found yet
                 if(this._isOperation(lines[i])) {
@@ -37,6 +43,12 @@ class HighlightManager {
                 } else this._hl.push(false);
 
             } else this._hl.push(this._isOperation(lines[i]));
+        }
+
+        this._pendingText = "";
+        const pendingLines = lines.length - (this._highlightedOps + this._nopsInHighlighting);
+        for(let i = 0; i < pendingLines; i++) {
+            this._pendingText += "\n";
         }
     }
 
@@ -53,34 +65,97 @@ class HighlightManager {
     }
 
     get nopsInHighlighting() {
-        return this._nopsInHighlighing;
+        return this._nopsInHighlighting;
     }
 
     isHighlighted(i) {
-        if(i < this._highlightedOps + this._nopsInHighlighing)
+        if(i < this._highlightedOps + this._nopsInHighlighting)
             return this._hl[i];
         else return false;  //line is definitely not highlighted (yet)
     }
 
     resetHighlighting(newText) {
         this._highlightedOps = 0;
-        this._nopsInHighlighing = 0;
+        this._nopsInHighlighting = 0;
+        this._processedText = "";
+
         this.text = newText;
 
         //todo reset content of div?
     }
 
+    highlightOnlyStart() {
+        this._highlightedOps = 0;
+        this.setHighlights();
+    }
+
+    increaseHighlighting() {
+        //debugger
+        //add possible nops between the highlighting and next operation
+        for(let i = this._highlightedOps + this._nopsInHighlighting;
+            i < this._hl.length && !this._hl[i];    //abort as soon as we have found the next operation
+            i++) {
+            this._addProcessedLine();
+            this._removePendingLine();
+
+            this._nopsInHighlighting++;
+        }
+
+        this._addProcessedLine(lineHighlight);
+        this._removePendingLine();
+        this._highlightedOps++;
+
+        this._updateDiv();
+    }
+
+
+    decreaseHighlighting() {
+        //remove possible nops inside the highlighting
+        for(let i = this._highlightedOps + this._nopsInHighlighting - 1; //-1 because we want the last highlighted line, not the potential next one
+            i >= 0 && !this._hl[i];    //abort as soon as we have found the last operation
+            i--) {
+            this._removeProcessedLine();
+            this._addPendingLine();
+
+            this._nopsInHighlighting--;
+        }
+
+        this._removeProcessedLine();
+        this._addPendingLine();
+        this._highlightedOps--;
+
+        this._updateDiv();
+    }
+
+    highlightEverything() {
+        //hl.length-1 because the last line is always \n and has nothing to do with the algorithm
+        for(let i = this._highlightedOps + this._nopsInHighlighting; i < this._hl.length-1; i++) {
+            if(this._hl[i]) {
+                this._addProcessedLine(lineHighlight);
+                this._highlightedOps++;
+            } else {
+                this._addProcessedLine();
+                this._nopsInHighlighting++;
+            }
+        }
+
+        this._pendingText = "";
+        this._updateDiv();
+        console.log(this._highlightedOps + " | " + this._nopsInHighlighting);
+    }
+
     setHighlights() {
-        let text = "";
         if(this._highlightedOps === 0) {  //special case for "no highlighting yet"
-            text = lineHighlight;   //just highlight the first line giving information about the format
+            this._processedText = "";   //just highlight the first line giving information about the format
             this._hl.forEach(l => {
-                text += l;
-                text += "\n";
+                this._pendingText += "\n";
             });
-            this._nopsInHighlighing = 0;    //todo or should it be 1? it is a nop-line, but it is highlighted nonetheless
+            this._nopsInHighlighting = 0;    //todo or should it be 1? it is a nop-line, but it is highlighted nonetheless
+            this._div.html(lineHighlight + this._pendingText);  //special case so not the usual updateDiv()
 
         } else {
+            this._processedText = "";
+            this._pendingText = "";
             let opLines = 0;
             let nopLines = 0;
             let i;
@@ -88,17 +163,42 @@ class HighlightManager {
                 if(opLines < this._highlightedOps) {  //highlighting may still be applied
                     if(this._hl[i]) {   //this is a line with an operation
                         opLines++;
-                        text += lineHighlight;
+                        this._processedText += lineHighlight;
                     } //else this is a line without highlighting
                     else nopLines++;
-                }
-                text += "\n";
+                    this._processedText += "\n";
+                } else this._pendingText += "\n";
             }
 
-            this._nopsInHighlighing = nopLines;
+            this._nopsInHighlighting = nopLines;
+            this._updateDiv();
         }
 
-        this._div.html(text);
+    }
+
+    _updateDiv() {
+        this._div.html(this._processedText + this._pendingText);
+    }
+
+    _addProcessedLine(line) {
+        line = line || "";
+        this._processedText += line + "\n";
+    }
+
+    _removeProcessedLine() {
+        //length-1 would start at the end, but we want to skip the \n at the very end which is interpreted as 1 character
+        const index = this._processedText.lastIndexOf("\n", this._processedText.length-2);
+        this._processedText = this._processedText.substring(0, index+1); //+1 because we still need the \n we found with lastIndexOf
+        //this needs to be done so "complicated" because we don't know if there is <mark>...</mark> between the last two
+        // "\n"s and we can't say for sure how long the mark is, because the size might have been updated in the meantime
+    }
+
+    _addPendingLine() {
+        this._pendingText += "\n";
+    }
+
+    _removePendingLine() {
+        this._pendingText = this._pendingText.substring(1); //remove one \n
     }
 
 }
