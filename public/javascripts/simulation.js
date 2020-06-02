@@ -52,7 +52,7 @@ function changeState(state) {
 
         case STATE_LOADED_END:
             enable = [ "drop_zone", "q_algo", "toStart", "prev", "ex_deutsch", "ex_alu", "stepDuration" ];
-            disable = [ "toEnd", "next", "automatic" ];   //don't disable q_algo because the user might want to add lines to the end //todo re-enable #next if lines are added?
+            disable = [ "toEnd", "next", "automatic" ];   //don't disable q_algo because the user might want to add lines to the end
             break;
 
         case STATE_SIMULATING:
@@ -114,6 +114,8 @@ function updateSizes() {
     const dzInnerWidth = parseInt(drop_zone.css('width')) - 2 * parseInt(drop_zone.css('border'));  //inner width of drop_zone
     const width = dzInnerWidth - q_algo.css('margin-left');
     q_algo.css('width', width);
+
+    //todo force rerender of q_algo
 
     if(dzInnerWidth > 0) {
         let lh = "<mark>";
@@ -763,11 +765,11 @@ function print(dot) {
         );
     }
 
-    /*
+
     const graph = d3.select("#qdd_div").graphviz({
         width: "70%",     //make it smaller so we have space around where we can scroll through the page - also the graphs are more high than wide so is shouldn't be a problem
         height: svgHeight,
         fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
     }).renderDot(dot);
-    */
+
 }

@@ -196,7 +196,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
 
     } catch(std::exception& e) {
         std::cout << "Exception while loading the algorithm: " << e.what() << std::endl;
-        reset();
+        //reset();  //todo reload old input
         std::string err = "Invalid Algorithm! ";// + e.what();
         Napi::Error::New(env, err).ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
@@ -360,7 +360,7 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
     std::stringstream ss{};
     try {
         std::cout << "inside getDD try" << std::endl;
-        dd->toDot(sim, ss, true);
+        dd->toDot2(sim, ss, true, false);
         std::cout << "inside getDD after toDot" << std::endl;
         std::string str = ss.str();
         return Napi::String::New(env, str);
