@@ -417,7 +417,7 @@ function loadAlgorithm(format = algoFormat, reset = false) {
             */
 
             call.done((res) => {
-                flag = false;   //todo also set on error
+                flag = false;   //todo also set on error if used
 
                 algoFormat = format;
                 oldInput = algo;
@@ -426,7 +426,7 @@ function loadAlgorithm(format = algoFormat, reset = false) {
                     hlManager.resetHighlighting(q_algo.val());
                     hlManager.highlightedLines = opNum;
                     hlManager.setHighlights();
-                }
+                } else hlManager.text = q_algo.val();
 
                 numOfOperations = res.data;  //number of operations the algorithm has
                 const digits = _numOfDigits(numOfOperations);
@@ -719,9 +719,6 @@ function handleInput() {
     }
 
     oldInput = q_algo.val();  //changes are legal so they are "saved"
-
-    hlManager.text = q_algo.val();
-    //updateHighlighting();
     setLineNumbers();
 }
 
