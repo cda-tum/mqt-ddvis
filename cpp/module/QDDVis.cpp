@@ -358,7 +358,19 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
     }
 
     std::stringstream ss{};
-    dd->toDot(sim, ss, true);
+    try {
+        std::cout << "inside getDD try" << std::endl;
+        dd->toDot(sim, ss, true);
+        std::cout << "inside getDD after toDot" << std::endl;
+        std::string str = ss.str();
+        return Napi::String::New(env, str);
 
-    return Napi::String::New(env, ss.str());
+    } catch(std::exception& e) {
+        std::cout << "Exception while getting the DD: " << e.what() << std::endl;
+        //reset();
+        std::string err = "Invalid getDD()-call! ";// + e.what();
+        Napi::Error::New(env, err).ThrowAsJavaScriptException();
+        return Napi::String::New(env, "-1");
+    }
+
 }

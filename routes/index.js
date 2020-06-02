@@ -45,9 +45,12 @@ router.post('/load', (req, res) => {
              */
 
             const numOfOperations = data.vis.load(qAlgo, format, opNum, reset);
+            console.log("loading fine [" + numOfOperations + "]");
             if(numOfOperations > -1) {
                 //sendFile(res, data.ip, numOfOperations);
+                console.log("before getDD");
                 sendDD(res, data.vis.getDD(), numOfOperations);
+                console.log("after getDD");
             }
             else res.status(400).json({ msg: "Error while loading the algorithm!" });
 
