@@ -210,6 +210,7 @@ const deutschAlgorithm =    "OPENQASM 2.0;\n" +
 function loadDeutsch() {
     q_algo.val(deutschAlgorithm);
 
+    algoChanged = true;
     loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
 
@@ -305,6 +306,7 @@ function loadAlu() {
         "x q[2];\n"
     );
 
+    algoChanged = true;
     loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
 
@@ -384,6 +386,7 @@ function dropHandler(event) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 q_algo.val(e.target.result);
+                algoChanged = true;
                 loadAlgorithm(format, true);    //since a completely new algorithm has been uploaded we have to throw away the old simulation data
             };
             reader.readAsBinaryString(file);
@@ -403,7 +406,9 @@ let lastValidAlgorithm = deutschAlgorithm;  //initialized with an arbitrary vali
  * @param algorithm only needed if the lastValidAlgorithm should be sent again because the algorithm in q_algo is invalid
  */
 function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
-    if(emptyAlgo) return;
+    if(emptyAlgo || !algoChanged) return;
+
+    console.log("called");
 
     const startTimeStemp = performance.now();
     let algo = algorithm || q_algo.val();   //usually q_algo.val() is taken
@@ -420,59 +425,65 @@ function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
     if(algo) {
         algo = preformatAlgorithm(algo, format);
         const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
-
-        let flag = true;
-        /*
-        const waitFunc = () => {
-            if(flag) {
-                console.log("still waiting");
-                setTimeout(() => waitFunc(), 100);
-            }
-        };
-        setTimeout(() => waitFunc(), 100);
-        */
-
         call.done((res) => {
-            flag = false;   //todo also set on error if used
-
-            algoFormat = format;
-            oldInput = algo;
-            lastValidAlgorithm = algo;  //algorithm in q_algo was valid if no error occured
-
-            if(reset) {
-                hlManager.resetHighlighting(q_algo.val());
-                hlManager.highlightedLines = opNum;
-                hlManager.setHighlights();
-            } else hlManager.text = q_algo.val();
-
-            numOfOperations = res.data;  //number of operations the algorithm has
-            const digits = _numOfDigits(numOfOperations);
-            const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
-            q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
-
-            const width = parseInt(drop_zone.css('width')) - margin - 2 * parseInt(drop_zone.css('border'));
-            q_algo.css('width', width);
-
-            setLineNumbers();
-
-            print(res.dot);
-
-
-            //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
-            if(opNum > numOfOperations) lineToGo.val(numOfOperations);
+            _loadingSuccess(res, algo, opNum, format, reset);
 
             if(opNum === 0) changeState(STATE_LOADED_START);
             else if(opNum === numOfOperations) changeState(STATE_LOADED_END);
             else changeState(STATE_LOADED);
         });
         call.fail((res) => {
+            //todo ask if this really is necessary or has any benefit, because disabling the buttons seems far more intuitive and cleaner
             if(res.responseJSON && res.responseJSON.retry && !algorithm) {
-                loadAlgorithm(format, reset, lastValidAlgorithm);
+                //loadAlgorithm(format, reset, lastValidAlgorithm);
+                const call2 = $.post("/load", { basisStates: null, algo: lastValidAlgorithm, opNum: opNum, format: format, reset: reset });
+                call2.done((res2) => {
+                    _loadingSuccess(res2, lastValidAlgorithm, opNum, format, reset);
+
+
+                    q_algo.prop('selectionStart', lastCursorPos);
+                    q_algo.prop('selectionEnd', lastCursorPos);
+                    document.getElementById("q_algo").focus();  //todo focus is there but not visible
+                });
+                // call2.fail((res2) => {
+                //    showResponseError(res, )
+                // });
             }
+            changeState(STATE_NOTHING_LOADED);
             showResponseError(res, "Couldn't connect to the server.");
+            //algoChanged = false;    //a little bit hacky but I think it is because of HTML that otherwise the focus would
+
         });
         console.log("Loading and processing " + opNum + " lines took " + (performance.now() - startTimeStemp) + "ms");
     }
+}
+
+function _loadingSuccess(res, algo, opNum, format, reset) {
+    algoFormat = format;
+    oldInput = algo;
+    algoChanged = false;
+    lastValidAlgorithm = algo;  //algorithm in q_algo was valid if no error occured
+
+    if(reset) {
+        hlManager.resetHighlighting(q_algo.val());
+        hlManager.highlightedLines = opNum;
+        hlManager.setHighlights();
+    } else hlManager.text = q_algo.val();
+
+    numOfOperations = res.data;  //number of operations the algorithm has
+    const digits = _numOfDigits(numOfOperations);
+    const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
+    q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
+
+    const width = parseInt(drop_zone.css('width')) - margin - 2 * parseInt(drop_zone.css('border'));
+    q_algo.css('width', width);
+
+    setLineNumbers();
+
+    print(res.dot);
+
+    //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
+    if(opNum > numOfOperations) lineToGo.val(numOfOperations);
 }
 
 function preformatAlgorithm(algo, format) {
@@ -482,16 +493,23 @@ function preformatAlgorithm(algo, format) {
     if(format === QASM_FORMAT) {
         let temp = "";
         const lines = algo.split('\n');
-        //debugger
         for(let i = 0; i < lines.length; i++) {
             const line = lines[i];
             //"\n" needs to be added separately because it was removed while splitting
             if(isOperation(line, format)) {
                 let l = line;
                 while(l.length !== 0) {
-                    const i = l.indexOf(';') + 1; //we need the index after the first semicolon
-                    const op =  l.substring(0, i);
-                    l = l.substring(i);
+                    const i = l.indexOf(';');
+                    if(i === -1) {  //no semicolon found -> we insert it (though this might lead to an error if the ;
+                                    // is at the start of a following line. but checking this would be complicated,
+                                    // because there could be arbitrary many empty lines or comments or other operations
+                                    // in between)
+                        temp += l + ";\n";  //insert the missing semicolon and the newline, then stop continue with the next line
+                        break;
+                    }
+
+                    const op =  l.substring(0, i+1);    //we need to include the semicolon, so it is i+1
+                    l = l.substring(i+1);
 
                     //special case for comments in the same line as an operation
                     if(isComment(l, format)) {
@@ -513,7 +531,6 @@ function preformatAlgorithm(algo, format) {
 
     //append an empty line at the end if there is none yet
     if(!algo.endsWith("\n")) {
-        console.log("appended \n");
         algo = algo + "\n";
         setQAlgo = true;
     }
@@ -914,8 +931,13 @@ function handleScroll() {
 }
 
 let oldInput;   //needed to reset input if an illegal change was made
+let algoChanged = false;
+let lastCursorPos = 0;
 function handleInput() {
+    lastCursorPos = q_algo.prop('selectionStart');
+
     emptyAlgo = false;
+    algoChanged = true;
     if(hlManager.highlightedLines > 0) {  //if nothing is highlighted yet, the user may also edit the lines before the first operation
         //check if a highlighted line changed, if yes abort the changes
         const curLines = q_algo.val().split('\n');
