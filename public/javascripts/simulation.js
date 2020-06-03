@@ -462,18 +462,15 @@ function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
 
 function preformatAlgorithm(algo, format) {
     let setQAlgo = false;
-    if(!algo.endsWith("\n")) {
-        algo = algo + "\n";
-        setQAlgo = true;
-    }
 
     //make sure every operation is in a separate line
     if(format === QASM_FORMAT) {
         let temp = "";
         const lines = algo.split('\n');
-        for(const line of lines) {
+        //debugger
+        for(let i = 0; i < lines.length; i++) {
+            const line = lines[i];
             //"\n" needs to be added separately because it was removed while splitting
-
             if(isOperation(line, format)) {
                 let l = line;
                 while(l.length !== 0) {
@@ -489,32 +486,23 @@ function preformatAlgorithm(algo, format) {
                     l = l.trim();
                 }
             } else {
-                temp += line + "\n";
+                temp += line;
+                //don't create a new line for the last line, because the way splitting works there was no \n at the end of the last line
+                if(i < lines.length-1) temp += "\n";
             }
-            /*
-            if(isComment(line, format)) temp += line + "\n"; //comments may have ; in the middle - it would even break the algorithm if a comment would be separated
-            else if(line.trim().length === 0) temp += line + "\n";
-            else {
-                let l = line;
-                while(l.length !== 0) {
-                    const i = l.indexOf(';') + 1; //we need the index after the first semicolon
-                    temp += l.substring(0, i) + "\n";
-                    l = l.substring(i).trim();
-                    if(isComment(l, format)) {
-                        
-                        break;
-                    }
-                    //if(sub.length === 0) break; //stop if no more
-                    //else l = sub;
-                }
-            }
-
-             */
         }
         algo = temp;
         setQAlgo = true;
     }
     //for REAL_FORMAT this is inherently the case, because \n is used to separate operations
+
+    //append an empty line at the end if there is none yet
+    if(!algo.endsWith("\n")) {
+        console.log("appended \n");
+        algo = algo + "\n";
+        setQAlgo = true;
+    }
+
 
     if(setQAlgo) q_algo.val(algo);
     return algo;
