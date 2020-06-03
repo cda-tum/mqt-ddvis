@@ -131,15 +131,21 @@ updateSizes();
 
 
 function validateStepDuration() {
-    const newVal = parseInt(step_duration.val());
-    if(0 <= newVal) {
-        stepDuration = newVal;
-        step_duration.val(newVal);  //needs to be done because of parseInt possible Floats are cut off
-
-    } else {
-        showError("Invalid number for step-duration: Only integers allowed!");
+    const input = step_duration.val();
+    if(input.includes(".") || input.includes(",")) {
+        showError("Floats are not allowed!\nPlease enter an unsigned integer instead.");
         step_duration.val(stepDuration);
-        return false;
+    } else {
+        const newVal = parseInt(input);
+        if(newVal && 0 <= newVal) {
+            stepDuration = newVal;
+            step_duration.val(newVal);  //needs to be done because of parseInt possible Floats are cut off
+
+        } else {
+            showError("Invalid number for step-duration: Only unsigned integers allowed!");
+            step_duration.val(stepDuration);
+            return false;
+        }
     }
 }
 
@@ -781,13 +787,26 @@ function gotoLine() {
 }
 
 function validateLineNumber() {
-    const num = parseInt(lineToGo.val());
-    if(num < 0) {
-        lineToGo.val("0");
-        showError("You can't go to a negative line number!\nPossible values: [0, " + numOfOperations + "]");
-    } else if(num > numOfOperations) {
-        lineToGo.val(numOfOperations);
-        showError("Line #" + num + " doesn't exist!\nPossible values: [0, " + numOfOperations + "]");
+    const lineNum = lineToGo.val();
+    if(lineNum.includes(".")) {
+        showError("Floats are not allowed! Only unsigned integers are valid.\n" +
+            "Possible values: [0, " + numOfOperations + "]");
+        lineToGo.val(0);
+    } else {
+        const num = parseInt(lineNum);
+        if(num) {
+            if(num < 0) {
+                showError("You can't go to a negative line number!\nPossible values: [0, " + numOfOperations + "]");
+                lineToGo.val(0);
+            } else if(num > numOfOperations) {
+                showError("Line #" + num + " doesn't exist!\nPossible values: [0, " + numOfOperations + "]");
+                lineToGo.val(numOfOperations);
+            }
+        } else {
+            showError("Your input is not a number!\n" +
+                "Please enter an unsigned integer of the interval [0, " + numOfOperations + "].");
+            lineToGo.val(0);
+        }
     }
 }
 
