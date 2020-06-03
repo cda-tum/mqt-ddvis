@@ -998,11 +998,9 @@ function print(dot) {
         );
     }
 
-
     const graph = d3.select("#qdd_div").graphviz({
         width: "70%",     //make it smaller so we have space around where we can scroll through the page - also the graphs are more high than wide so is shouldn't be a problem
         height: svgHeight,
         fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
     }).renderDot(dot);
-
 }

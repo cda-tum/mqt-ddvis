@@ -142,3 +142,7 @@ mark {
     color: transparent;
     background-color: #b1adad;
 }
+
+svg {
+    border: 2px solid #685972;
+}
