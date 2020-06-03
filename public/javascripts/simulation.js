@@ -1,13 +1,14 @@
 //################### J-QUERY ELEMENTS ###############################################################################################################
 
 const step_duration = $('#stepDuration');
-const automatic = $('#automatic');
+const algo_div = $('#algo_div');
 const drop_zone = $('#drop_zone');
 const backdrop = $('#backdrop');
 const line_numbers = $('#line_numbers');
 const highlighting = $('#highlighting');
 const q_algo = $('#q_algo');
-const algo_div = $('#algo_div');
+const automatic = $('#automatic');
+const lineToGo = $('#lineToGo');
 const qddText = $('#qdd_text');
 //todo also initialize all other selectors once?
 
@@ -36,29 +37,29 @@ function changeState(state) {
     switch (state) {
         case STATE_NOTHING_LOADED:
             enable = [ "drop_zone", "q_algo", "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
-            disable = [ "toStart", "prev", "automatic", "next", "toEnd" ];
+            disable = [ "toStart", "prev", "automatic", "next", "toEnd", "toLine" ];
             break;
 
         case STATE_LOADED:
-            enable = [  "drop_zone", "q_algo", "toStart", "prev", "automatic", "next", "toEnd",
+            enable = [  "drop_zone", "q_algo", "toStart", "prev", "automatic", "next", "toEnd", "toLine",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
             disable = [  ];
             break;
 
         case STATE_LOADED_START:
-            enable = [  "drop_zone", "q_algo", "automatic", "next", "toEnd", "ex_real", "ex_qasm",
+            enable = [  "drop_zone", "q_algo", "automatic", "next", "toEnd", "toLine", "ex_real", "ex_qasm",
                         "ex_deutsch", "ex_alu", "stepDuration" ];
             disable = [ "toStart", "prev" ];
             break;
 
         case STATE_LOADED_END:
-            enable = [ "drop_zone", "q_algo", "toStart", "prev", "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
+            enable = [ "drop_zone", "q_algo", "toStart", "prev", "toLine", "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
             disable = [ "toEnd", "next", "automatic" ];   //don't disable q_algo because the user might want to add lines to the end
             break;
 
         case STATE_SIMULATING:
             enable = [];
-            disable = [ "drop_zone", "q_algo", "toStart", "prev", "automatic", "next", "toEnd",
+            disable = [ "drop_zone", "q_algo", "toStart", "prev", "automatic", "next", "toEnd", "toLine",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
             break;
 
@@ -67,7 +68,7 @@ function changeState(state) {
             pauseDia = false;
             automatic.text("||");   //\u23F8
             enable = [ "automatic" ];
-            disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd",
+            disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "toLine",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
             break;
     }
@@ -398,11 +399,10 @@ let lastValidAlgorithm = deutschAlgorithm;  //initialized with an arbitrary vali
 function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
     if(emptyAlgo) return;
 
-
     const startTimeStemp = performance.now();
     let algo = algorithm || q_algo.val();   //usually q_algo.val() is taken
     const opNum = reset ?
-        parseInt($('#startLine').val()) :
+        0 : //parseInt(lineToGo.val()) :
         hlManager.highlightedLines;   //we want to continue simulating after the last processed line, which is after the highlighted ones
 
     if(format === FORMAT_UNKNOWN) {
@@ -453,7 +453,7 @@ function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
 
 
             //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
-            if(opNum > numOfOperations) $('#startLine').val(numOfOperations);
+            if(opNum > numOfOperations) lineToGo.val(numOfOperations);
 
             if(opNum === 0) changeState(STATE_LOADED_START);
             else if(opNum === numOfOperations) changeState(STATE_LOADED_END);
@@ -517,9 +517,9 @@ function preformatAlgorithm(algo, format) {
     return algo;
 }
 
-//################### API BUTTONS ##################################################################################################################
+//################### NAVIGATION ##################################################################################################################
 $(() =>  {
-    /* ######################################################### */
+    /* ######################################################### *
     $('#toStart').on('click', () => {
         changeState(STATE_SIMULATING);
         const call = $.ajax({
@@ -538,7 +538,7 @@ $(() =>  {
             changeState(STATE_LOADED);
         });
     });
-    /* ######################################################### */
+    /* ######################################################### *
     $('#prev').on('click', () => {
         changeState(STATE_SIMULATING);
         const call = $.ajax({
@@ -560,7 +560,7 @@ $(() =>  {
            changeState(STATE_LOADED);
         });
     });
-    /* ######################################################### */
+    /* ######################################################### *
     $('#next').on('click', () => {
         const startTimeStemp = performance.now();
         changeState(STATE_SIMULATING);
@@ -583,10 +583,13 @@ $(() =>  {
         });
         call.fail((res) => {
             showResponseError(res, "Going a step ahead failed!");
-            changeState(STATE_LOADED);
+            //determine our current position in the algorithm
+            if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
+            else if(hlManager.highlightedLines === numOfOperations) changeState(STATE_LOADED_END);
+            else changeState(STATE_LOADED);
         });
     });
-    /* ######################################################### */
+    /* ######################################################### *
     $('#toEnd').on('click', () => {
         changeState(STATE_SIMULATING);
         const call = $.ajax({
@@ -653,7 +656,140 @@ $(() =>  {
      */
 });
 
+function gotoStart() {
+    changeState(STATE_SIMULATING);
+    const call = $.ajax({
+        url: '/tostart',
+        contentType: 'application/json',
+        success: (res) => {
+            if(res.dot) {
+                print(res.dot);
+                hlManager.initialHighlighting();
+            }
+            changeState(STATE_LOADED_START);
+        }
+    });
+    call.fail((res) => {
+        showResponseError(res, "Going back to the start failed!");
+        //determine our current position in the algorithm
+        if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
+        else if(hlManager.highlightedLines === numOfOperations) changeState(STATE_LOADED_END);
+        else changeState(STATE_LOADED);
+    });
+}
 
+function goBack() {
+    changeState(STATE_SIMULATING);
+    const call = $.ajax({
+        url: '/prev',
+        contentType: 'application/json',
+        success: (res) => {
+            if(res.dot) {
+                print(res.dot);
+
+                hlManager.decreaseHighlighting();
+                if(hlManager.highlightedLines <= 0) changeState(STATE_LOADED_START);
+                else changeState(STATE_LOADED);
+
+            } else changeState(STATE_LOADED_START); //should never reach this code because the button should be disabled when we reach the start
+        }
+    });
+    call.fail((res) => {
+        showResponseError(res, "Going a step back failed!");
+        //determine our current position in the algorithm
+        if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
+        else if(hlManager.highlightedLines === numOfOperations) changeState(STATE_LOADED_END);
+        else changeState(STATE_LOADED);
+    });
+}
+
+function goForward() {
+    const startTimeStemp = performance.now();
+    changeState(STATE_SIMULATING);
+    const call = $.ajax({
+        url: '/next',
+        contentType: 'application/json',
+        success: (res) => {
+            if(res.dot) {   //we haven't reached the end yet
+                print(res.dot);
+
+                hlManager.increaseHighlighting();
+
+                if(hlManager.highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
+                else changeState(STATE_LOADED);
+
+            } else changeState(STATE_LOADED_END); //should never reach this code because the button should be disabled when we reach the end
+
+            console.log("Time spent: " + (performance.now() - startTimeStemp) + "ms");
+        }
+    });
+    call.fail((res) => {
+        showResponseError(res, "Going a step ahead failed!");
+        //determine our current position in the algorithm
+        if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
+        else if(hlManager.highlightedLines === numOfOperations) changeState(STATE_LOADED_END);
+        else changeState(STATE_LOADED);
+    });
+}
+
+function gotoEnd() {
+    changeState(STATE_SIMULATING);
+    const call = $.ajax({
+        url: '/toend',
+        contentType: 'application/json',
+        success: (res) => {
+            if(res.dot) {
+                print(res.dot);
+                hlManager.highlightEverything();
+            }
+            changeState(STATE_LOADED_END);
+        }
+    });
+    call.fail((res) => {
+        showResponseError(res, "Going to the end failed!");
+        //determine our current position in the algorithm
+        if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
+        else if(hlManager.highlightedLines === numOfOperations) changeState(STATE_LOADED_END);
+        else changeState(STATE_LOADED);
+    });
+}
+
+function gotoLine() {
+    changeState(STATE_SIMULATING);
+    const line = Math.min(parseInt(lineToGo.val()), numOfOperations);
+    const call = $.ajax({
+        url: '/toline?line=' + line,
+        contentType: 'application/json',
+        success: (res) => {
+            if(res.dot) {
+                print(res.dot);
+                hlManager.highlightToXOps(line);
+            }
+            //determine our current position in the algorithm
+            if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
+            else if(hlManager.highlightedLines === numOfOperations) changeState(STATE_LOADED_END);
+            else changeState(STATE_LOADED);
+        }
+    });
+    call.fail((res) => {
+        showResponseError(res, "Going to line " + line + " failed!");
+        //determine our current position in the algorithm
+        if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
+        else if(hlManager.highlightedLines === numOfOperations) changeState(STATE_LOADED_END);
+        else changeState(STATE_LOADED);
+    });
+}
+
+function validateLineNumber() {
+    const num = parseInt(lineToGo.val());
+    if(num < 0) {
+        lineToGo.val("0");
+        showError("You can't go to a negative line number!\nPossible values: [0, " + numOfOperations + "]");
+    } else if(num > numOfOperations) {
+        lineToGo.val(numOfOperations);
+        showError("Line #" + num + " doesn't exist!\nPossible values: [0, " + numOfOperations + "]");
+    }
+}
 
 //################### LINE HIGHLIGHTING ##################################################################################################################
 const hlManager = new HighlightManager(highlighting, isOperation);

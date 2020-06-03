@@ -29,6 +29,7 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
         Napi::Value Next(const Napi::CallbackInfo& info);
         Napi::Value Prev(const Napi::CallbackInfo& info);
         Napi::Value ToEnd(const Napi::CallbackInfo& info);
+        Napi::Value ToLine(const Napi::CallbackInfo& info);
         Napi::Value GetDD(const Napi::CallbackInfo& info);
 
         //fields
@@ -39,6 +40,7 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
         dd::Edge sim{};
 
         std::vector<std::unique_ptr<qc::Operation>>::iterator iterator{};
+        unsigned int position = 0;
 
         std::array<short, qc::MAX_QUBITS> line {};
         bool ready = false;     //true if a valid algorithm is imported, false otherwise

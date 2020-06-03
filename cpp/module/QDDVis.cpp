@@ -32,6 +32,7 @@ Napi::Object QDDVis::Init(Napi::Env env, Napi::Object exports) {
                             InstanceMethod("prev", &QDDVis::Prev),
                             InstanceMethod("next", &QDDVis::Next),
                             InstanceMethod("toEnd", &QDDVis::ToEnd),
+                            InstanceMethod("toLine", &QDDVis::ToLine),
                             InstanceMethod("getDD", &QDDVis::GetDD)
                         }
                     );
@@ -65,6 +66,7 @@ QDDVis::QDDVis(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVis>(info) 
 
     line.fill(qc::LINE_DEFAULT);
     this->iterator = this->qc->begin();
+    this->position = 0;
 }
 
 
@@ -88,6 +90,7 @@ void QDDVis::stepForward() {
     dd->garbageCollect();
 
     iterator++; // advance iterator
+    position++;
     if (iterator == qc->end()) {    //qc->end() is after the last operation in the iterator
         atEnd = true;
     }
@@ -102,6 +105,7 @@ void QDDVis::stepBack() {
     }
 
     iterator--; //set iterator back to the desired operation
+    position--;
     const dd::Edge currDD = (*iterator)->getInverseDD(dd, line); // get the inverse of the current operation
 
     auto temp = dd->multiply(currDD, sim);   //"remove" the current operation by multiplying with its inverse
@@ -206,9 +210,10 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     atInitial = true;
     atEnd = false;
     iterator = qc->begin();
+    position = 0;
 
     //the third parameter (how many operations to apply immediately)
-    const unsigned int opNum = (unsigned int)info[2].As<Napi::Number>();
+    const unsigned int opNum = (unsigned int)info[2].As<Napi::Number>();    //at this point opNum may be bigger than the number of operations the algorithm has!
     if(opNum > 0) {
         //todo check if iterator has elements? because if not we will get a segmentation fault because iterator++ points to memory of something else
         atInitial = false;
@@ -221,7 +226,10 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
                 stepForward();
             }
         } else {
-            for(unsigned int i = 0; i < opNum; i++) iterator++; //just advance the iterator so it points to the operations where we stopped before the edit
+            for(unsigned int i = 0; i < opNum; i++) {
+                iterator++; //just advance the iterator so it points to the operations where we stopped before the edit
+                position++;
+            }
         }
 
     } else {    //sim needs to be initialized in some cases
@@ -229,7 +237,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         sim = dd->makeZeroState(qc->getNqubits());
         dd->incRef(sim);
     }
-
+    std::cout << "Position = " << position << std::endl;
     return Napi::Number::New(env, qc->getNops());
 }
 
@@ -252,6 +260,7 @@ Napi::Value QDDVis::ToStart(const Napi::CallbackInfo& info) {
             atInitial = true;
             atEnd = false;
             iterator = qc->begin();
+            position = 0;
 
             return Napi::Boolean::New(env, true);   //something changed
 
@@ -347,6 +356,56 @@ Napi::Value QDDVis::ToEnd(const Napi::CallbackInfo& info) {
     }
 }
 
+Napi::Value QDDVis::ToLine(const Napi::CallbackInfo &info) {
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+
+    //check if the correct parameters have been passed
+    if(info.Length() != 1) {
+        Napi::RangeError::New(env, "Need 1 (unsigned int) argument!").ThrowAsJavaScriptException();
+        return Napi::Boolean::New(env, false);
+    }
+    if (!info[0].IsNumber()) {  //algorithm
+        Napi::TypeError::New(env, "arg1: unsigned int expected!").ThrowAsJavaScriptException();
+        return Napi::Boolean::New(env, false);
+    }
+
+    unsigned int param = (unsigned int)info[0].As<Napi::Number>();
+    if(param > qc->getNops()) param = qc->getNops();    //we can't go further than to the end
+    const unsigned int targetPos = param;
+    std::cout << "TL = " << targetPos << std::endl;
+    std::cout << "Pos [before] = " << position << std::endl;
+
+    try {
+        if(position == targetPos) return Napi::Boolean::New(env, false);   //nothing changed
+
+        //only one of the two loops can be entered
+        while(position > targetPos) stepBack();
+        while(position < targetPos) stepForward();
+
+        atInitial = false;
+        atEnd = false;
+        if(position == 0) atInitial = true;
+        else if(position == qc->getNops()) atEnd = true;
+        std::cout << "Pos [after] = " << position << std::endl;
+        std::cout << "Nops = " << qc->getNops() << std::endl;
+
+        return Napi::Boolean::New(env, true);   //something changed
+
+    } catch(std::exception& e) {
+        std::string msg = "Exception while going to line ";// + position + " to " + targetPos;
+        //msg += position + " to " + targetPos;
+        //msg.append(position);
+        //msg.append(" to ");
+        //msg.append(targetPos);
+        std::cout << "Exception while going from " << position << " to " << targetPos << std::endl;
+        std::cout << e.what() << std::endl;
+        Napi::Error::New(env, msg).ThrowAsJavaScriptException();
+        return Napi::Boolean::New(env, false);
+    }
+
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
@@ -359,15 +418,12 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
 
     std::stringstream ss{};
     try {
-        std::cout << "inside getDD try" << std::endl;
         dd->toDot2(sim, ss, true, false);
-        std::cout << "inside getDD after toDot" << std::endl;
         std::string str = ss.str();
         return Napi::String::New(env, str);
 
     } catch(std::exception& e) {
         std::cout << "Exception while getting the DD: " << e.what() << std::endl;
-        //reset();
         std::string err = "Invalid getDD()-call! ";// + e.what();
         Napi::Error::New(env, err).ThrowAsJavaScriptException();
         return Napi::String::New(env, "-1");

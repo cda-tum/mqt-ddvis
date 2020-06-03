@@ -111,6 +111,19 @@ router.get('/toend', (req, res) => {
     }
 });
 
+router.get('/toline', (req, res) => {
+    const data = dm.get(req);
+    const line = parseInt(req.query.line);
+    if(data) {
+        const ret = data.vis.toLine(line);
+        if(ret) sendDD(res, data.vis.getDD());  //sendFile(res, data.ip); //something changes so we update the shown dd
+        else res.send({ msg: "you were already at line " + line, reload: "false" });
+
+    } else {
+        console.log("ERROR! Ip not found!");
+    }
+});
+
 //####################################################################################################################################################################
 
 module.exports = router;

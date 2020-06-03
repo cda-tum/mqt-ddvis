@@ -111,7 +111,6 @@ class HighlightManager {
         this._updateDiv();
     }
 
-
     decreaseHighlighting() {
         //remove possible nops inside the highlighting
         for(let i = this._highlightedOps + this._nopsInHighlighting - 1; //-1 because we want the last highlighted line, not the potential next one
@@ -152,6 +151,26 @@ class HighlightManager {
 
         this._pendingText = "";
         this._updateDiv();
+    }
+
+    /**
+     *
+     * @param ops target value of this._highlightedOps
+     */
+    highlightToXOps(ops) {
+        console.log("Begin: " + ops + " | " + this._highlightedOps);
+        if(ops < this._highlightedOps) {
+            while(ops < this._highlightedOps) {
+                this.decreaseHighlighting();
+            }
+
+        } else if(ops > this._highlightedOps) {
+            while(ops > this._highlightedOps) {
+                this.increaseHighlighting();
+            }
+
+        } //else ops === this._highlighedOps so nothing to do
+        console.log("End: " + ops + " | " + this._highlightedOps);
     }
 
     setHighlights() {
