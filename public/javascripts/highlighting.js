@@ -32,7 +32,6 @@ class HighlightManager {
         this._operationOffset = -1;
         const lines = text.split('\n');
         this._hl = [];
-        this._p
         for(let i = 0; i < lines.length; i++) {
             if(this._operationOffset < 0) {             //operation offset hasn't been found yet
                 if(this._isOperation(lines[i])) {
@@ -81,7 +80,7 @@ class HighlightManager {
 
         this.text = newText;
 
-        //todo reset content of div?
+        this._div.html("");
     }
 
     initialHighlighting() {

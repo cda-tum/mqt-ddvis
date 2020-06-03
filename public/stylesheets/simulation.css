@@ -85,8 +85,7 @@
     height: 15%;
 }
 
-#backdrop, #line_numbers {
-}
+
 #backdrop, #q_algo, #line_numbers {
     width: 100%;
     height: 100%;
@@ -128,7 +127,7 @@
     display: block;
     position: absolute;
     z-index: 3;
-    margin: 0;
+    margin: 0 0 0 20px;     /* set initial margin-left for the template algorithms */
     border: none;
     outline: none;
     border-radius: 0;

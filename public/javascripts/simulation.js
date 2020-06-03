@@ -35,30 +35,31 @@ function changeState(state) {
     let disable;
     switch (state) {
         case STATE_NOTHING_LOADED:
-            enable = [ "drop_zone", "q_algo", "ex_deutsch", "ex_alu", "stepDuration" ];
+            enable = [ "drop_zone", "q_algo", "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
             disable = [ "toStart", "prev", "automatic", "next", "toEnd" ];
             break;
 
         case STATE_LOADED:
-            enable = [ "drop_zone", "q_algo", "toStart", "prev", "automatic", "next", "toEnd",
-                        "ex_deutsch", "ex_alu", "stepDuration" ];
+            enable = [  "drop_zone", "q_algo", "toStart", "prev", "automatic", "next", "toEnd",
+                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
             disable = [  ];
             break;
 
         case STATE_LOADED_START:
-            enable = [ "drop_zone", "q_algo", "automatic", "next", "toEnd", "ex_deutsch", "ex_alu", "stepDuration" ];
+            enable = [  "drop_zone", "q_algo", "automatic", "next", "toEnd", "ex_real", "ex_qasm",
+                        "ex_deutsch", "ex_alu", "stepDuration" ];
             disable = [ "toStart", "prev" ];
             break;
 
         case STATE_LOADED_END:
-            enable = [ "drop_zone", "q_algo", "toStart", "prev", "ex_deutsch", "ex_alu", "stepDuration" ];
+            enable = [ "drop_zone", "q_algo", "toStart", "prev", "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
             disable = [ "toEnd", "next", "automatic" ];   //don't disable q_algo because the user might want to add lines to the end
             break;
 
         case STATE_SIMULATING:
             enable = [];
             disable = [ "drop_zone", "q_algo", "toStart", "prev", "automatic", "next", "toEnd",
-                        "ex_deutsch", "ex_alu", "stepDuration" ];
+                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
             break;
 
         case STATE_DIASHOW:
@@ -67,7 +68,7 @@ function changeState(state) {
             automatic.text("||");   //\u23F8
             enable = [ "automatic" ];
             disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd",
-                        "ex_deutsch", "ex_alu", "stepDuration" ];        //todo should next (maybe even toEnd) be enabled?
+                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
             break;
     }
 
@@ -152,34 +153,40 @@ const FORMAT_UNKNOWN = 0;
 const QASM_FORMAT = 1;
 const REAL_FORMAT = 2;
 
+const emptyQasm =   "OPENQASM 2.0;\n" +
+                    "include \"qelib1.inc\";\n" +
+                    "\n" +
+                    "qreg q[];\n" +
+                    "creg c[];\n";
+const emptyReal =   ".version 2.0 \n" +
+                    ".numvars 0 \n" +
+                    ".variables \n" +
+                    ".begin \n" +
+                    "\n" +
+                    ".end \n";
+let emptyAlgo = false;  //whether currently one of the two empty algorithms (templates) are in the textArea or not
 /**Load empty QASM-Format
  *
  */
 function loadQASM() {
-    q_algo.val(
-        "OPENQASM 2.0;\n" +
-        "include \"qelib1.inc\";\n" +
-        "\n" +
-        "qreg q[];\n" +
-        "creg c[];\n" +
-        "\n"
-    );
+    q_algo.val(emptyQasm);
     algoFormat = QASM_FORMAT;
+    emptyAlgo = true;
+
+    hlManager.resetHighlighting("");
+    removeLineNumbers();
 }
 
 /**Load empty Real-Format
  *
  */
 function loadReal() {
-    q_algo.val(
-        ".version 2.0 \n" +
-        ".numvars 0 \n" +
-        ".variables \n" +
-        ".begin \n" +
-        "\n" +
-        ".end \n"
-    );
+    q_algo.val(emptyReal);
     algoFormat = REAL_FORMAT;
+    emptyAlgo = true;
+
+    hlManager.resetHighlighting("");
+    removeLineNumbers();
 }
 
 const deutschAlgorithm =    "OPENQASM 2.0;\n" +
@@ -389,6 +396,9 @@ let lastValidAlgorithm = deutschAlgorithm;  //initialized with an arbitrary vali
  * @param algorithm only needed if the lastValidAlgorithm should be sent again because the algorithm in q_algo is invalid
  */
 function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
+    if(emptyAlgo) return;
+
+
     const startTimeStemp = performance.now();
     let algo = algorithm || q_algo.val();   //usually q_algo.val() is taken
     const opNum = reset ?
@@ -451,7 +461,6 @@ function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
         });
         call.fail((res) => {
             if(res.responseJSON && res.responseJSON.retry && !algorithm) {
-                console.log("TesT");
                 loadAlgorithm(format, reset, lastValidAlgorithm);
             }
             showResponseError(res, "Couldn't connect to the server.");
@@ -729,6 +738,10 @@ function setLineNumbers() {
     line_numbers.html(text);
 }
 
+function removeLineNumbers() {
+    line_numbers.html("");
+}
+
 
 //################### HIGHLIGHTING and NUMBERING ##################################################################################################################
 
@@ -747,20 +760,37 @@ function handleScroll() {
 
 let oldInput;   //needed to reset input if an illegal change was made
 function handleInput() {
+    emptyAlgo = false;
     if(hlManager.highlightedLines > 0) {  //if nothing is highlighted yet, the user may also edit the lines before the first operation
         //check if a highlighted line changed, if yes abort the changes
         const curLines = q_algo.val().split('\n');
         const lastLineWithHighlighting = hlManager.highlightedLines + hlManager.nopsInHighlighting;
+
+        /*
         if(curLines.length < lastLineWithHighlighting) { //illegal change because at least the last line has been deleted
             q_algo.val(oldInput);   //reset algorithm to old input
             showError("You are not allowed to change already processed lines!");
             return;
         }
+        */
 
         const oldLines = oldInput.split('\n');
+        /*
+        //header can be adapted, but lines can't be deleted (this would make a complete update of the highlighting necessary)
         for(let i = hlManager.offset; i <= lastLineWithHighlighting; i++) {
             //non-highlighted lines may change, because they are no operations
             if(hlManager.isHighlighted(i) && curLines[i] !== oldLines[i]) {   //illegal change!
+                q_algo.val(oldInput);   //reset algorithm to old input
+                showError("You are not allowed to change already processed lines!");
+                return;
+            }
+        }
+         */
+        //the header is not allowed to change as well as all processed lines
+        for(let i = 0; i <= lastLineWithHighlighting; i++) {
+            //non-highlighted lines may change, because they are no operations
+            if((i < hlManager.offset || hlManager.isHighlighted(i)) //highlighted lines and the header are not allowed to change (but comments are)
+                && curLines[i] !== oldLines[i]) {   //illegal change!
                 q_algo.val(oldInput);   //reset algorithm to old input
                 showError("You are not allowed to change already processed lines!");
                 return;
