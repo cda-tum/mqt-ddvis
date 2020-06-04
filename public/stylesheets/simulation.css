@@ -75,7 +75,7 @@
     height: 80%;
     border: 2px solid #685972;
     display: block;
-    margin: 0 auto;
+    margin: 0 0;
     transform: translateZ(0);
     -webkit-text-size-adjust: none;
 }
@@ -92,7 +92,8 @@
 }
 
 .highlights, #q_algo, #line_numbers {
-    padding: 10px;
+    /*padding: 10px; works very nice in Opera, because the scrollbar ignores padding, but looks very bad on firefox,
+    where scrolling doesn't ignore padding (at least for textareas, the divs for linenumbering and highlighting seem to ignore padding*/
     letter-spacing: 1px;
 }
 

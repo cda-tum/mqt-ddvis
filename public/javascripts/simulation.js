@@ -440,10 +440,12 @@ function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
                 call2.done((res2) => {
                     _loadingSuccess(res2, lastValidAlgorithm, opNum, format, reset);
 
-
                     q_algo.prop('selectionStart', lastCursorPos);
-                    q_algo.prop('selectionEnd', lastCursorPos);
-                    document.getElementById("q_algo").focus();  //todo focus is there but not visible
+                    q_algo.prop('selectionEnd', lastCursorPos+1);
+
+                    //set the focus and scroll to the cursor positoin - doesn't work on Opera
+                    q_algo.focus();
+                    $.trigger({ type: 'keypress' });
                 });
                 // call2.fail((res2) => {
                 //    showResponseError(res, )
@@ -970,6 +972,7 @@ function handleInput() {
                 && curLines[i] !== oldLines[i]) {   //illegal change!
                 q_algo.val(oldInput);   //reset algorithm to old input
                 showError("You are not allowed to change already processed lines!");
+                selectLineWithCursor();
                 return;
             }
         }
@@ -979,7 +982,19 @@ function handleInput() {
     setLineNumbers();
 }
 
+function selectLineWithCursor() {
+    let lineStart = q_algo.val().lastIndexOf("\n", lastCursorPos) + 1;  //+1 because we need the index of the first character in the line
+    let lineEnd;
+    //special case where lastCursorPos is directly at the end of a line
+    if(lineStart === lastCursorPos) {
+        lineStart = q_algo.val().lastIndexOf("\n", lastCursorPos-2) + 1;    //lastCursorPos-1 would be the current lineStart, but we need one character before that
+        lineEnd = lastCursorPos-1;  //the position right before \n
 
+    } else lineEnd = q_algo.val().indexOf("\n", lineStart);
+
+    q_algo.prop('selectionStart', lineStart);
+    q_algo.prop('selectionEnd', lineEnd);
+}
 
 
 
