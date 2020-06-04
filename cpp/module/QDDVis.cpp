@@ -117,7 +117,8 @@ void QDDVis::stepBack() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/**Parameters: String algorithm, Object basicStates
+/**Parameters: String algorithm, unsigned int formatCode, unsigned int num of operations to step forward, bool whether the
+ * operations should be processed or just the iterator needs to be advanced
  * Returns: true or false 
  * 
  * Tries to import the passed algorithm and returns whether it was successful or not.
@@ -128,7 +129,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
 
     //check if the correct parameters have been passed
     if(info.Length() != 4) {
-        Napi::RangeError::New(env, "Need 3 (String, unsigned int, unsigned int) arguments!").ThrowAsJavaScriptException();
+        Napi::RangeError::New(env, "Need 4 (String, unsigned int, unsigned int, bool) arguments!").ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
     }
     if (!info[0].IsString()) {  //algorithm
@@ -153,41 +154,6 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     const std::string algo = arg.Utf8Value();
     std::stringstream ss{algo};
 
-    //basis state functionality not a priority and therefore further work on it is delayed
-    /*
-    if(info.Length() == 2) {      //also basic states have been passed
-        if(info[1].IsArray()) {
-            Napi::Array compVals = info[1].As<Napi::Array>();
-
-            if(compVals.Length() % 2 == 0) {
-                const unsigned int length = compVals.Length() / 2;
-                Comp* basicStates = (Comp*)malloc(length * sizeof(Comp));
-
-                for(unsigned int i = 0; i < compVals.Length(); i++) {
-                    const Napi::Value val = compVals[i];
-                    const double num = (double)val.As<Napi::Number>();
-                    const Comp* bs = basicStates + (i/2);
-
-                    //the first value of the pair is always the real part, the second value the imaginary part
-                    if(i % 2 == 0) bs->re = num;
-                    else bs->im = num;
-                }
-
-                for(unsigned int i = 0; i < length; i++) {
-                    const Comp* bs = (basicStates + i);
-                    std::cout << "#" << i << "\tRe=" << bs->re << "\tIm=" << bs->im << std::endl;
-                }
-
-            } else {
-                //todo error
-                std::cout << "error, param 2 must have an even length!" << std::endl;
-            }
-        } else {
-            std::cout << "error, param 2 is not an array either!" << std::endl;
-        }
-    }
-     */
-
     try {
         //second parameter describes the format of the algorithm
         const unsigned int formatCode = (unsigned int)info[1].As<Napi::Number>();
@@ -200,7 +166,6 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
 
     } catch(std::exception& e) {
         std::cout << "Exception while loading the algorithm: " << e.what() << std::endl;
-        //reset();  //todo reload old input
         std::string err("");//e.what());    //todo e.what() gives unreadable characters?
         Napi::Error::New(env, "Invalid Algorithm! " + err).ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);

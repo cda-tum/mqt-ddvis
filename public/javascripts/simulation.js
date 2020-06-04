@@ -315,64 +315,6 @@ function loadAlu() {
     loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
 
-//let basisStates = null;
-/*function validate() {
-    const basic_states = document.getElementById("basic_states");
-    const arr = basic_states.value.split(" ");
-
-    basicStates = [];
-    arr.forEach(value => {
-        const index = value.indexOf("j");
-        if(0 <= value.indexOf("+")) {   //complex number
-            console.log(value + " is a complex number");
-
-            const parts = value.split("+");
-            if(parts.length === 2) {
-
-            }
-
-        } else if(0 <= value.indexOf("-")) {   //complex number
-            console.log(value + " is a complex number");
-
-
-        } else if(index === 0 || index === value.length-1) {      //imaginary number
-            console.log(value + " is a imaginary number");
-
-            if(index === 0) value = value.substring(1);
-            else value = value.substring(0, index);
-
-            const num = parseFloat(value);
-            if(num) basicStates.push(new Complex(0, num));
-            else {
-                document.getElementById("output").value = "Error! " + value + " is no float!";  //todo error
-            }
-
-        } else {            //real number
-            console.log(value + " is a real number");
-
-            const num = parseFloat(value);
-            if(num) basicStates.push(new Complex(num, 0));
-            else {
-                document.getElementById("output").value = "Error! " + value + " is no float!";  //todo error
-            }
-        }
-    });
-
-    basicStates.forEach(value => console.log("bs: " + value));
-}
-function validate() {
-    $(() => {
-        const basis_states = $('#basis_states').val();
-
-
-        $.post("/validate", { basisStates: basis_states },
-            (res) => {
-            }
-        ).fail();
-    });
-}
-*/
-
 function dropHandler(event) {
     event.preventDefault();     //prevents the browser from opening the file and therefore leaving the website
 
