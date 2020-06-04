@@ -8,8 +8,9 @@ const line_numbers = $('#line_numbers');
 const highlighting = $('#highlighting');
 const q_algo = $('#q_algo');
 const automatic = $('#automatic');
-const lineToGo = $('#lineToGo');
-const qddText = $('#qdd_text');
+const line_to_go = $('#line_to_go');
+const qdd_div = $('#qdd_div');
+const qdd_text = $('#qdd_text');
 //todo also initialize all other selectors once?
 
 
@@ -117,6 +118,8 @@ function updateSizes() {
     const width = dzInnerWidth - q_algo.css('margin-left');
     q_algo.css('width', width);
 
+
+    $.trigger({ type: 'keypress' });
     //todo force rerender of q_algo
 
     if(dzInnerWidth > 0) {
@@ -172,28 +175,36 @@ const emptyReal =   ".version 2.0 \n" +
                     "\n" +
                     ".end \n";
 let emptyAlgo = false;  //whether currently one of the two empty algorithms (templates) are in the textArea or not
+
+function resetAlgorithm() {
+    emptyAlgo = true;
+    algoFormat = FORMAT_UNKNOWN;
+
+    hlManager.resetHighlighting("");
+    removeLineNumbers();
+    q_algo.val("");
+
+    print();    //reset dd
+
+    changeState(STATE_NOTHING_LOADED);
+}
+
 /**Load empty QASM-Format
  *
  */
 function loadQASM() {
+    resetAlgorithm();
     q_algo.val(emptyQasm);
     algoFormat = QASM_FORMAT;
-    emptyAlgo = true;
-
-    hlManager.resetHighlighting("");
-    removeLineNumbers();
 }
 
 /**Load empty Real-Format
  *
  */
 function loadReal() {
+    resetAlgorithm();
     q_algo.val(emptyReal);
     algoFormat = REAL_FORMAT;
-    emptyAlgo = true;
-
-    hlManager.resetHighlighting("");
-    removeLineNumbers();
 }
 
 const deutschAlgorithm =    "OPENQASM 2.0;\n" +
@@ -413,7 +424,7 @@ function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
     const startTimeStemp = performance.now();
     let algo = algorithm || q_algo.val();   //usually q_algo.val() is taken
     const opNum = reset ?
-        0 : //parseInt(lineToGo.val()) :
+        0 : //parseInt(line_to_go.val()) :
         hlManager.highlightedLines;   //we want to continue simulating after the last processed line, which is after the highlighted ones
 
     if(format === FORMAT_UNKNOWN) {
@@ -444,6 +455,7 @@ function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
                     q_algo.prop('selectionEnd', lastCursorPos+1);
 
                     //set the focus and scroll to the cursor positoin - doesn't work on Opera
+                    q_algo.blur();
                     q_algo.focus();
                     $.trigger({ type: 'keypress' });
                 });
@@ -462,7 +474,7 @@ function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
 
 function _loadingSuccess(res, algo, opNum, format, reset) {
     algoFormat = format;
-    oldInput = algo;
+    oldAlgo = algo;
     algoChanged = false;
     lastValidAlgorithm = algo;  //algorithm in q_algo was valid if no error occured
 
@@ -485,7 +497,7 @@ function _loadingSuccess(res, algo, opNum, format, reset) {
     print(res.dot);
 
     //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
-    if(opNum > numOfOperations) lineToGo.val(numOfOperations);
+    if(opNum > numOfOperations) line_to_go.val(numOfOperations);
 }
 
 function preformatAlgorithm(algo, format) {
@@ -781,7 +793,7 @@ function gotoEnd() {
 
 function gotoLine() {
     changeState(STATE_SIMULATING);
-    const line = Math.min(parseInt(lineToGo.val()), numOfOperations);
+    const line = Math.min(parseInt(line_to_go.val()), numOfOperations);
     const call = $.ajax({
         url: '/toline?line=' + line,
         contentType: 'application/json',
@@ -806,25 +818,25 @@ function gotoLine() {
 }
 
 function validateLineNumber() {
-    const lineNum = lineToGo.val();
+    const lineNum = line_to_go.val();
     if(lineNum.includes(".")) {
         showError("Floats are not allowed! Only unsigned integers are valid.\n" +
             "Possible values: [0, " + numOfOperations + "]");
-        lineToGo.val(0);
+        line_to_go.val(0);
     } else {
         const num = parseInt(lineNum);
         if(num) {
             if(num < 0) {
                 showError("You can't go to a negative line number!\nPossible values: [0, " + numOfOperations + "]");
-                lineToGo.val(0);
+                line_to_go.val(0);
             } else if(num > numOfOperations) {
                 showError("Line #" + num + " doesn't exist!\nPossible values: [0, " + numOfOperations + "]");
-                lineToGo.val(numOfOperations);
+                line_to_go.val(numOfOperations);
             }
         } else {
             showError("Your input is not a number!\n" +
                 "Please enter an unsigned integer of the interval [0, " + numOfOperations + "].");
-            lineToGo.val(0);
+            line_to_go.val(0);
         }
     }
 }
@@ -932,34 +944,40 @@ function handleScroll() {
     //$('#backdrop').scrollLeft(scrollLeft);
 }
 
-let oldInput;   //needed to reset input if an illegal change was made
+let oldAlgo;   //needed to reset input if an illegal change was made
 let algoChanged = false;
 let lastCursorPos = 0;
 function handleInput() {
     lastCursorPos = q_algo.prop('selectionStart');
 
+    const newAlgo = q_algo.val();
+    if(newAlgo.trim().length === 0) {   //user deleted everything, so we reset
+        resetAlgorithm();
+        return;
+    }
+
     emptyAlgo = false;
     algoChanged = true;
     if(hlManager.highlightedLines > 0) {  //if nothing is highlighted yet, the user may also edit the lines before the first operation
         //check if a highlighted line changed, if yes abort the changes
-        const curLines = q_algo.val().split('\n');
+        const curLines = newAlgo.split('\n');
         const lastLineWithHighlighting = hlManager.highlightedLines + hlManager.nopsInHighlighting;
 
         /*
         if(curLines.length < lastLineWithHighlighting) { //illegal change because at least the last line has been deleted
-            q_algo.val(oldInput);   //reset algorithm to old input
+            q_algo.val(oldAlgo);   //reset algorithm to old input
             showError("You are not allowed to change already processed lines!");
             return;
         }
         */
 
-        const oldLines = oldInput.split('\n');
+        const oldLines = oldAlgo.split('\n');
         /*
         //header can be adapted, but lines can't be deleted (this would make a complete update of the highlighting necessary)
         for(let i = hlManager.offset; i <= lastLineWithHighlighting; i++) {
             //non-highlighted lines may change, because they are no operations
             if(hlManager.isHighlighted(i) && curLines[i] !== oldLines[i]) {   //illegal change!
-                q_algo.val(oldInput);   //reset algorithm to old input
+                q_algo.val(oldAlgo);   //reset algorithm to old input
                 showError("You are not allowed to change already processed lines!");
                 return;
             }
@@ -970,7 +988,7 @@ function handleInput() {
             //non-highlighted lines may change, because they are no operations
             if((i < hlManager.offset || hlManager.isHighlighted(i)) //highlighted lines and the header are not allowed to change (but comments are)
                 && curLines[i] !== oldLines[i]) {   //illegal change!
-                q_algo.val(oldInput);   //reset algorithm to old input
+                q_algo.val(oldAlgo);   //reset algorithm to old input
                 showError("You are not allowed to change already processed lines!");
                 selectLineWithCursor();
                 return;
@@ -978,19 +996,20 @@ function handleInput() {
         }
     }
 
-    oldInput = q_algo.val();  //changes are legal so they are "saved"
+    oldAlgo = q_algo.val();  //changes are legal so they are "saved"
     setLineNumbers();
 }
 
 function selectLineWithCursor() {
-    let lineStart = q_algo.val().lastIndexOf("\n", lastCursorPos) + 1;  //+1 because we need the index of the first character in the line
+    const algo = q_algo.val();
+    let lineStart = algo.lastIndexOf("\n", lastCursorPos) + 1;  //+1 because we need the index of the first character in the line
     let lineEnd;
     //special case where lastCursorPos is directly at the end of a line
     if(lineStart === lastCursorPos) {
-        lineStart = q_algo.val().lastIndexOf("\n", lastCursorPos-2) + 1;    //lastCursorPos-1 would be the current lineStart, but we need one character before that
+        lineStart = algo.lastIndexOf("\n", lastCursorPos-2) + 1;    //lastCursorPos-1 would be the current lineStart, but we need one character before that
         lineEnd = lastCursorPos-1;  //the position right before \n
 
-    } else lineEnd = q_algo.val().indexOf("\n", lineStart);
+    } else lineEnd = algo.indexOf("\n", lineStart);
 
     q_algo.prop('selectionStart', lineStart);
     q_algo.prop('selectionEnd', lineEnd);
@@ -1028,16 +1047,21 @@ function endDia() {
 
 let svgHeight = 0;  //can't be initialized beforehand
 function print(dot) {
-    if(svgHeight === 0) {
-        //subtract the whole height of the qdd-text from the height of qdd-div to get the space that is available for the graph
-        svgHeight = parseInt($('#qdd_div').css('height')) - (
-            parseInt(parseInt(qddText.css('height'))) + parseInt(qddText.css('margin-top')) + parseInt(qddText.css('margin-bottom'))    //height of the qdd-text
-        );
-    }
+    if(dot) {
+        if(svgHeight === 0) {
+            //subtract the whole height of the qdd-text from the height of qdd-div to get the space that is available for the graph
+            svgHeight = parseInt($('#qdd_div').css('height')) - (
+                parseInt(parseInt(qdd_text.css('height'))) + parseInt(qdd_text.css('margin-top')) + parseInt(qdd_text.css('margin-bottom'))    //height of the qdd-text
+            );
+        }
 
-    const graph = d3.select("#qdd_div").graphviz({
-        width: "70%",     //make it smaller so we have space around where we can scroll through the page - also the graphs are more high than wide so is shouldn't be a problem
-        height: svgHeight,
-        fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
-    }).renderDot(dot);
+        const graph = d3.select("#qdd_div").graphviz({
+            width: "70%",     //make it smaller so we have space around where we can scroll through the page - also the graphs are more high than wide so is shouldn't be a problem
+            height: svgHeight,
+            fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
+        }).renderDot(dot);
+
+    } else {
+        qdd_div.html(qdd_text);
+    }
 }
