@@ -662,7 +662,7 @@ function validateLineNumber() {
         line_to_go.val(0);
     } else {
         const num = parseInt(lineNum);
-        if(num) {
+        if(num || num === 0) {
             if(num < 0) {
                 showError("You can't go to a negative line number!\nPossible values: [0, " + numOfOperations + "]");
                 line_to_go.val(0);
