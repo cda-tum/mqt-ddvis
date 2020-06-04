@@ -1,6 +1,5 @@
 
 let lineHighlight = "<mark>                                                                                                                                  </mark>";
-//let lineHighlight = "<mark>      </mark>";
 
 function updateLineHighlight(newLH) {
     lineHighlight = newLH;
@@ -93,7 +92,6 @@ class HighlightManager {
     }
 
     increaseHighlighting() {
-        //debugger
         //add possible nops between the highlighting and next operation
         for(let i = this._highlightedOps + this._nopsInHighlighting;
             i < this._hl.length && !this._hl[i];    //abort as soon as we have found the next operation
@@ -158,7 +156,6 @@ class HighlightManager {
      * @param ops target value of this._highlightedOps
      */
     highlightToXOps(ops) {
-        console.log("Begin: " + ops + " | " + this._highlightedOps);
         if(ops < this._highlightedOps) {
             while(ops < this._highlightedOps) {
                 this.decreaseHighlighting();
@@ -170,7 +167,6 @@ class HighlightManager {
             }
 
         } //else ops === this._highlighedOps so nothing to do
-        console.log("End: " + ops + " | " + this._highlightedOps);
     }
 
     setHighlights() {

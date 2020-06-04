@@ -19,7 +19,6 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
         static long NextID;
 
         //"private" methods
-        void reset();
         void stepForward();
         void stepBack();
 

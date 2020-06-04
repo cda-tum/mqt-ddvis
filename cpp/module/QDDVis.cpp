@@ -69,15 +69,6 @@ QDDVis::QDDVis(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVis>(info) 
     this->position = 0;
 }
 
-
-void QDDVis::reset() {
-    this->qc->reset();
-    sim = { };
-    ready = false;
-    atInitial = true;
-    atEnd = false;
-}
-
 void QDDVis::stepForward() {
     if(atEnd) return;   //no further steps possible
 
@@ -202,7 +193,6 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         sim = dd->makeZeroState(qc->getNqubits());
         dd->incRef(sim);
     }
-    std::cout << "Position = " << position << std::endl;
     return Napi::Number::New(env, qc->getNops());
 }
 
@@ -338,8 +328,6 @@ Napi::Value QDDVis::ToLine(const Napi::CallbackInfo &info) {
     unsigned int param = (unsigned int)info[0].As<Napi::Number>();
     if(param > qc->getNops()) param = qc->getNops();    //we can't go further than to the end
     const unsigned int targetPos = param;
-    std::cout << "TL = " << targetPos << std::endl;
-    std::cout << "Pos [before] = " << position << std::endl;
 
     try {
         if(position == targetPos) return Napi::Boolean::New(env, false);   //nothing changed
@@ -352,8 +340,6 @@ Napi::Value QDDVis::ToLine(const Napi::CallbackInfo &info) {
         atEnd = false;
         if(position == 0) atInitial = true;
         else if(position == qc->getNops()) atEnd = true;
-        std::cout << "Pos [after] = " << position << std::endl;
-        std::cout << "Nops = " << qc->getNops() << std::endl;
 
         return Napi::Boolean::New(env, true);   //something changed
 

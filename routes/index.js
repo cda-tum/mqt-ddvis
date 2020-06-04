@@ -4,7 +4,6 @@ const express = require('express');
 const router = express.Router();
 const dm = require('../datamanager');
 const fs = require('fs');
-const Complex = require('complex.js');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {

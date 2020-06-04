@@ -110,10 +110,6 @@ for (let i = 0; i < acc.length; i++) {
 
 window.addEventListener('resize', (event) => updateSizes());
 function updateSizes() {
-    //console.log(screen.availHeight);
-    //backdrop.css('width', drop_zone.css('width')) - 2 * parseInt(drop_zone.css('border'));
-    //console.log(backdrop.css('width'));
-
     const dzInnerWidth = parseFloat(drop_zone.css('width')) - 2 * parseFloat(drop_zone.css('border'));  //inner width of drop_zone
     const width = dzInnerWidth - parseFloat(q_algo.css('margin-left'));
     q_algo.css('width', width);
@@ -145,7 +141,6 @@ function validateStepDuration() {
         }
     }
 }
-
 
 changeState(STATE_NOTHING_LOADED);      //initial state
 
@@ -355,8 +350,6 @@ let lastValidAlgorithm = deutschAlgorithm;  //initialized with an arbitrary vali
 function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
     if(emptyAlgo || !algoChanged) return;
 
-    console.log("called");
-
     const startTimeStemp = performance.now();
     let algo = algorithm || q_algo.val();   //usually q_algo.val() is taken
     const opNum = reset ?
@@ -382,7 +375,6 @@ function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
         call.fail((res) => {
             //todo ask if this really is necessary or has any benefit, because disabling the buttons seems far more intuitive and cleaner
             if(res.responseJSON && res.responseJSON.retry && !algorithm) {
-                //loadAlgorithm(format, reset, lastValidAlgorithm);
                 const call2 = $.post("/load", { basisStates: null, algo: lastValidAlgorithm, opNum: opNum, format: format, reset: reset });
                 call2.done((res2) => {
                     _loadingSuccess(res2, lastValidAlgorithm, opNum, format, reset);
@@ -401,7 +393,6 @@ function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
             }
             changeState(STATE_NOTHING_LOADED);
             showResponseError(res, "Couldn't connect to the server.");
-            //algoChanged = false;    //a little bit hacky but I think it is because of HTML that otherwise the focus would
 
         });
         console.log("Loading and processing " + opNum + " lines took " + (performance.now() - startTimeStemp) + "ms");
@@ -492,97 +483,16 @@ function preformatAlgorithm(algo, format) {
 
 //################### NAVIGATION ##################################################################################################################
 $(() =>  {
-    /* ######################################################### *
-    $('#toStart').on('click', () => {
-        changeState(STATE_SIMULATING);
-        const call = $.ajax({
-            url: '/tostart',
-            contentType: 'application/json',
-            success: (res) => {
-                if(res.dot) {
-                    print(res.dot);
-                    hlManager.initialHighlighting();
-                }
-                changeState(STATE_LOADED_START);
-            }
-        });
-        call.fail((res) => {
-           showResponseError(res, "Going back to the start failed!");
-            changeState(STATE_LOADED);
-        });
-    });
-    /* ######################################################### *
-    $('#prev').on('click', () => {
-        changeState(STATE_SIMULATING);
-        const call = $.ajax({
-            url: '/prev',
-            contentType: 'application/json',
-            success: (res) => {
-                if(res.dot) {
-                    print(res.dot);
-
-                    hlManager.decreaseHighlighting();
-                    if(hlManager.highlightedLines <= 0) changeState(STATE_LOADED_START);
-                    else changeState(STATE_LOADED);
-
-                } else changeState(STATE_LOADED_START); //should never reach this code because the button should be disabled when we reach the start
-            }
-        });
-        call.fail((res) => {
-           showResponseError(res, "Going a step back failed!");
-           changeState(STATE_LOADED);
-        });
-    });
-    /* ######################################################### *
-    $('#next').on('click', () => {
-        const startTimeStemp = performance.now();
-        changeState(STATE_SIMULATING);
-        const call = $.ajax({
-            url: '/next',
-            contentType: 'application/json',
-            success: (res) => {
-                if(res.dot) {   //we haven't reached the end yet
-                    print(res.dot);
-
-                    hlManager.increaseHighlighting();
-
-                    if(hlManager.highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
-                    else changeState(STATE_LOADED);
-
-                } else changeState(STATE_LOADED_END); //should never reach this code because the button should be disabled when we reach the end
-
-                console.log("Time spent: " + (performance.now() - startTimeStemp) + "ms");
-            }
-        });
-        call.fail((res) => {
-            showResponseError(res, "Going a step ahead failed!");
-            //determine our current position in the algorithm
-            if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
-            else if(hlManager.highlightedLines === numOfOperations) changeState(STATE_LOADED_END);
-            else changeState(STATE_LOADED);
-        });
-    });
-    /* ######################################################### *
-    $('#toEnd').on('click', () => {
-        changeState(STATE_SIMULATING);
-        const call = $.ajax({
-            url: '/toend',
-            contentType: 'application/json',
-            success: (res) => {
-                if(res.dot) {
-                    print(res.dot);
-                    hlManager.highlightEverything();
-                }
-                changeState(STATE_LOADED_END);
-            }
-        });
-        call.fail((res) => {
-            showResponseError(res, "Going back to the start failed!");
-            changeState(STATE_LOADED);
-        });
-    });
-    /* ######################################################### */
     automatic.on('click', () => {
+        function endDia() {
+            pauseDia = true;
+            runDia = false;
+
+            if(hlManager.highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
+            else changeState(STATE_LOADED);
+            automatic.text("\u25B6");   //play-symbol in unicode
+        }
+
         if(runDia) {
             endDia();
 
@@ -618,15 +528,6 @@ $(() =>  {
             setTimeout(() => func(), stepDuration);
         }
     });
-    /*
-    $('#stop').on('click', () => {
-        pauseDia = true;
-        runDia = false;
-
-        if(hlManager.highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
-        else changeState(STATE_LOADED);
-    });
-     */
 });
 
 function gotoStart() {
@@ -874,10 +775,6 @@ function handleScroll() {
 
     backdrop.scrollTop(scrollTop);
     line_numbers.scrollTop(scrollTop);
-
-    //const scrollLeft = q_algo.scrollLeft();
-    //console.log(scrollLeft);
-    //$('#backdrop').scrollLeft(scrollLeft);
 }
 
 let oldAlgo;   //needed to reset input if an illegal change was made
@@ -970,16 +867,6 @@ function showError(error) {
 
 
 //################### MISC ##################################################################################################################
-
-function endDia() {
-    pauseDia = true;
-    runDia = false;
-
-    if(hlManager.highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
-    else changeState(STATE_LOADED);
-    automatic.text("\u25B6");   //play-symbol in unicode
-    //document.getElementById("stop").disabled = false;   //enable stop button
-}
 
 let svgHeight = 0;  //can't be initialized beforehand
 function print(dot) {

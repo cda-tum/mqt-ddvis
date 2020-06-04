@@ -1,11 +1,9 @@
 
-
 /* Create two columns/boxes that floats next to each other */
 #algo_div {
     float: left;
     width: 30%;
     height: 750px;
-    /* background: #f1f1f1; */
     padding: 0;
     margin-top: 5px;
     text-align: center;
@@ -13,17 +11,12 @@
 
 #qdd_div {
     float: right;
-    padding: 0 0 0 0; /* top right bottom left */
+    padding: 0 0 0 0;
     margin-top: 5px;
     width: 70%;
     height: 750px;
     text-align: center;
 }
-/*
-#svg_div {
-    width: 70px;
-}
- */
 
 /* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
 @media (max-width: 600px) {
@@ -37,7 +30,6 @@
     margin: 0 5px;
     width: 100px;
 }
-
 
 /* accordion from https://www.w3schools.com/howto/howto_js_accordion.asp */
 /* Style the buttons that are used to open and close the accordion panel */
