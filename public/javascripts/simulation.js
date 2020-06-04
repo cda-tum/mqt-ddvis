@@ -478,7 +478,7 @@ function _loadingSuccess(res, algo, opNum, format, reset) {
         hlManager.setHighlights();
     } else hlManager.text = q_algo.val();
 
-    numOfOperations = res.data;  //number of operations the algorithm has
+    numOfOperations = Math.max(res.data, 1);  //number of operations the algorithm has; at least the initial padding of 1 digit
     const digits = _numOfDigits(numOfOperations);
     const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
     q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling

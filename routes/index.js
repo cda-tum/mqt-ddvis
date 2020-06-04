@@ -45,13 +45,7 @@ router.post('/load', (req, res) => {
              */
 
             const numOfOperations = data.vis.load(qAlgo, format, opNum, reset);
-            console.log("loading fine [" + numOfOperations + "]");
-            if(numOfOperations > -1) {
-                //sendFile(res, data.ip, numOfOperations);
-                console.log("before getDD");
-                sendDD(res, data.vis.getDD(), numOfOperations);
-                console.log("after getDD");
-            }
+            if(numOfOperations > -1) sendDD(res, data.vis.getDD(), numOfOperations);
             else res.status(400).json({ msg: "Error while loading the algorithm!" });
 
         } catch(err) {
@@ -129,8 +123,9 @@ router.get('/toline', (req, res) => {
 module.exports = router;
 
 function sendDD(res, dd, data) {
-    if(data) res.status(200).json({ dot: dd, data: data });
+    if(data || data === 0) res.status(200).json({ dot: dd, data: data });
     else res.status(200).json({ dot: dd });
+
 }
 
 function sendFile(res, ip, msg = "") {
