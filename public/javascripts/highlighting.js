@@ -5,7 +5,6 @@ function updateLineHighlight(newLH) {
     lineHighlight = newLH;
 }
 
-
 class HighlightManager {
     _div;
     _isOperation;
@@ -147,7 +146,8 @@ class HighlightManager {
             }
         }
 
-        this._pendingText = "";
+        this._pendingText = "\n";   //pending text is the \n at the very end that we skipped
+
         this._updateDiv();
     }
 
