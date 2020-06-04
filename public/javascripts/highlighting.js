@@ -88,7 +88,7 @@ class HighlightManager {
         this._pendingText = "";
         this._hl.forEach(l => this._pendingText += "\n");
         this._nopsInHighlighting = 0;
-        this._div.html(lineHighlight + this._pendingText);  //special case so not the usual updateDiv()
+        this._div.html(this._pendingText);  //special case so not the usual updateDiv()
     }
 
     increaseHighlighting() {
