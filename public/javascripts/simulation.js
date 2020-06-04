@@ -114,13 +114,9 @@ function updateSizes() {
     //backdrop.css('width', drop_zone.css('width')) - 2 * parseInt(drop_zone.css('border'));
     //console.log(backdrop.css('width'));
 
-    const dzInnerWidth = parseInt(drop_zone.css('width')) - 2 * parseInt(drop_zone.css('border'));  //inner width of drop_zone
-    const width = dzInnerWidth - q_algo.css('margin-left');
+    const dzInnerWidth = parseFloat(drop_zone.css('width')) - 2 * parseFloat(drop_zone.css('border'));  //inner width of drop_zone
+    const width = dzInnerWidth - parseFloat(q_algo.css('margin-left'));
     q_algo.css('width', width);
-
-
-    $.trigger({ type: 'keypress' });
-    //todo force rerender of q_algo
 
     if(dzInnerWidth > 0) {
         let lh = "<mark>";
@@ -129,8 +125,6 @@ function updateSizes() {
         updateLineHighlight(lh);
     }
 }
-//let lineHighlight = "<mark>                                                                                                                                  </mark>";
-updateSizes();
 
 
 function validateStepDuration() {
