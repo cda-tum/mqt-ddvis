@@ -358,7 +358,7 @@ function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
 
     if(format === FORMAT_UNKNOWN) {
         //find out of which format the input text is
-        if(algo.startsWith("OPENQASM")) format = QASM_FORMAT;
+        if(algo.includes("OPENQASM")) format = QASM_FORMAT;
         else format = REAL_FORMAT;      //right now only these two formats are supported, so if it is not QASM, it must be Real
     }
 
