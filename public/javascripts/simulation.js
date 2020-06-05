@@ -376,6 +376,8 @@ function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
             else changeState(STATE_LOADED);
         });
         call.fail((res) => {
+            if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
             //todo ask if this really is necessary or has any benefit, because disabling the buttons seems far more intuitive and cleaner
             if(res.responseJSON && res.responseJSON.retry && !algorithm) {
                 const call2 = $.post("/load", { basisStates: null, algo: lastValidAlgorithm, opNum: opNum, format: format, reset: reset });
@@ -527,6 +529,8 @@ $(() =>  {
                         }
                     });
                     call.fail((res) => {
+                        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
                         showResponseError(res, "Going a step ahead failed! Aborting Diashow."); //todo notify user that the diashow was aborted if res-msg is shown?
                         endDia();
                     });
@@ -551,6 +555,8 @@ function gotoStart() {
         }
     });
     call.fail((res) => {
+        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
         showResponseError(res, "Going back to the start failed!");
         //determine our current position in the algorithm
         if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
@@ -576,6 +582,8 @@ function goBack() {
         }
     });
     call.fail((res) => {
+        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
         showResponseError(res, "Going a step back failed!");
         //determine our current position in the algorithm
         if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
@@ -605,6 +613,8 @@ function goForward() {
         }
     });
     call.fail((res) => {
+        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
         showResponseError(res, "Going a step ahead failed!");
         //determine our current position in the algorithm
         if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
@@ -627,6 +637,8 @@ function gotoEnd() {
         }
     });
     call.fail((res) => {
+        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
         showResponseError(res, "Going to the end failed!");
         //determine our current position in the algorithm
         if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
@@ -653,6 +665,8 @@ function gotoLine() {
         }
     });
     call.fail((res) => {
+        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
         showResponseError(res, "Going to line " + line + " failed!");
         //determine our current position in the algorithm
         if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);

@@ -13,16 +13,16 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/load', (req, res) => {
-    const data = dm.get(req);
-    if(data) {
+    const vis = dm.get(req);
+    if(vis) {
         try {
-            const qAlgo = req.body.algo;
+            const algo = req.body.algo;
             const opNum = parseInt(req.body.opNum);
             const format = parseInt(req.body.format);
             const reset = req.body.reset === "true";   //whether the algorithm should be reset to the start or if iterator and current DD should stay as they are
 
-            const numOfOperations = data.vis.load(qAlgo, format, opNum, reset);
-            if(numOfOperations > -1) sendDD(res, data.vis.getDD(), numOfOperations);
+            const numOfOperations = vis.load(algo, format, opNum, reset);
+            if(numOfOperations > -1) sendDD(res, vis.getDD(), numOfOperations);
             else res.status(400).json({ msg: "Error while loading the algorithm!" });
 
         } catch(err) {
@@ -30,68 +30,68 @@ router.post('/load', (req, res) => {
             res.status(400).json({ msg: err.message, retry: retry});
         }
     } else {
-        console.log("ERROR! Ip not found!");
+        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
     }
 });
 
 router.get('/tostart', (req, res) => {
-    const data = dm.get(req);
-    if(data) {
-        const ret = data.vis.toStart();
-        if(ret) sendDD(res, data.vis.getDD());  //sendFile(res, data.ip);
+    const vis = dm.get(req);
+    if(vis) {
+        const ret = vis.toStart();
+        if(ret) sendDD(res, vis.getDD());  //sendFile(res, data.ip);
         else res.status(403).json({ msg: "you were already at the start" });    //the client will search for res.svg, but it will be null so they won't redraw
 
     } else {
-        console.log("ERROR! Ip not found!");
+        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
     }
 });
 
 router.get('/prev', (req, res) => {
-    const data = dm.get(req);
-    if(data) {
-        const ret = data.vis.prev();
-        if(ret) sendDD(res, data.vis.getDD());  //sendFile(res, data.ip);
+    const vis = dm.get(req);
+    if(vis) {
+        const ret = vis.prev();
+        if(ret) sendDD(res, vis.getDD());  //sendFile(res, data.ip);
         else res.status(403).json({ msg: "can't go back because we are at the beginning" });    //the client will search for res.svg, but it will be null so they won't redraw
 
     } else {
-        console.log("ERROR! Ip not found!");
+        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
     }
 });
 
 router.get('/next', (req, res) => {
-    const data = dm.get(req);
-    if(data) {
-        const ret = data.vis.next();
-        if(ret) sendDD(res, data.vis.getDD());  //sendFile(res, data.ip);     //something changes so we update the shown dd
+    const vis = dm.get(req);
+    if(vis) {
+        const ret = vis.next();
+        if(ret) sendDD(res, vis.getDD());  //sendFile(res, data.ip);     //something changes so we update the shown dd
         else res.send({ msg: "can't go ahead because we are at the end", reload: "false" });
 
     } else {
-        console.log("ERROR! Ip not found!");
+        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
     }
 });
 
 router.get('/toend', (req, res) => {
-    const data = dm.get(req);
-    if(data) {
-        const ret = data.vis.toEnd();
-        if(ret) sendDD(res, data.vis.getDD());  //sendFile(res, data.ip); //something changes so we update the shown dd
+    const vis = dm.get(req);
+    if(vis) {
+        const ret = vis.toEnd();
+        if(ret) sendDD(res, vis.getDD());  //sendFile(res, data.ip); //something changes so we update the shown dd
         else res.send({ msg: "you were already at the end", reload: "false" });
 
     } else {
-        console.log("ERROR! Ip not found!");
+        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
     }
 });
 
 router.get('/toline', (req, res) => {
-    const data = dm.get(req);
+    const vis = dm.get(req);
     const line = parseInt(req.query.line);
-    if(data) {
-        const ret = data.vis.toLine(line);
-        if(ret) sendDD(res, data.vis.getDD());  //sendFile(res, data.ip); //something changes so we update the shown dd
+    if(vis) {
+        const ret = vis.toLine(line);
+        if(ret) sendDD(res, vis.getDD());  //sendFile(res, data.ip); //something changes so we update the shown dd
         else res.send({ msg: "you were already at line " + line, reload: "false" });
 
     } else {
-        console.log("ERROR! Ip not found!");
+        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
     }
 });
 
