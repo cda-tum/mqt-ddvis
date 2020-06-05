@@ -172,6 +172,7 @@ function resetAlgorithm() {
     hlManager.resetHighlighting("");
     removeLineNumbers();
     q_algo.val("");
+    setQAlgoMarginLeft();   //reset margin-left to the initial/default value
 
     print();    //reset dd
 
@@ -210,6 +211,7 @@ const deutschAlgorithm =    "OPENQASM 2.0;\n" +
 function loadDeutsch() {
     q_algo.val(deutschAlgorithm);
 
+    emptyAlgo = false;
     algoChanged = true;
     loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
@@ -306,6 +308,7 @@ function loadAlu() {
         "x q[2];\n"
     );
 
+    emptyAlgo = false;
     algoChanged = true;
     loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
@@ -413,11 +416,7 @@ function _loadingSuccess(res, algo, opNum, format, reset) {
 
     numOfOperations = Math.max(res.data, 1);  //number of operations the algorithm has; at least the initial padding of 1 digit
     const digits = _numOfDigits(numOfOperations);
-    const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
-    q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
-
-    const width = parseInt(drop_zone.css('width')) - margin - 2 * parseInt(drop_zone.css('border'));
-    q_algo.css('width', width);
+    setQAlgoMarginLeft(digits);
 
     setLineNumbers();
 
@@ -425,6 +424,14 @@ function _loadingSuccess(res, algo, opNum, format, reset) {
 
     //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
     if(opNum > numOfOperations) line_to_go.val(numOfOperations);
+}
+
+function setQAlgoMarginLeft(digits = 1) {
+    const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
+    q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
+
+    const width = parseInt(drop_zone.css('width')) - margin - 2 * parseInt(drop_zone.css('border'));
+    q_algo.css('width', width);
 }
 
 function preformatAlgorithm(algo, format) {
