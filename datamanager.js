@@ -39,7 +39,6 @@ module.exports.register = register;
 module.exports.get = get;
 module.exports.parseIP = parseIP;
 
-
 const CLEANUP_TIMER = 24 * 60 * 60 * 1000;        //how mucht time is between two cleanUPData()-calls - in ms (24 hours)
 const MAX_LAST_ACCESS_DIFF = CLEANUP_TIMER;  //how much time must have passed since the last access before it will be deleted - in ms
 function cleanUpData() {
@@ -56,7 +55,7 @@ function cleanUpData() {
     for(const ip of ipsToRemove) remove(ip);
 
     setTimeout(() => cleanUpData(), CLEANUP_TIMER);
-    console.log("Cleanup finished. Removed " + ipsToRemove.length + " items.");
+    console.log("Cleanup finished. Removed " + ipsToRemove.length + " items, " + data.size + " items remain.");
 }
 //setTimeout(() => cleanUpData(), CLEANUP_TIMER);
 cleanUpData();
