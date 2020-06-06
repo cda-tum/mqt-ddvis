@@ -2,11 +2,6 @@
 
 const step_duration = $('#stepDuration');
 const algo_div = $('#algo_div');
-//const drop_zone = $('#drop_zone');
-//const backdrop = $('#backdrop');
-//const line_numbers = $('#line_numbers');
-const highlighting = $('#highlighting');
-//const q_algo = $('#q_algo');
 const automatic = $('#automatic');
 const line_to_go = $('#line_to_go');
 const qdd_div = $('#qdd_div');
@@ -151,9 +146,6 @@ changeState(STATE_NOTHING_LOADED);      //initial state
 
 
 //################### ALGORITHM LOADING ##################################################################################################################
-//const FORMAT_UNKNOWN = 0;
-//const QASM_FORMAT = 1;
-//const REAL_FORMAT = 2;
 
 const emptyQasm =   "OPENQASM 2.0;\n" +
                     "include \"qelib1.inc\";\n" +
@@ -166,23 +158,6 @@ const emptyReal =   ".version 2.0 \n" +
                     ".begin \n" +
                     "\n" +
                     ".end \n";
-//let emptyAlgo = false;  //whether currently one of the two empty algorithms (templates) are in the textArea or not
-
-/*
-function resetAlgorithm() {
-    emptyAlgo = true;
-    algoFormat = FORMAT_UNKNOWN;
-
-    hlManager.resetHighlighting("");
-    removeLineNumbers();
-    q_algo.val("");
-    setQAlgoMarginLeft();   //reset margin-left to the initial/default value
-
-    print();    //reset dd
-
-    changeState(STATE_NOTHING_LOADED);
-}
-*/
 
 /**Load empty QASM-Format
  *
@@ -319,38 +294,6 @@ function loadAlu() {
     algoArea.algoChanged = true;
     algoArea.loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
-
-/*
-function dropHandler(event) {
-    event.preventDefault();     //prevents the browser from opening the file and therefore leaving the website
-
-    if(event.dataTransfer.items) {  //check if a file was transmitted/dropped
-        for(let i = 0; i < event.dataTransfer.files.length; i++) {
-            //determine which format to load or show an error
-            let format = FORMAT_UNKNOWN;
-            if(event.dataTransfer.files[i].name.endsWith(".qasm")) format = QASM_FORMAT;
-            else if(event.dataTransfer.files[i].name.endsWith(".real")) format = REAL_FORMAT;
-            else {
-                showError("Filetype not supported!");
-                return;
-            }
-
-            const file = event.dataTransfer.files[i];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                q_algo.val(e.target.result);
-                algoChanged = true;
-                loadAlgorithm(format, true);    //since a completely new algorithm has been uploaded we have to throw away the old simulation data
-            };
-            reader.readAsBinaryString(file);
-        }
-    }
-}
- */
-
-//let algoFormat = FORMAT_UNKNOWN;
-//let numOfOperations = 0;    //number of operations the whole algorithm has
-//let lastValidAlgorithm = deutschAlgorithm;  //initialized with an arbitrary valid algorithm (deutsch: because it was available and it is short)
 
 //################### NAVIGATION ##################################################################################################################
 $(() =>  {
@@ -548,127 +491,6 @@ function validateLineNumber() {
         }
     }
 }
-
-//################### LINE HIGHLIGHTING ##################################################################################################################
-//const hlManager = new HighlightManager(highlighting, algoArea.isOperation);
-
-
-//################### LINE NUMBERING ##################################################################################################################
-
-/*
-function setLineNumbers() {
-    const digits = numOfDigits(numOfOperations);
-
-    const lines = q_algo.val().split('\n');
-    let num = 0;
-    for(let i = 0; i < lines.length; i++) {
-        if(i <= hlManager.offset) lines[i] = "";
-        else {
-            if(algoArea.isOperation(lines[i])) {
-                num++;
-                const numDigits = numOfDigits(num);
-
-                let space = "";
-                for(let j = 0; j < digits - numDigits; j++) space += "  ";
-                lines[i] = space + num.toString();
-
-            } else lines[i] = "";
-        }
-    }
-
-    let text = "";
-    lines.forEach(l => text += l + "\n");
-    line_numbers.html(text);
-}
-
-function removeLineNumbers() {
-    line_numbers.html("");
-}
-*/
-
-
-//################### HIGHLIGHTING and NUMBERING ##################################################################################################################
-
-//highlighting and line numbering              ONLY WORKS IF EACH LINE CONTAINS NO MORE THAN 1 OPERATION!!!
-//adapted from: https://codepen.io/lonekorean/pen/gaLEMR
-function handleScroll() {
-    //const scrollTop = q_algo.scrollTop();
-
-    //highlighting.scrollTop(scrollTop);
-    //line_numbers.scrollTop(scrollTop);
-}
-
-//let oldAlgo;   //needed to reset input if an illegal change was made
-let algoChanged = false;
-//let lastCursorPos = 0;
-// function handleInput() {
-//     lastCursorPos = q_algo.prop('selectionStart');
-//
-//     const newAlgo = q_algo.val();
-//     if(newAlgo.trim().length === 0) {   //user deleted everything, so we reset
-//         resetAlgorithm();
-//         return;
-//     }
-//
-//     emptyAlgo = false;
-//     algoChanged = true;
-//     if(hlManager.highlightedLines > 0) {  //if nothing is highlighted yet, the user may also edit the lines before the first operation
-//         //check if a highlighted line changed, if yes abort the changes
-//         const curLines = newAlgo.split('\n');
-//         const lastLineWithHighlighting = hlManager.highlightedLines + hlManager.nopsInHighlighting;
-//
-//         /*
-//         if(curLines.length < lastLineWithHighlighting) { //illegal change because at least the last line has been deleted
-//             q_algo.val(oldAlgo);   //reset algorithm to old input
-//             showError("You are not allowed to change already processed lines!");
-//             return;
-//         }
-//         */
-//
-//         const oldLines = oldAlgo.split('\n');
-//         /*
-//         //header can be adapted, but lines can't be deleted (this would make a complete update of the highlighting necessary)
-//         for(let i = hlManager.offset; i <= lastLineWithHighlighting; i++) {
-//             //non-highlighted lines may change, because they are no operations
-//             if(hlManager.isHighlighted(i) && curLines[i] !== oldLines[i]) {   //illegal change!
-//                 q_algo.val(oldAlgo);   //reset algorithm to old input
-//                 showError("You are not allowed to change already processed lines!");
-//                 return;
-//             }
-//         }
-//          */
-//         //the header is not allowed to change as well as all processed lines
-//         for(let i = 0; i <= lastLineWithHighlighting; i++) {
-//             //non-highlighted lines may change, because they are no operations
-//             if((i < hlManager.offset || hlManager.isHighlighted(i)) //highlighted lines and the header are not allowed to change (but comments are)
-//                 && curLines[i] !== oldLines[i]) {   //illegal change!
-//                 q_algo.val(oldAlgo);   //reset algorithm to old input
-//                 showError("You are not allowed to change already processed lines!");
-//                 selectLineWithCursor();
-//                 return;
-//             }
-//         }
-//     }
-//
-//     oldAlgo = q_algo.val();  //changes are legal so they are "saved"
-//     setLineNumbers();
-// }
-//
-// function selectLineWithCursor() {
-//     const algo = q_algo.val();
-//     let lineStart = algo.lastIndexOf("\n", lastCursorPos) + 1;  //+1 because we need the index of the first character in the line
-//     let lineEnd;
-//     //special case where lastCursorPos is directly at the end of a line
-//     if(lineStart === lastCursorPos) {
-//         lineStart = algo.lastIndexOf("\n", lastCursorPos-2) + 1;    //lastCursorPos-1 would be the current lineStart, but we need one character before that
-//         lineEnd = lastCursorPos-1;  //the position right before \n
-//
-//     } else lineEnd = algo.indexOf("\n", lineStart);
-//
-//     q_algo.prop('selectionStart', lineStart);
-//     q_algo.prop('selectionEnd', lineEnd);
-// }
-
 
 //################### ERROR HANDLING ##################################################################################################################
 function showResponseError(res, altMsg = "Unknown Error!") {
