@@ -139,7 +139,7 @@ algo_div.append(
     '</div>'
 );
 
-algoArea.updateSizes();  //todo at this point the width of the elements hasn't been calculated so updateSizes() updates to wrong sizes!
+//algoArea.updateSizes();  //todo at this point the width of the elements hasn't been calculated so updateSizes() updates to wrong sizes!
 changeState(STATE_NOTHING_LOADED);      //initial state
 
 

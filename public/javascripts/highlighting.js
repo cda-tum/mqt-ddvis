@@ -4,6 +4,7 @@ let lineHighlight = "<mark>                                                     
 
 function updateLineHighlight(newLH) {
     lineHighlight = newLH;
+    console.log("LH.length = " + lineHighlight.length);
 }
 
 class HighlightManager {

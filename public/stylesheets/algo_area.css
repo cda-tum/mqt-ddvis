@@ -73,5 +73,7 @@
 
 mark {
     color: transparent;
+    margin: 0;
+    padding: 0;
     background-color: #b1adad;
 }
