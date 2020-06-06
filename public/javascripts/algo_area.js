@@ -23,23 +23,33 @@ class AlgoArea {
     _hlManager;
     _changeState;   //function to change the state on the callers side  //todo how to handle the state codes?
     _print;         //function to print the DD on the callers side
+    _error;     //function on the callers side for handling errors
 
     _algoFormat = QASM_FORMAT;
     _emptyAlgo = false;
     _algoChanged = true;
-    _lastValidAlgorithm;
+    _lastValidAlgorithm;    //todo initialize
     _numOfOperations;
     _oldAlgo;           //the old input (maybe not valid, but needed if the user edit lines they are not allowed to change)
     _lastCursorPos;
 
-    constructor(div, idPrefix, changeState, print) {
+    constructor(div, idPrefix, changeState, print, error) {
         //todo what about resizing?
 
-
         //todo dropHandler and dragOverHandler
-        this._drop_zone = $('<div></div>');//<div id="drop_zone" class=".container" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
-        this._drop_zone.attr('id', idPrefix + '_drop_zone');
-        div.append(this._drop_zone);
+        //this._drop_zone = $('<div></div>');//<div id="drop_zone" class=".container" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
+        //this._drop_zone.attr('id', idPrefix + '_drop_zone');
+        //div.append(this._drop_zone);
+        this._drop_zone = $(
+            '<div id="' + idPrefix + '_drop_zone" class="drop_zone" ' +
+            //'ondrop="dropHandler(event)" ondragover="dragOverHandler(event)"' +
+            '>' +
+            '</div>'
+        );
+        this._drop_zone.on({
+           'drop': (event) => this._handleDrop(event),  //todo doesn't seem to work
+           'dragover': (event) => this._handleDragOver(event)
+        });
 
         this._line_numbers = $(
             '<div id="' + idPrefix + '_line_numbers" class="line_numbers">' +
@@ -62,9 +72,14 @@ class AlgoArea {
             'autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">' +
             '</textarea>'
         );
-        this._q_algo.focusout(() => this.loadAlgorithm());
+        //this._q_algo.focusout(() => this.loadAlgorithm());
+        this._q_algo.on({
+            'focusout': () => this.loadAlgorithm(),
+            'input': () => this._handleInput(),
+            'scroll': () => this._handleScroll()
+        });
 
-
+        div.append(this._drop_zone);
         this._drop_zone.append(this._line_numbers);
         this._drop_zone.append(this._backdrop);
         this._drop_zone.append(this._q_algo);
@@ -73,9 +88,10 @@ class AlgoArea {
 
 
 
-        this._hlManager = new HighlightManager(this._highlighting, AlgoArea.isOperation);
+        this._hlManager = new HighlightManager(this._highlighting, this.isOperation);
         this._changeState = changeState;
         this._print = print;
+        this._error = error;
     }
 
     get algo() {
@@ -84,6 +100,7 @@ class AlgoArea {
 
     set algo(algo) {
         this._q_algo.val(algo);
+        this._hlManager.text = algo;
     }
 
     get q_algo() {
@@ -96,6 +113,26 @@ class AlgoArea {
 
     get hlManager() {
         return this._hlManager;
+    }
+
+    get numOfOperations() {
+        return this._numOfOperations;
+    }
+
+    set format(f) {
+        this._algoFormat = f;   //todo check if value is valid?
+    }
+
+    set emptyAlgo(flag) {
+        this._emptyAlgo = !!flag;   //!! forces parsing to bool
+    }
+
+    set algoChanged(flag) {
+        this._algoChanged = !!flag;   //!! forces parsing to bool
+    }
+
+    isFullyHighlighted() {
+        return this._hlManager.highlightedLines >= this._numOfOperations;
     }
 
     /**Loads the algorithm placed inside the textArea #q_algo
@@ -121,13 +158,13 @@ class AlgoArea {
         }
 
         if(algo) {
-            algo = AlgoArea.preformatAlgorithm(algo, format);
+            algo = this._preformatAlgorithm(algo, format);
             const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
             call.done((res) => {
                 this._loadingSuccess(res, algo, opNum, format, reset);
 
                 if(opNum === 0) this._changeState(STATE_LOADED_START);
-                else if(opNum === numOfOperations) this._changeState(STATE_LOADED_END);
+                else if(opNum === this._numOfOperations) this._changeState(STATE_LOADED_END);
                 else this._changeState(STATE_LOADED);
             });
             call.fail((res) => {
@@ -135,12 +172,12 @@ class AlgoArea {
 
                 //todo ask if this really is necessary or has any benefit, because disabling the buttons seems far more intuitive and cleaner
                 if(res.responseJSON && res.responseJSON.retry && !algorithm) {
-                    const call2 = $.post("/load", { basisStates: null, algo: lastValidAlgorithm, opNum: opNum, format: format, reset: reset });
+                    const call2 = $.post("/load", { basisStates: null, algo: this._lastValidAlgorithm, opNum: opNum, format: format, reset: reset });
                     call2.done((res2) => {
-                        this._loadingSuccess(res2, lastValidAlgorithm, opNum, format, reset);
+                        this._loadingSuccess(res2, this._lastValidAlgorithm, opNum, format, reset);
 
-                        this._q_algo.prop('selectionStart', lastCursorPos);
-                        this._q_algo.prop('selectionEnd', lastCursorPos+1);
+                        this._q_algo.prop('selectionStart', this._lastCursorPos);
+                        this._q_algo.prop('selectionEnd', this._lastCursorPos+1);
 
                         //set the focus and scroll to the cursor positoin - doesn't work on Opera
                         this._q_algo.blur();
@@ -164,10 +201,10 @@ class AlgoArea {
         this._lastValidAlgorithm = algo;  //algorithm in q_algo was valid if no error occured
 
         if(reset) {
-            this._hlManager.resetHighlighting(q_algo.val());
+            this._hlManager.resetHighlighting(this._q_algo.val());
             this._hlManager.highlightedLines = opNum;
             this._hlManager.setHighlights();
-        } else this._hlManager.text = q_algo.val();
+        } else this._hlManager.text = this._q_algo.val();
 
         this._numOfOperations = Math.max(res.data, 1);  //number of operations the algorithm has; at least the initial padding of 1 digit
         const digits = numOfDigits(this._numOfOperations);
@@ -187,13 +224,27 @@ class AlgoArea {
         this._algoFormat = FORMAT_UNKNOWN;
 
         this._hlManager.resetHighlighting("");
-        line_numbers.html("");  //remove line numbers
+        this._line_numbers.html("");  //remove line numbers
         this._q_algo.val("");   //todo remove when called for set algo("")
         this._setQAlgoMarginLeft();   //reset margin-left to the initial/default value
 
         this._print();    //reset dd
 
         this._changeState(STATE_NOTHING_LOADED);
+    }
+
+    updateSizes() {
+        const dzInnerWidth = parseFloat(this._drop_zone.css('width'))
+                            - 2 * parseFloat(this._drop_zone.css('border'));  //width of drop_zone between its borders
+        const width = dzInnerWidth - parseFloat(this._q_algo.css('margin-left'));
+        this._q_algo.css('width', width);
+
+        if(dzInnerWidth > 0) {
+            let lh = "<mark>";
+            for(let i = 0; i < dzInnerWidth / 4; i++) lh += " ";
+            lh += "</mark>";
+            updateLineHighlight(lh);
+        }
     }
 
     _setLineNumbers() {
@@ -204,7 +255,7 @@ class AlgoArea {
         for(let i = 0; i < lines.length; i++) {
             if(i <= this._hlManager.offset) lines[i] = "";
             else {
-                if(AlgoArea.isOperation(lines[i])) {
+                if(this.isOperation(lines[i], this._algoFormat)) {
                     num++;
                     const numDigits = numOfDigits(num);
 
@@ -229,7 +280,115 @@ class AlgoArea {
         this._q_algo.css('width', width);
     }
 
-    static preformatAlgorithm(algo, format) {
+    _handleDrop(event) {
+        console.log(event);
+        event.preventDefault();     //prevents the browser from opening the file and therefore leaving the website
+
+        if(event.dataTransfer.items) {  //check if a file was transmitted/dropped
+            for(let i = 0; i < event.dataTransfer.files.length; i++) {
+                //determine which format to load or show an error
+                let format = FORMAT_UNKNOWN;
+                if(event.dataTransfer.files[i].name.endsWith(".qasm")) format = QASM_FORMAT;
+                else if(event.dataTransfer.files[i].name.endsWith(".real")) format = REAL_FORMAT;
+                else {
+                    this._error("Filetype not supported!");
+                    return;
+                }
+
+                const file = event.dataTransfer.files[i];
+                const reader = new FileReader();
+                reader.onload = (e) => this._dropLoad(e);
+                reader.readAsBinaryString(file);
+            }
+        }
+    }
+
+    _dropLoad(e) {
+        this._q_algo.val(e.target.result);
+        this._algoChanged = true;
+        this.loadAlgorithm(format, true);    //since a completely new algorithm has been uploaded we have to throw away the old simulation data
+    }
+
+    _handleDragOver(event) {
+        event.preventDefault();
+    }
+
+    _handleInput() {
+        this._lastCursorPos = this._q_algo.prop('selectionStart');
+
+        const newAlgo = this._q_algo.val();
+        if(newAlgo.trim().length === 0) {   //user deleted everything, so we reset
+            this.resetAlgorithm();
+            return;
+        }
+
+        this._emptyAlgo = false;
+        this._algoChanged = true;
+        if(this._hlManager.highlightedLines > 0) {  //if nothing is highlighted yet, the user may also edit the lines before the first operation
+            //check if a highlighted line changed, if yes abort the changes
+            const curLines = newAlgo.split('\n');
+            const lastLineWithHighlighting = this._hlManager.highlightedLines + this._hlManager.nopsInHighlighting;
+
+            /*
+            if(curLines.length < lastLineWithHighlighting) { //illegal change because at least the last line has been deleted
+                q_algo.val(oldAlgo);   //reset algorithm to old input
+                showError("You are not allowed to change already processed lines!");
+                return;
+            }
+            */
+
+            const oldLines = this._oldAlgo.split('\n');
+            /*
+            //header can be adapted, but lines can't be deleted (this would make a complete update of the highlighting necessary)
+            for(let i = hlManager.offset; i <= lastLineWithHighlighting; i++) {
+                //non-highlighted lines may change, because they are no operations
+                if(hlManager.isHighlighted(i) && curLines[i] !== oldLines[i]) {   //illegal change!
+                    q_algo.val(oldAlgo);   //reset algorithm to old input
+                    showError("You are not allowed to change already processed lines!");
+                    return;
+                }
+            }
+             */
+            //the header is not allowed to change as well as all processed lines
+            for(let i = 0; i <= lastLineWithHighlighting; i++) {
+                //non-highlighted lines may change, because they are no operations
+                if((i < this._hlManager.offset || this._hlManager.isHighlighted(i)) //highlighted lines and the header are not allowed to change (but comments are)
+                    && curLines[i] !== oldLines[i]) {   //illegal change!
+                    this._q_algo.val(this._oldAlgo);   //reset algorithm to old input
+                    this._error("You are not allowed to change already processed lines!");
+                    this._selectLineWithCursor();
+                    return;
+                }
+            }
+        }
+
+        this._oldAlgo = this._q_algo.val();  //changes are legal so they are "saved"
+        this._setLineNumbers();
+    }
+
+    _selectLineWithCursor() {
+        const algo = this._q_algo.val();
+        let lineStart = algo.lastIndexOf("\n", this._lastCursorPos) + 1;  //+1 because we need the index of the first character in the line
+        let lineEnd;
+        //special case where lastCursorPos is directly at the end of a line
+        if(lineStart === this._lastCursorPos) {
+            lineStart = algo.lastIndexOf("\n", this._lastCursorPos-2) + 1;    //lastCursorPos-1 would be the current lineStart, but we need one character before that
+            lineEnd = this._lastCursorPos-1;  //the position right before \n
+
+        } else lineEnd = algo.indexOf("\n", lineStart);
+
+        this._q_algo.prop('selectionStart', lineStart);
+        this._q_algo.prop('selectionEnd', lineEnd);
+    }
+
+    _handleScroll() {
+        const scrollTop = this._q_algo.scrollTop();
+
+        this._line_numbers.scrollTop(scrollTop);
+        this._highlighting.scrollTop(scrollTop);
+    }
+
+    _preformatAlgorithm(algo, format) {
         let setQAlgo = false;
 
         //make sure every operation is in a separate line
@@ -239,7 +398,7 @@ class AlgoArea {
             for(let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 //"\n" needs to be added separately because it was removed while splitting
-                if(AlgoArea.isOperation(line, format)) {
+                if(this.isOperation(line, format)) {
                     let l = line;
                     while(l.length !== 0) {
                         const i = l.indexOf(';');
@@ -279,7 +438,7 @@ class AlgoArea {
         }
 
 
-        if(setQAlgo) q_algo.val(algo);
+        if(setQAlgo) this._q_algo.val(algo);
         return algo;
     }
 
@@ -288,7 +447,7 @@ class AlgoArea {
      * @param line of an algorithm
      * @param format of the line we check
      */
-    static isOperation(line, format = algoFormat) {
+    isOperation(line, format = this._algoFormat) {
         if(line) {
             if(format === QASM_FORMAT) {
                 if( line.trim() === "" ||
@@ -307,7 +466,7 @@ class AlgoArea {
 
             } else {
                 //showError("Format not recognized. Please try again.");  //todo change message?
-                console.log("Format not recognized");
+                console.log("Format (" + format + ") not recognized");
                 return false;
             }
         } else return false;

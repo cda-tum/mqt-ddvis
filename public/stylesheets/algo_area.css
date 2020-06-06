@@ -19,22 +19,25 @@
     letter-spacing: 1px;
 }
 
+.backdrop {
+    z-index: 1;
+}
+
+.backdrop, .line_numbers {
+    position: absolute;
+    /*border: 2px solid #685972;*/
+    background-color: transparent;
+    overflow: auto;
+    pointer-events: none;
+    transition: transform 1s;
+}
+
 .line_numbers {
     z-index: 2;
     border: none;
     white-space: pre;
     text-align: left;
     padding-left: 10px;
-}
-
-.backdrop, .line_numbers {
-    position: absolute;
-    z-index: 1;
-    /*border: 2px solid #685972;*/
-    background-color: transparent;
-    overflow: auto;
-    pointer-events: none;
-    transition: transform 1s;
 }
 
 .highlights {

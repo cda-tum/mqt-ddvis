@@ -2,11 +2,11 @@
 
 const step_duration = $('#stepDuration');
 const algo_div = $('#algo_div');
-const drop_zone = $('#drop_zone');
-const backdrop = $('#backdrop');
-const line_numbers = $('#line_numbers');
+//const drop_zone = $('#drop_zone');
+//const backdrop = $('#backdrop');
+//const line_numbers = $('#line_numbers');
 const highlighting = $('#highlighting');
-const q_algo = $('#q_algo');
+//const q_algo = $('#q_algo');
 const automatic = $('#automatic');
 const line_to_go = $('#line_to_go');
 const qdd_div = $('#qdd_div');
@@ -35,30 +35,30 @@ function changeState(state) {
     let disable;
     switch (state) {
         case STATE_NOTHING_LOADED:
-            enable = [ "drop_zone", "q_algo", "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
+            enable = [ "sim_drop_zone", "sim_q_algo", "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
             disable = [ "toStart", "prev", "automatic", "next", "toEnd", "toLine" ];
             break;
 
         case STATE_LOADED:
-            enable = [  "drop_zone", "q_algo", "toStart", "prev", "automatic", "next", "toEnd", "toLine",
+            enable = [  "sim_drop_zone", "sim_q_algo", "toStart", "prev", "automatic", "next", "toEnd", "toLine",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
             disable = [  ];
             break;
 
         case STATE_LOADED_START:
-            enable = [  "drop_zone", "q_algo", "automatic", "next", "toEnd", "toLine", "ex_real", "ex_qasm",
+            enable = [  "sim_drop_zone", "sim_q_algo", "automatic", "next", "toEnd", "toLine", "ex_real", "ex_qasm",
                         "ex_deutsch", "ex_alu", "stepDuration" ];
             disable = [ "toStart", "prev" ];
             break;
 
         case STATE_LOADED_END:
-            enable = [ "drop_zone", "q_algo", "toStart", "prev", "toLine", "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
+            enable = [ "sim_drop_zone", "sim_q_algo", "toStart", "prev", "toLine", "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
             disable = [ "toEnd", "next", "automatic" ];   //don't disable q_algo because the user might want to add lines to the end
             break;
 
         case STATE_SIMULATING:
             enable = [];
-            disable = [ "drop_zone", "q_algo", "toStart", "prev", "automatic", "next", "toEnd", "toLine",
+            disable = [ "sim_drop_zone", "sim_q_algo", "toStart", "prev", "automatic", "next", "toEnd", "toLine",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
             break;
 
@@ -67,23 +67,23 @@ function changeState(state) {
             pauseDia = false;
             automatic.text("||");   //\u23F8
             enable = [ "automatic" ];
-            disable = [ "drop_zone", "q_algo", "toStart", "prev", "next", "toEnd", "toLine",
+            disable = [ "sim_drop_zone", "sim_q_algo", "toStart", "prev", "next", "toEnd", "toLine",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
             break;
     }
 
-    enableElementsWithID(enable);
-    disableElementsWithID(disable);
+    _enableElementsWithID(enable);
+    _disableElementsWithID(disable);
 }
 
-function enableElementsWithID(ids) {
+function _enableElementsWithID(ids) {
     ids.forEach((id) => {
         const elem = document.getElementById(id);
         elem.disabled = false;
     });
 }
 
-function disableElementsWithID(ids) {
+function _disableElementsWithID(ids) {
     ids.forEach((id) => {
         const elem = document.getElementById(id);
         elem.disabled = true;
@@ -106,20 +106,7 @@ for (let i = 0; i < acc.length; i++) {
     });
 }
 
-window.addEventListener('resize', (event) => updateSizes());
-function updateSizes() {
-    const dzInnerWidth = parseFloat(drop_zone.css('width')) - 2 * parseFloat(drop_zone.css('border'));  //inner width of drop_zone
-    const width = dzInnerWidth - parseFloat(q_algo.css('margin-left'));
-    q_algo.css('width', width);
-
-    if(dzInnerWidth > 0) {
-        let lh = "<mark>";
-        for(let i = 0; i < dzInnerWidth / 4; i++) lh += " ";
-        lh += "</mark>";
-        updateLineHighlight(lh);
-    }
-}
-
+window.addEventListener('resize', (event) => algoArea.updateSizes());
 
 function validateStepDuration() {
     const input = step_duration.val();
@@ -140,6 +127,24 @@ function validateStepDuration() {
     }
 }
 
+
+const algoArea = new AlgoArea(algo_div, "sim", changeState, print);
+//append the navigation div below algoArea
+algo_div.append(
+  '<div id="nav_div">\n' +
+    '        <button type="button" id="toStart" onclick="sim_gotoStart()">&#8606</button>\n' +
+    '        <button type="button" id="prev" onclick="sim_goBack()">&#8592</button>\n' +
+    '        <button type="button" id="automatic">&#9654</button>\n' +
+    '        <button type="button" id="next" onclick="sim_goForward()">&#8594</button>\n' +
+    '        <button type="button" id="toEnd" onclick="sim_gotoEnd()">&#8608</button>\n' +
+    '\n' +
+    '        <p></p>\n' +
+    '        <button type="button" onclick="sim_gotoLine()" id="toLine">Go to Line</button>\n' +
+    '        <input type="number" min="0" id="line_to_go" value="0" onchange="validateLineNumber()"/>\n' +
+    '</div>'
+);
+
+algoArea.updateSizes();  //todo at this point the width of the elements hasn't been calculated so updateSizes() updates to wrong sizes!
 changeState(STATE_NOTHING_LOADED);      //initial state
 
 
@@ -161,8 +166,9 @@ const emptyReal =   ".version 2.0 \n" +
                     ".begin \n" +
                     "\n" +
                     ".end \n";
-let emptyAlgo = false;  //whether currently one of the two empty algorithms (templates) are in the textArea or not
+//let emptyAlgo = false;  //whether currently one of the two empty algorithms (templates) are in the textArea or not
 
+/*
 function resetAlgorithm() {
     emptyAlgo = true;
     algoFormat = FORMAT_UNKNOWN;
@@ -176,23 +182,24 @@ function resetAlgorithm() {
 
     changeState(STATE_NOTHING_LOADED);
 }
+*/
 
 /**Load empty QASM-Format
  *
  */
 function loadQASM() {
-    resetAlgorithm();
-    q_algo.val(emptyQasm);
-    algoFormat = QASM_FORMAT;
+    algoArea.resetAlgorithm();
+    algoArea.algo = emptyQasm;
+    algoArea.format = QASM_FORMAT;
 }
 
 /**Load empty Real-Format
  *
  */
 function loadReal() {
-    resetAlgorithm();
-    q_algo.val(emptyReal);
-    algoFormat = REAL_FORMAT;
+    algoArea.resetAlgorithm();
+    algoArea.algo = emptyReal;
+    algoArea.format = REAL_FORMAT;
 }
 
 const deutschAlgorithm =    "OPENQASM 2.0;\n" +
@@ -207,15 +214,17 @@ const deutschAlgorithm =    "OPENQASM 2.0;\n" +
                             "cx q[0],q[1];\n" +
                             "h q[0];\n";
 function loadDeutsch() {
-    q_algo.val(deutschAlgorithm);
+    algoArea.emptyAlgo = false;
+    algoArea.algoChanged = true;
+    algoArea.format = QASM_FORMAT;
 
-    emptyAlgo = false;
-    algoChanged = true;
-    loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
+    algoArea.algo = deutschAlgorithm;
+
+    algoArea.loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
 
 function loadAlu() {
-    q_algo.val(
+    algoArea.algo =
         "OPENQASM 2.0;\n" +
         "include \"qelib1.inc\";\n" +
         "qreg q[5];\n" +
@@ -304,13 +313,14 @@ function loadAlu() {
         "cx q[3],q[0];\n" +
         "h q[2];\n" +
         "x q[2];\n"
-    );
+    ;
 
-    emptyAlgo = false;
-    algoChanged = true;
-    loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
+    algoArea.emptyAlgo = false;
+    algoArea.algoChanged = true;
+    algoArea.loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
 
+/*
 function dropHandler(event) {
     event.preventDefault();     //prevents the browser from opening the file and therefore leaving the website
 
@@ -336,103 +346,11 @@ function dropHandler(event) {
         }
     }
 }
-
-let algoFormat = FORMAT_UNKNOWN;
-let numOfOperations = 0;    //number of operations the whole algorithm has
-let lastValidAlgorithm = deutschAlgorithm;  //initialized with an arbitrary valid algorithm (deutsch: because it was available and it is short)
-/**Loads the algorithm placed inside the textArea #q_algo
- *
- * @param format the format in which the algorithm is written; the only occasion where this parameter is not set
- *        is when leaving the textArea after editing, but in this case the format didn't change so the old algoFormat is used
- * @param reset whether a new simulation needs to be started after loading; default false because again the only occasion
- *        it is not set is after editing, but there we especially don't want to reset
- * @param algorithm only needed if the lastValidAlgorithm should be sent again because the algorithm in q_algo is invalid
  */
-function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
-    if(emptyAlgo || !algoChanged) return;
 
-    const startTimeStemp = performance.now();
-    let algo = algorithm || q_algo.val();   //usually q_algo.val() is taken
-    const opNum = reset ?
-        0 : //parseInt(line_to_go.val()) :
-        hlManager.highlightedLines;   //we want to continue simulating after the last processed line, which is after the highlighted ones
-
-    if(format === FORMAT_UNKNOWN) {
-        //find out of which format the input text is
-        if(algo.includes("OPENQASM")) format = QASM_FORMAT;
-        else format = REAL_FORMAT;      //right now only these two formats are supported, so if it is not QASM, it must be Real
-    }
-
-    if(algo) {
-        algo = AlgoArea.preformatAlgorithm(algo, format);
-        const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
-        call.done((res) => {
-            _loadingSuccess(res, algo, opNum, format, reset);
-
-            if(opNum === 0) changeState(STATE_LOADED_START);
-            else if(opNum === numOfOperations) changeState(STATE_LOADED_END);
-            else changeState(STATE_LOADED);
-        });
-        call.fail((res) => {
-            if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-
-            //todo ask if this really is necessary or has any benefit, because disabling the buttons seems far more intuitive and cleaner
-            if(res.responseJSON && res.responseJSON.retry && !algorithm) {
-                const call2 = $.post("/load", { basisStates: null, algo: lastValidAlgorithm, opNum: opNum, format: format, reset: reset });
-                call2.done((res2) => {
-                    _loadingSuccess(res2, lastValidAlgorithm, opNum, format, reset);
-
-                    q_algo.prop('selectionStart', lastCursorPos);
-                    q_algo.prop('selectionEnd', lastCursorPos+1);
-
-                    //set the focus and scroll to the cursor positoin - doesn't work on Opera
-                    q_algo.blur();
-                    q_algo.focus();
-                    $.trigger({ type: 'keypress' });
-                });
-                // call2.fail((res2) => {
-                //    showResponseError(res, )
-                // });
-            }
-            changeState(STATE_NOTHING_LOADED);
-            showResponseError(res, "Couldn't connect to the server.");
-
-        });
-        console.log("Loading and processing " + opNum + " lines took " + (performance.now() - startTimeStemp) + "ms");
-    }
-}
-
-function _loadingSuccess(res, algo, opNum, format, reset) {
-    algoFormat = format;
-    oldAlgo = algo;
-    algoChanged = false;
-    lastValidAlgorithm = algo;  //algorithm in q_algo was valid if no error occured
-
-    if(reset) {
-        hlManager.resetHighlighting(q_algo.val());
-        hlManager.highlightedLines = opNum;
-        hlManager.setHighlights();
-    } else hlManager.text = q_algo.val();
-
-    numOfOperations = Math.max(res.data, 1);  //number of operations the algorithm has; at least the initial padding of 1 digit
-    const digits = numOfDigits(numOfOperations);
-    setQAlgoMarginLeft(digits);
-
-    setLineNumbers();
-
-    print(res.dot);
-
-    //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
-    if(opNum > numOfOperations) line_to_go.val(numOfOperations);
-}
-
-function setQAlgoMarginLeft(digits = 1) {
-    const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
-    q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
-
-    const width = parseInt(drop_zone.css('width')) - margin - 2 * parseInt(drop_zone.css('border'));
-    q_algo.css('width', width);
-}
+//let algoFormat = FORMAT_UNKNOWN;
+//let numOfOperations = 0;    //number of operations the whole algorithm has
+//let lastValidAlgorithm = deutschAlgorithm;  //initialized with an arbitrary valid algorithm (deutsch: because it was available and it is short)
 
 //################### NAVIGATION ##################################################################################################################
 $(() =>  {
@@ -441,8 +359,7 @@ $(() =>  {
             pauseDia = true;
             runDia = false;
 
-            if(hlManager.highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
-            else changeState(STATE_LOADED);
+            _onErrorChangeState();  //in error-cases we also call endDia(), and in normal cases it doesn't matter that we call this function
             automatic.text("\u25B6");   //play-symbol in unicode
         }
 
@@ -464,7 +381,7 @@ $(() =>  {
                             if(res.dot) {
                                 print(res.dot);
 
-                                hlManager.increaseHighlighting();
+                                algoArea.hlManager.increaseHighlighting();
 
                                 const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
                                 setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
@@ -485,7 +402,7 @@ $(() =>  {
     });
 });
 
-function gotoStart() {
+function sim_gotoStart() {
     changeState(STATE_SIMULATING);
     const call = $.ajax({
         url: '/tostart',
@@ -493,7 +410,7 @@ function gotoStart() {
         success: (res) => {
             if(res.dot) {
                 print(res.dot);
-                hlManager.initialHighlighting();
+                algoArea.hlManager.initialHighlighting();
             }
             changeState(STATE_LOADED_START);
         }
@@ -502,14 +419,11 @@ function gotoStart() {
         if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
 
         showResponseError(res, "Going back to the start failed!");
-        //determine our current position in the algorithm
-        if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
-        else if(hlManager.highlightedLines === numOfOperations) changeState(STATE_LOADED_END);
-        else changeState(STATE_LOADED);
+        _onErrorChangeState();
     });
 }
 
-function goBack() {
+function sim_goBack() {
     changeState(STATE_SIMULATING);
     const call = $.ajax({
         url: '/prev',
@@ -518,8 +432,8 @@ function goBack() {
             if(res.dot) {
                 print(res.dot);
 
-                hlManager.decreaseHighlighting();
-                if(hlManager.highlightedLines <= 0) changeState(STATE_LOADED_START);
+                algoArea.hlManager.decreaseHighlighting();
+                if(algoArea.hlManager.highlightedLines <= 0) changeState(STATE_LOADED_START);
                 else changeState(STATE_LOADED);
 
             } else changeState(STATE_LOADED_START); //should never reach this code because the button should be disabled when we reach the start
@@ -529,15 +443,11 @@ function goBack() {
         if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
 
         showResponseError(res, "Going a step back failed!");
-        //determine our current position in the algorithm
-        if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
-        else if(hlManager.highlightedLines === numOfOperations) changeState(STATE_LOADED_END);
-        else changeState(STATE_LOADED);
+        _onErrorChangeState();
     });
 }
 
-function goForward() {
-    const startTimeStemp = performance.now();
+function sim_goForward() {
     changeState(STATE_SIMULATING);
     const call = $.ajax({
         url: '/next',
@@ -546,28 +456,23 @@ function goForward() {
             if(res.dot) {   //we haven't reached the end yet
                 print(res.dot);
 
-                hlManager.increaseHighlighting();
+                algoArea.hlManager.increaseHighlighting();
 
-                if(hlManager.highlightedLines >= numOfOperations) changeState(STATE_LOADED_END);
+                if(algoArea.hlManager.highlightedLines >= algoArea.numOfOperations) changeState(STATE_LOADED_END);
                 else changeState(STATE_LOADED);
 
             } else changeState(STATE_LOADED_END); //should never reach this code because the button should be disabled when we reach the end
-
-            console.log("Time spent: " + (performance.now() - startTimeStemp) + "ms");
         }
     });
     call.fail((res) => {
         if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
 
         showResponseError(res, "Going a step ahead failed!");
-        //determine our current position in the algorithm
-        if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
-        else if(hlManager.highlightedLines === numOfOperations) changeState(STATE_LOADED_END);
-        else changeState(STATE_LOADED);
+        _onErrorChangeState();
     });
 }
 
-function gotoEnd() {
+function sim_gotoEnd() {
     changeState(STATE_SIMULATING);
     const call = $.ajax({
         url: '/toend',
@@ -575,7 +480,7 @@ function gotoEnd() {
         success: (res) => {
             if(res.dot) {
                 print(res.dot);
-                hlManager.highlightEverything();
+                algoArea.hlManager.highlightEverything();
             }
             changeState(STATE_LOADED_END);
         }
@@ -584,27 +489,24 @@ function gotoEnd() {
         if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
 
         showResponseError(res, "Going to the end failed!");
-        //determine our current position in the algorithm
-        if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
-        else if(hlManager.highlightedLines === numOfOperations) changeState(STATE_LOADED_END);
-        else changeState(STATE_LOADED);
+        _onErrorChangeState();
     });
 }
 
-function gotoLine() {
+function sim_gotoLine() {
     changeState(STATE_SIMULATING);
-    const line = Math.min(parseInt(line_to_go.val()), numOfOperations);
+    const line = Math.min(parseInt(line_to_go.val()), algoArea.numOfOperations);
     const call = $.ajax({
         url: '/toline?line=' + line,
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {
                 print(res.dot);
-                hlManager.highlightToXOps(line);
+                algoArea.hlManager.highlightToXOps(line);
             }
             //determine our current position in the algorithm
-            if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
-            else if(hlManager.highlightedLines === numOfOperations) changeState(STATE_LOADED_END);
+            if(algoArea.hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
+            else if(algoArea.hlManager.highlightedLines === algoArea.numOfOperations) changeState(STATE_LOADED_END);
             else changeState(STATE_LOADED);
         }
     });
@@ -612,51 +514,48 @@ function gotoLine() {
         if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
 
         showResponseError(res, "Going to line " + line + " failed!");
-        //determine our current position in the algorithm
-        if(hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
-        else if(hlManager.highlightedLines === numOfOperations) changeState(STATE_LOADED_END);
-        else changeState(STATE_LOADED);
+        _onErrorChangeState();
     });
+}
+
+function _onErrorChangeState() {
+    //determine our current position in the algorithm
+    if(algoArea.hlManager.highlightedLines <= 0) changeState(STATE_LOADED_START);
+    else if(algoArea.hlManager.highlightedLines >= algoArea.numOfOperations) changeState(STATE_LOADED_END);
+    else changeState(STATE_LOADED);
 }
 
 function validateLineNumber() {
     const lineNum = line_to_go.val();
     if(lineNum.includes(".")) {
         showError("Floats are not allowed! Only unsigned integers are valid.\n" +
-            "Possible values: [0, " + numOfOperations + "]");
+            "Possible values: [0, " + algoArea.numOfOperations + "]");
         line_to_go.val(0);
     } else {
         const num = parseInt(lineNum);
         if(num || num === 0) {
             if(num < 0) {
-                showError("You can't go to a negative line number!\nPossible values: [0, " + numOfOperations + "]");
+                showError("You can't go to a negative line number!\nPossible values: [0, " + algoArea.numOfOperations + "]");
                 line_to_go.val(0);
-            } else if(num > numOfOperations) {
-                showError("Line #" + num + " doesn't exist!\nPossible values: [0, " + numOfOperations + "]");
-                line_to_go.val(numOfOperations);
+            } else if(num > algoArea.numOfOperations) {
+                showError("Line #" + num + " doesn't exist!\nPossible values: [0, " + algoArea.numOfOperations + "]");
+                line_to_go.val(algoArea.numOfOperations);
             }
         } else {
             showError("Your input is not a number!\n" +
-                "Please enter an unsigned integer of the interval [0, " + numOfOperations + "].");
+                "Please enter an unsigned integer of the interval [0, " + algoArea.numOfOperations + "].");
             line_to_go.val(0);
         }
     }
 }
 
 //################### LINE HIGHLIGHTING ##################################################################################################################
-const hlManager = new HighlightManager(highlighting, AlgoArea.isOperation);
+//const hlManager = new HighlightManager(highlighting, algoArea.isOperation);
 
-function bindEvents() {
-    q_algo.on({
-        'input': handleInput,
-        'scroll': handleScroll
-    });
-}
-bindEvents();
 
 //################### LINE NUMBERING ##################################################################################################################
 
-
+/*
 function setLineNumbers() {
     const digits = numOfDigits(numOfOperations);
 
@@ -665,7 +564,7 @@ function setLineNumbers() {
     for(let i = 0; i < lines.length; i++) {
         if(i <= hlManager.offset) lines[i] = "";
         else {
-            if(AlgoArea.isOperation(lines[i])) {
+            if(algoArea.isOperation(lines[i])) {
                 num++;
                 const numDigits = numOfDigits(num);
 
@@ -685,6 +584,7 @@ function setLineNumbers() {
 function removeLineNumbers() {
     line_numbers.html("");
 }
+*/
 
 
 //################### HIGHLIGHTING and NUMBERING ##################################################################################################################
@@ -692,83 +592,82 @@ function removeLineNumbers() {
 //highlighting and line numbering              ONLY WORKS IF EACH LINE CONTAINS NO MORE THAN 1 OPERATION!!!
 //adapted from: https://codepen.io/lonekorean/pen/gaLEMR
 function handleScroll() {
-    const scrollTop = q_algo.scrollTop();
+    //const scrollTop = q_algo.scrollTop();
 
-    highlighting.scrollTop(scrollTop);
-    line_numbers.scrollTop(scrollTop);
+    //highlighting.scrollTop(scrollTop);
+    //line_numbers.scrollTop(scrollTop);
 }
 
-let oldAlgo;   //needed to reset input if an illegal change was made
+//let oldAlgo;   //needed to reset input if an illegal change was made
 let algoChanged = false;
-let lastCursorPos = 0;
-function handleInput() {
-    lastCursorPos = q_algo.prop('selectionStart');
-
-    const newAlgo = q_algo.val();
-    if(newAlgo.trim().length === 0) {   //user deleted everything, so we reset
-        resetAlgorithm();
-        return;
-    }
-
-    emptyAlgo = false;
-    algoChanged = true;
-    if(hlManager.highlightedLines > 0) {  //if nothing is highlighted yet, the user may also edit the lines before the first operation
-        //check if a highlighted line changed, if yes abort the changes
-        const curLines = newAlgo.split('\n');
-        const lastLineWithHighlighting = hlManager.highlightedLines + hlManager.nopsInHighlighting;
-
-        /*
-        if(curLines.length < lastLineWithHighlighting) { //illegal change because at least the last line has been deleted
-            q_algo.val(oldAlgo);   //reset algorithm to old input
-            showError("You are not allowed to change already processed lines!");
-            return;
-        }
-        */
-
-        const oldLines = oldAlgo.split('\n');
-        /*
-        //header can be adapted, but lines can't be deleted (this would make a complete update of the highlighting necessary)
-        for(let i = hlManager.offset; i <= lastLineWithHighlighting; i++) {
-            //non-highlighted lines may change, because they are no operations
-            if(hlManager.isHighlighted(i) && curLines[i] !== oldLines[i]) {   //illegal change!
-                q_algo.val(oldAlgo);   //reset algorithm to old input
-                showError("You are not allowed to change already processed lines!");
-                return;
-            }
-        }
-         */
-        //the header is not allowed to change as well as all processed lines
-        for(let i = 0; i <= lastLineWithHighlighting; i++) {
-            //non-highlighted lines may change, because they are no operations
-            if((i < hlManager.offset || hlManager.isHighlighted(i)) //highlighted lines and the header are not allowed to change (but comments are)
-                && curLines[i] !== oldLines[i]) {   //illegal change!
-                q_algo.val(oldAlgo);   //reset algorithm to old input
-                showError("You are not allowed to change already processed lines!");
-                selectLineWithCursor();
-                return;
-            }
-        }
-    }
-
-    oldAlgo = q_algo.val();  //changes are legal so they are "saved"
-    setLineNumbers();
-}
-
-function selectLineWithCursor() {
-    const algo = q_algo.val();
-    let lineStart = algo.lastIndexOf("\n", lastCursorPos) + 1;  //+1 because we need the index of the first character in the line
-    let lineEnd;
-    //special case where lastCursorPos is directly at the end of a line
-    if(lineStart === lastCursorPos) {
-        lineStart = algo.lastIndexOf("\n", lastCursorPos-2) + 1;    //lastCursorPos-1 would be the current lineStart, but we need one character before that
-        lineEnd = lastCursorPos-1;  //the position right before \n
-
-    } else lineEnd = algo.indexOf("\n", lineStart);
-
-    q_algo.prop('selectionStart', lineStart);
-    q_algo.prop('selectionEnd', lineEnd);
-}
-
+//let lastCursorPos = 0;
+// function handleInput() {
+//     lastCursorPos = q_algo.prop('selectionStart');
+//
+//     const newAlgo = q_algo.val();
+//     if(newAlgo.trim().length === 0) {   //user deleted everything, so we reset
+//         resetAlgorithm();
+//         return;
+//     }
+//
+//     emptyAlgo = false;
+//     algoChanged = true;
+//     if(hlManager.highlightedLines > 0) {  //if nothing is highlighted yet, the user may also edit the lines before the first operation
+//         //check if a highlighted line changed, if yes abort the changes
+//         const curLines = newAlgo.split('\n');
+//         const lastLineWithHighlighting = hlManager.highlightedLines + hlManager.nopsInHighlighting;
+//
+//         /*
+//         if(curLines.length < lastLineWithHighlighting) { //illegal change because at least the last line has been deleted
+//             q_algo.val(oldAlgo);   //reset algorithm to old input
+//             showError("You are not allowed to change already processed lines!");
+//             return;
+//         }
+//         */
+//
+//         const oldLines = oldAlgo.split('\n');
+//         /*
+//         //header can be adapted, but lines can't be deleted (this would make a complete update of the highlighting necessary)
+//         for(let i = hlManager.offset; i <= lastLineWithHighlighting; i++) {
+//             //non-highlighted lines may change, because they are no operations
+//             if(hlManager.isHighlighted(i) && curLines[i] !== oldLines[i]) {   //illegal change!
+//                 q_algo.val(oldAlgo);   //reset algorithm to old input
+//                 showError("You are not allowed to change already processed lines!");
+//                 return;
+//             }
+//         }
+//          */
+//         //the header is not allowed to change as well as all processed lines
+//         for(let i = 0; i <= lastLineWithHighlighting; i++) {
+//             //non-highlighted lines may change, because they are no operations
+//             if((i < hlManager.offset || hlManager.isHighlighted(i)) //highlighted lines and the header are not allowed to change (but comments are)
+//                 && curLines[i] !== oldLines[i]) {   //illegal change!
+//                 q_algo.val(oldAlgo);   //reset algorithm to old input
+//                 showError("You are not allowed to change already processed lines!");
+//                 selectLineWithCursor();
+//                 return;
+//             }
+//         }
+//     }
+//
+//     oldAlgo = q_algo.val();  //changes are legal so they are "saved"
+//     setLineNumbers();
+// }
+//
+// function selectLineWithCursor() {
+//     const algo = q_algo.val();
+//     let lineStart = algo.lastIndexOf("\n", lastCursorPos) + 1;  //+1 because we need the index of the first character in the line
+//     let lineEnd;
+//     //special case where lastCursorPos is directly at the end of a line
+//     if(lineStart === lastCursorPos) {
+//         lineStart = algo.lastIndexOf("\n", lastCursorPos-2) + 1;    //lastCursorPos-1 would be the current lineStart, but we need one character before that
+//         lineEnd = lastCursorPos-1;  //the position right before \n
+//
+//     } else lineEnd = algo.indexOf("\n", lineStart);
+//
+//     q_algo.prop('selectionStart', lineStart);
+//     q_algo.prop('selectionEnd', lineEnd);
+// }
 
 
 //################### ERROR HANDLING ##################################################################################################################
@@ -810,5 +709,3 @@ function print(dot) {
     }
 }
 
-
-new AlgoArea(qdd_div, "test", changeState, print);

@@ -1,4 +1,5 @@
 
+//todo make static?
 let lineHighlight = "<mark>                                                                                                                                  </mark>";
 
 function updateLineHighlight(newLH) {
@@ -6,6 +7,7 @@ function updateLineHighlight(newLH) {
 }
 
 class HighlightManager {
+
     _div;
     _isOperation;
     _hl;    //an array that tells us for each line if it is an operation or not
