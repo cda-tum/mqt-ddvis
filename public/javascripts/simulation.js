@@ -3,7 +3,6 @@
 const step_duration = $('#stepDuration');
 const algo_div = $('#algo_div');
 const automatic = $('#automatic');
-const line_to_go = $('#line_to_go');
 const qdd_div = $('#qdd_div');
 const qdd_text = $('#qdd_text');
 //todo also initialize all other selectors once?
@@ -123,7 +122,7 @@ function validateStepDuration() {
 }
 
 
-const algoArea = new AlgoArea(algo_div, "sim", changeState, print);
+const algoArea = new AlgoArea(algo_div, "sim", changeState, print, showError);
 //append the navigation div below algoArea
 algo_div.append(
   '<div id="nav_div">\n' +
@@ -138,6 +137,7 @@ algo_div.append(
     '        <input type="number" min="0" id="line_to_go" value="0" onchange="validateLineNumber()"/>\n' +
     '</div>'
 );
+const line_to_go = $('#line_to_go');
 
 //algoArea.updateSizes();  //todo at this point the width of the elements hasn't been calculated so updateSizes() updates to wrong sizes!
 changeState(STATE_NOTHING_LOADED);      //initial state
@@ -164,8 +164,9 @@ const emptyReal =   ".version 2.0 \n" +
  */
 function loadQASM() {
     algoArea.resetAlgorithm();
+
+    algoArea.algoFormat = QASM_FORMAT;
     algoArea.algo = emptyQasm;
-    algoArea.format = QASM_FORMAT;
 }
 
 /**Load empty Real-Format
@@ -173,8 +174,8 @@ function loadQASM() {
  */
 function loadReal() {
     algoArea.resetAlgorithm();
+    algoArea.algoFormat = REAL_FORMAT;
     algoArea.algo = emptyReal;
-    algoArea.format = REAL_FORMAT;
 }
 
 const deutschAlgorithm =    "OPENQASM 2.0;\n" +
@@ -191,14 +192,18 @@ const deutschAlgorithm =    "OPENQASM 2.0;\n" +
 function loadDeutsch() {
     algoArea.emptyAlgo = false;
     algoArea.algoChanged = true;
-    algoArea.format = QASM_FORMAT;
 
+    algoArea.algoFormat = QASM_FORMAT;
     algoArea.algo = deutschAlgorithm;
 
     algoArea.loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
 
 function loadAlu() {
+    algoArea.emptyAlgo = false;
+    algoArea.algoChanged = true;
+
+    algoArea.algoFormat = QASM_FORMAT;
     algoArea.algo =
         "OPENQASM 2.0;\n" +
         "include \"qelib1.inc\";\n" +
@@ -290,8 +295,6 @@ function loadAlu() {
         "x q[2];\n"
     ;
 
-    algoArea.emptyAlgo = false;
-    algoArea.algoChanged = true;
     algoArea.loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
 
@@ -374,7 +377,6 @@ function sim_goBack() {
         success: (res) => {
             if(res.dot) {
                 print(res.dot);
-
                 algoArea.hlManager.decreaseHighlighting();
                 if(algoArea.hlManager.highlightedLines <= 0) changeState(STATE_LOADED_START);
                 else changeState(STATE_LOADED);

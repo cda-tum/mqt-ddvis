@@ -1,16 +1,13 @@
 
 //todo make static?
 let lineHighlight = "<mark>                                                                                                                                  </mark>";
-
 function updateLineHighlight(newLH) {
     lineHighlight = newLH;
-    console.log("LH.length = " + lineHighlight.length);
 }
 
 class HighlightManager {
-
     _div;
-    _isOperation;
+    _isOperation;       //todo fix: right now this is an AlgoArea (needed because the default format of algoArea.algoFormat isn't used if we just provide the function)
     _hl;    //an array that tells us for each line if it is an operation or not
     _operationOffset = 0;
     _highlightedOps = 0;      //how many lines with Operations are highlighted
@@ -28,6 +25,8 @@ class HighlightManager {
     }
 
     set text(text) {
+        //debugger
+
         //calculate new operationOffset for the new text and decide for each line of the text whether
         // it is an operation (therefore will be highlighted) or not
         this._operationOffset = -1;
@@ -35,14 +34,14 @@ class HighlightManager {
         this._hl = [];
         for(let i = 0; i < lines.length; i++) {
             if(this._operationOffset < 0) {             //operation offset hasn't been found yet
-                if(this._isOperation(lines[i])) {
+                if(this._isOperation.isOperation(lines[i])) {
                     //we found the first operation so the offset is one line before the current one
                     this._operationOffset = i-1;
                     this._hl.push(true);
 
                 } else this._hl.push(false);
 
-            } else this._hl.push(this._isOperation(lines[i]));
+            } else this._hl.push(this._isOperation.isOperation(lines[i]));
         }
 
         this._pendingText = "";
@@ -224,4 +223,61 @@ class HighlightManager {
         this._pendingText = this._pendingText.substring(1); //remove one \n
     }
 
+
+
+    _preformatAlgorithm(algo, format) {
+        let setQAlgo = false;
+
+        //make sure every operation is in a separate line
+        if(format === QASM_FORMAT) {
+            let temp = "";
+            const lines = algo.split('\n');
+            for(let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                //"\n" needs to be added separately because it was removed while splitting
+                if(this._isOperation.isOperation(line, format)) {
+                    let l = line;
+                    while(l.length !== 0) {
+                        const i = l.indexOf(';');
+                        if(i === -1) {  //no semicolon found -> we insert it (though this might lead to an error if the ;
+                            // is at the start of a following line. but checking this would be complicated,
+                            // because there could be arbitrary many empty lines or comments or other operations
+                            // in between)
+                            temp += l + ";\n";  //insert the missing semicolon and the newline, then stop continue with the next line
+                            break;
+                        }
+
+                        const op =  l.substring(0, i+1);    //we need to include the semicolon, so it is i+1
+                        l = l.substring(i+1);
+
+                        //special case for comments in the same line as an operation
+                        if(AlgoArea.isComment(l, format)) {
+                            temp += op + l + "\n";  //the comment is allowed to stay in the same line
+                            break;
+                        } else temp += op + "\n";    //insert the operation with the added newLine
+                        l = l.trim();
+                    }
+                } else {
+                    temp += line;
+                    //don't create a new line for the last line, because the way splitting works there was no \n at the end of the last line
+                    if(i < lines.length-1) temp += "\n";
+                }
+            }
+            algo = temp;
+            setQAlgo = true;
+        }
+        //for REAL_FORMAT this is inherently the case, because \n is used to separate operations
+
+        //append an empty line at the end if there is none yet
+        if(!algo.endsWith("\n")) {
+            algo = algo + "\n";
+            setQAlgo = true;
+        }
+
+        //if(setQAlgo) this._q_algo.val(algo);
+        return {
+            algo: algo,
+            set: setQAlgo
+        };
+    }
 }

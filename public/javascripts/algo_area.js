@@ -3,7 +3,7 @@ const FORMAT_UNKNOWN = 0;
 const QASM_FORMAT = 1;
 const REAL_FORMAT = 2;
 
-const paddingLeftOffset = 10;   //10px is the padding of lineNumbers, so q_algo also needs at least this much padding
+const paddingLeftOffset = 15;   //10px is the padding of lineNumbers, so q_algo also needs at least this much padding
 const paddingLeftPerDigit = 10; //padding of q_algo based on the number of digits the line-numbering needs
 
 /*
@@ -25,13 +25,13 @@ class AlgoArea {
     _print;         //function to print the DD on the callers side
     _error;     //function on the callers side for handling errors
 
-    _algoFormat = QASM_FORMAT;
+    _algoFormat = FORMAT_UNKNOWN;
     _emptyAlgo = false;
     _algoChanged = true;
     _lastValidAlgorithm;    //todo initialize
-    _numOfOperations;
+    _numOfOperations = 0;
     _oldAlgo;           //the old input (maybe not valid, but needed if the user edit lines they are not allowed to change)
-    _lastCursorPos;
+    _lastCursorPos = 0;
 
     constructor(div, idPrefix, changeState, print, error) {
         //todo what about resizing?
@@ -88,7 +88,7 @@ class AlgoArea {
 
 
 
-        this._hlManager = new HighlightManager(this._highlighting, this.isOperation);
+        this._hlManager = new HighlightManager(this._highlighting, this);
         this._changeState = changeState;
         this._print = print;
         this._error = error;
@@ -103,14 +103,6 @@ class AlgoArea {
         this._hlManager.text = algo;
     }
 
-    get q_algo() {
-        return this._q_algo;
-    }
-
-    get drop_zone() {
-        return this._drop_zone;
-    }
-
     get hlManager() {
         return this._hlManager;
     }
@@ -119,8 +111,9 @@ class AlgoArea {
         return this._numOfOperations;
     }
 
-    set format(f) {
+    set algoFormat(f) {
         this._algoFormat = f;   //todo check if value is valid?
+        console.log(this._algoFormat);
     }
 
     set emptyAlgo(flag) {
@@ -158,7 +151,10 @@ class AlgoArea {
         }
 
         if(algo) {
-            algo = this._preformatAlgorithm(algo, format);
+            const temp = this._hlManager._preformatAlgorithm(algo, format);
+            algo = temp.algo;
+            if(temp.set) this._q_algo.val(algo);
+
             const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
             call.done((res) => {
                 this._loadingSuccess(res, algo, opNum, format, reset);
@@ -195,7 +191,7 @@ class AlgoArea {
     }
 
     _loadingSuccess(res, algo, opNum, format, reset) {
-        this._algoFormat = format;
+        this.algoFormat = format;
         this._oldAlgo = algo;
         this._algoChanged = false;
         this._lastValidAlgorithm = algo;  //algorithm in q_algo was valid if no error occured
@@ -221,7 +217,7 @@ class AlgoArea {
     resetAlgorithm() {
         //todo maybe just call this when set algo("")
         this._emptyAlgo = true;
-        this._algoFormat = FORMAT_UNKNOWN;
+        this.algoFormat = FORMAT_UNKNOWN;
 
         this._hlManager.resetHighlighting("");
         this._line_numbers.html("");  //remove line numbers
@@ -386,60 +382,6 @@ class AlgoArea {
 
         this._line_numbers.scrollTop(scrollTop);
         this._highlighting.scrollTop(scrollTop);
-    }
-
-    _preformatAlgorithm(algo, format) {
-        let setQAlgo = false;
-
-        //make sure every operation is in a separate line
-        if(format === QASM_FORMAT) {
-            let temp = "";
-            const lines = algo.split('\n');
-            for(let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-                //"\n" needs to be added separately because it was removed while splitting
-                if(this.isOperation(line, format)) {
-                    let l = line;
-                    while(l.length !== 0) {
-                        const i = l.indexOf(';');
-                        if(i === -1) {  //no semicolon found -> we insert it (though this might lead to an error if the ;
-                            // is at the start of a following line. but checking this would be complicated,
-                            // because there could be arbitrary many empty lines or comments or other operations
-                            // in between)
-                            temp += l + ";\n";  //insert the missing semicolon and the newline, then stop continue with the next line
-                            break;
-                        }
-
-                        const op =  l.substring(0, i+1);    //we need to include the semicolon, so it is i+1
-                        l = l.substring(i+1);
-
-                        //special case for comments in the same line as an operation
-                        if(AlgoArea.isComment(l, format)) {
-                            temp += op + l + "\n";  //the comment is allowed to stay in the same line
-                            break;
-                        } else temp += op + "\n";    //insert the operation with the added newLine
-                        l = l.trim();
-                    }
-                } else {
-                    temp += line;
-                    //don't create a new line for the last line, because the way splitting works there was no \n at the end of the last line
-                    if(i < lines.length-1) temp += "\n";
-                }
-            }
-            algo = temp;
-            setQAlgo = true;
-        }
-        //for REAL_FORMAT this is inherently the case, because \n is used to separate operations
-
-        //append an empty line at the end if there is none yet
-        if(!algo.endsWith("\n")) {
-            algo = algo + "\n";
-            setQAlgo = true;
-        }
-
-
-        if(setQAlgo) this._q_algo.val(algo);
-        return algo;
     }
 
     /**Checks if the given QASM- or Real-line is an operation

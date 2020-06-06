@@ -57,6 +57,7 @@
 .q_algo {
     /*width: 190%;*/
     height: 100%;
+    padding: 0;
     display: block;
     position: absolute;
     z-index: 3;
