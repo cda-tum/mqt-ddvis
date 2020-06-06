@@ -60,6 +60,12 @@
     overflow: hidden;
 }
 
+#nav_div {
+    padding: 10px;
+    height: 15%;
+}
+
+
 
 
 #drop_zone {
@@ -72,11 +78,6 @@
     -webkit-text-size-adjust: none;
 }
 
-#nav_div {
-    padding: 10px;
-    height: 15%;
-}
-
 
 #backdrop, #q_algo, #line_numbers {
     width: 100%;
@@ -84,30 +85,10 @@
 }
 
 .highlights, #q_algo, #line_numbers {
-    /*padding: 10px; works very nice in Opera, because the scrollbar ignores padding, but looks very bad on firefox,
+    /*padding: 10px; works very nice in Opera, because the scrollbar ignores padding, but looks very bad in firefox,
     where scrolling doesn't ignore padding (at least for textareas, the divs for linenumbering and highlighting seem to ignore padding*/
     padding-top: 0;
     letter-spacing: 1px;
-}
-
-.backdrop {
-    position: absolute;
-    z-index: 1;
-    /*border: 2px solid #685972;*/
-    background-color: transparent;
-    overflow: auto;
-    pointer-events: none;
-    transition: transform 1s;
-}
-
-.highlights {
-    padding-left: 0;
-    padding-right: 0;
-    overflow-x: hidden;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    text-align: left;
-    color: transparent;
 }
 
 #line_numbers {
@@ -131,11 +112,6 @@
     overflow: auto;
     resize: none;
     white-space: pre;
-}
-
-mark {
-    color: transparent;
-    background-color: #b1adad;
 }
 
 svg {

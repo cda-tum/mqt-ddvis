@@ -1,0 +1,324 @@
+
+const FORMAT_UNKNOWN = 0;
+const QASM_FORMAT = 1;
+const REAL_FORMAT = 2;
+
+const paddingLeftOffset = 10;   //10px is the padding of lineNumbers, so q_algo also needs at least this much padding
+const paddingLeftPerDigit = 10; //padding of q_algo based on the number of digits the line-numbering needs
+
+/*
+Only works for integers!
+ */
+function numOfDigits(num) {
+    return String(num).length;
+}
+
+class AlgoArea {
+    _drop_zone;
+    _line_numbers;
+    _backdrop;
+    _highlighting;
+    _q_algo;
+
+    _hlManager;
+    _changeState;   //function to change the state on the callers side  //todo how to handle the state codes?
+    _print;         //function to print the DD on the callers side
+
+    _algoFormat = QASM_FORMAT;
+    _emptyAlgo = false;
+    _algoChanged = true;
+    _lastValidAlgorithm;
+    _numOfOperations;
+    _oldAlgo;           //the old input (maybe not valid, but needed if the user edit lines they are not allowed to change)
+    _lastCursorPos;
+
+    constructor(div, idPrefix, changeState, print) {
+        //todo what about resizing?
+
+
+        //todo dropHandler and dragOverHandler
+        this._drop_zone = $('<div></div>');//<div id="drop_zone" class=".container" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
+        this._drop_zone.attr('id', idPrefix + '_drop_zone');
+        div.append(this._drop_zone);
+
+        this._line_numbers = $(
+            '<div id="' + idPrefix + '_line_numbers" class="line_numbers">' +
+            '</div>'
+        );
+
+        this._backdrop = $(
+            '<div id="' + idPrefix + '_backdrop" class="backdrop">' +
+            '</div>'
+        );
+
+        this._highlighting = $(
+            '<div id="' + idPrefix + '_highlighting" class="highlights"></div>'
+        );
+
+        this._q_algo = $(
+            '<textarea id="' + idPrefix + '_q_algo" type="text" class="q_algo"' +
+            //'onfocusout="aaloadAlgorithm(' + 'lineHighlight' + ')" ' +
+            'placeholder="Enter Algorithm or drop .qasm-/.real-File here."' +
+            'autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">' +
+            '</textarea>'
+        );
+        this._q_algo.focusout(() => this.loadAlgorithm());
+
+
+        this._drop_zone.append(this._line_numbers);
+        this._drop_zone.append(this._backdrop);
+        this._drop_zone.append(this._q_algo);
+
+        this._backdrop.append(this._highlighting);
+
+
+
+        this._hlManager = new HighlightManager(this._highlighting, AlgoArea.isOperation);
+        this._changeState = changeState;
+        this._print = print;
+    }
+
+    get algo() {
+        return this._q_algo.val();
+    }
+
+    set algo(algo) {
+        this._q_algo.val(algo);
+    }
+
+    get q_algo() {
+        return this._q_algo;
+    }
+
+    get drop_zone() {
+        return this._drop_zone;
+    }
+
+    get hlManager() {
+        return this._hlManager;
+    }
+
+    /**Loads the algorithm placed inside the textArea #q_algo
+     *
+     * @param format the format in which the algorithm is written; the only occasion where this parameter is not set
+     *        is when leaving the textArea after editing, but in this case the format didn't change so the old algoFormat is used
+     * @param reset whether a new simulation needs to be started after loading; default false because again the only occasion
+     *        it is not set is after editing, but there we especially don't want to reset
+     * @param algorithm only needed if the lastValidAlgorithm should be sent again because the algorithm in q_algo is invalid
+     */
+    loadAlgorithm(format = this._algoFormat, reset = false, algorithm) {
+        if(this._emptyAlgo || !this._algoChanged) return;
+
+        let algo = algorithm || this._q_algo.val();   //usually q_algo.val() is taken
+        const opNum = reset ?
+            0 : //parseInt(line_to_go.val()) :
+            this._hlManager.highlightedLines;   //we want to continue simulating after the last processed line, which is after the highlighted ones
+
+        if(format === FORMAT_UNKNOWN) {
+            //find out of which format the input text is
+            if(algo.includes("OPENQASM")) format = QASM_FORMAT;
+            else format = REAL_FORMAT;      //right now only these two formats are supported, so if it is not QASM, it must be Real
+        }
+
+        if(algo) {
+            algo = AlgoArea.preformatAlgorithm(algo, format);
+            const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
+            call.done((res) => {
+                this._loadingSuccess(res, algo, opNum, format, reset);
+
+                if(opNum === 0) this._changeState(STATE_LOADED_START);
+                else if(opNum === numOfOperations) this._changeState(STATE_LOADED_END);
+                else this._changeState(STATE_LOADED);
+            });
+            call.fail((res) => {
+                if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
+                //todo ask if this really is necessary or has any benefit, because disabling the buttons seems far more intuitive and cleaner
+                if(res.responseJSON && res.responseJSON.retry && !algorithm) {
+                    const call2 = $.post("/load", { basisStates: null, algo: lastValidAlgorithm, opNum: opNum, format: format, reset: reset });
+                    call2.done((res2) => {
+                        this._loadingSuccess(res2, lastValidAlgorithm, opNum, format, reset);
+
+                        this._q_algo.prop('selectionStart', lastCursorPos);
+                        this._q_algo.prop('selectionEnd', lastCursorPos+1);
+
+                        //set the focus and scroll to the cursor positoin - doesn't work on Opera
+                        this._q_algo.blur();
+                        this._q_algo.focus();
+                        $.trigger({ type: 'keypress' });
+                    });
+                    // call2.fail((res2) => {
+                    //    showResponseError(res, )
+                    // });
+                }
+                changeState(STATE_NOTHING_LOADED);
+                showResponseError(res, "Couldn't connect to the server.");
+            });
+        }
+    }
+
+    _loadingSuccess(res, algo, opNum, format, reset) {
+        this._algoFormat = format;
+        this._oldAlgo = algo;
+        this._algoChanged = false;
+        this._lastValidAlgorithm = algo;  //algorithm in q_algo was valid if no error occured
+
+        if(reset) {
+            this._hlManager.resetHighlighting(q_algo.val());
+            this._hlManager.highlightedLines = opNum;
+            this._hlManager.setHighlights();
+        } else this._hlManager.text = q_algo.val();
+
+        this._numOfOperations = Math.max(res.data, 1);  //number of operations the algorithm has; at least the initial padding of 1 digit
+        const digits = numOfDigits(this._numOfOperations);
+        this._setQAlgoMarginLeft(digits);
+
+        this._setLineNumbers();
+
+        this._print(res.dot);
+
+        //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
+        //if(line_to_go && opNum > this._numOfOperations) line_to_go.val(this._numOfOperations);  //todo maybe change this, because it is only "needed" for Simulation
+    }
+
+    resetAlgorithm() {
+        //todo maybe just call this when set algo("")
+        this._emptyAlgo = true;
+        this._algoFormat = FORMAT_UNKNOWN;
+
+        this._hlManager.resetHighlighting("");
+        line_numbers.html("");  //remove line numbers
+        this._q_algo.val("");   //todo remove when called for set algo("")
+        this._setQAlgoMarginLeft();   //reset margin-left to the initial/default value
+
+        this._print();    //reset dd
+
+        this._changeState(STATE_NOTHING_LOADED);
+    }
+
+    _setLineNumbers() {
+        const digits = numOfDigits(this._numOfOperations);
+
+        const lines = this._q_algo.val().split('\n');
+        let num = 0;
+        for(let i = 0; i < lines.length; i++) {
+            if(i <= this._hlManager.offset) lines[i] = "";
+            else {
+                if(AlgoArea.isOperation(lines[i])) {
+                    num++;
+                    const numDigits = numOfDigits(num);
+
+                    let space = "";
+                    for(let j = 0; j < digits - numDigits; j++) space += "  ";
+                    lines[i] = space + num.toString();
+
+                } else lines[i] = "";
+            }
+        }
+
+        let text = "";
+        lines.forEach(l => text += l + "\n");
+        this._line_numbers.html(text);
+    }
+
+    _setQAlgoMarginLeft(digits = 1) {
+        const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
+        this._q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
+
+        const width = parseInt(this._drop_zone.css('width')) - margin - 2 * parseInt(this._drop_zone.css('border'));
+        this._q_algo.css('width', width);
+    }
+
+    static preformatAlgorithm(algo, format) {
+        let setQAlgo = false;
+
+        //make sure every operation is in a separate line
+        if(format === QASM_FORMAT) {
+            let temp = "";
+            const lines = algo.split('\n');
+            for(let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                //"\n" needs to be added separately because it was removed while splitting
+                if(AlgoArea.isOperation(line, format)) {
+                    let l = line;
+                    while(l.length !== 0) {
+                        const i = l.indexOf(';');
+                        if(i === -1) {  //no semicolon found -> we insert it (though this might lead to an error if the ;
+                            // is at the start of a following line. but checking this would be complicated,
+                            // because there could be arbitrary many empty lines or comments or other operations
+                            // in between)
+                            temp += l + ";\n";  //insert the missing semicolon and the newline, then stop continue with the next line
+                            break;
+                        }
+
+                        const op =  l.substring(0, i+1);    //we need to include the semicolon, so it is i+1
+                        l = l.substring(i+1);
+
+                        //special case for comments in the same line as an operation
+                        if(AlgoArea.isComment(l, format)) {
+                            temp += op + l + "\n";  //the comment is allowed to stay in the same line
+                            break;
+                        } else temp += op + "\n";    //insert the operation with the added newLine
+                        l = l.trim();
+                    }
+                } else {
+                    temp += line;
+                    //don't create a new line for the last line, because the way splitting works there was no \n at the end of the last line
+                    if(i < lines.length-1) temp += "\n";
+                }
+            }
+            algo = temp;
+            setQAlgo = true;
+        }
+        //for REAL_FORMAT this is inherently the case, because \n is used to separate operations
+
+        //append an empty line at the end if there is none yet
+        if(!algo.endsWith("\n")) {
+            algo = algo + "\n";
+            setQAlgo = true;
+        }
+
+
+        if(setQAlgo) q_algo.val(algo);
+        return algo;
+    }
+
+    /**Checks if the given QASM- or Real-line is an operation
+     *
+     * @param line of an algorithm
+     * @param format of the line we check
+     */
+    static isOperation(line, format = algoFormat) {
+        if(line) {
+            if(format === QASM_FORMAT) {
+                if( line.trim() === "" ||
+                    line.includes("OPENQASM") ||
+                    line.includes("include") ||
+                    line.includes("reg") ||
+                    AlgoArea.isComment(line, format)
+                ) return false;
+                return true;
+
+            } else if(format === REAL_FORMAT) {
+                if( line.startsWith(".") ||   //all non-operation lines start with "."
+                    AlgoArea.isComment(line, format)
+                ) return false;
+                return true;
+
+            } else {
+                //showError("Format not recognized. Please try again.");  //todo change message?
+                console.log("Format not recognized");
+                return false;
+            }
+        } else return false;
+    }
+
+    static isComment(line, format) {
+        if(format === QASM_FORMAT) return line.trimStart().startsWith("//");
+        else if(format === REAL_FORMAT) return line.trimStart().startsWith("#");
+        else {
+            console.log("Format not recognized");
+            return true;
+        }
+    }
+}

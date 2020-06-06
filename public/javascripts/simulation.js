@@ -15,8 +15,6 @@ const qdd_text = $('#qdd_text');
 
 
 //################### CONFIGURATION ##################################################################################################################
-const paddingLeftOffset = 10;   //10px is the padding of lineNumbers, so q_algo also needs at least this much padding
-const paddingLeftPerDigit = 10; //padding of q_algo based on the number of digits the line-numbering needs
 
 let stepDuration = 700;   //in ms
 
@@ -148,9 +146,9 @@ changeState(STATE_NOTHING_LOADED);      //initial state
 
 
 //################### ALGORITHM LOADING ##################################################################################################################
-const FORMAT_UNKNOWN = 0;
-const QASM_FORMAT = 1;
-const REAL_FORMAT = 2;
+//const FORMAT_UNKNOWN = 0;
+//const QASM_FORMAT = 1;
+//const REAL_FORMAT = 2;
 
 const emptyQasm =   "OPENQASM 2.0;\n" +
                     "include \"qelib1.inc\";\n" +
@@ -366,7 +364,7 @@ function loadAlgorithm(format = algoFormat, reset = false, algorithm) {
     }
 
     if(algo) {
-        algo = preformatAlgorithm(algo, format);
+        algo = AlgoArea.preformatAlgorithm(algo, format);
         const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
         call.done((res) => {
             _loadingSuccess(res, algo, opNum, format, reset);
@@ -417,7 +415,7 @@ function _loadingSuccess(res, algo, opNum, format, reset) {
     } else hlManager.text = q_algo.val();
 
     numOfOperations = Math.max(res.data, 1);  //number of operations the algorithm has; at least the initial padding of 1 digit
-    const digits = _numOfDigits(numOfOperations);
+    const digits = numOfDigits(numOfOperations);
     setQAlgoMarginLeft(digits);
 
     setLineNumbers();
@@ -434,60 +432,6 @@ function setQAlgoMarginLeft(digits = 1) {
 
     const width = parseInt(drop_zone.css('width')) - margin - 2 * parseInt(drop_zone.css('border'));
     q_algo.css('width', width);
-}
-
-function preformatAlgorithm(algo, format) {
-    let setQAlgo = false;
-
-    //make sure every operation is in a separate line
-    if(format === QASM_FORMAT) {
-        let temp = "";
-        const lines = algo.split('\n');
-        for(let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            //"\n" needs to be added separately because it was removed while splitting
-            if(isOperation(line, format)) {
-                let l = line;
-                while(l.length !== 0) {
-                    const i = l.indexOf(';');
-                    if(i === -1) {  //no semicolon found -> we insert it (though this might lead to an error if the ;
-                                    // is at the start of a following line. but checking this would be complicated,
-                                    // because there could be arbitrary many empty lines or comments or other operations
-                                    // in between)
-                        temp += l + ";\n";  //insert the missing semicolon and the newline, then stop continue with the next line
-                        break;
-                    }
-
-                    const op =  l.substring(0, i+1);    //we need to include the semicolon, so it is i+1
-                    l = l.substring(i+1);
-
-                    //special case for comments in the same line as an operation
-                    if(isComment(l, format)) {
-                        temp += op + l + "\n";  //the comment is allowed to stay in the same line
-                        break;
-                    } else temp += op + "\n";    //insert the operation with the added newLine
-                    l = l.trim();
-                }
-            } else {
-                temp += line;
-                //don't create a new line for the last line, because the way splitting works there was no \n at the end of the last line
-                if(i < lines.length-1) temp += "\n";
-            }
-        }
-        algo = temp;
-        setQAlgo = true;
-    }
-    //for REAL_FORMAT this is inherently the case, because \n is used to separate operations
-
-    //append an empty line at the end if there is none yet
-    if(!algo.endsWith("\n")) {
-        algo = algo + "\n";
-        setQAlgo = true;
-    }
-
-
-    if(setQAlgo) q_algo.val(algo);
-    return algo;
 }
 
 //################### NAVIGATION ##################################################################################################################
@@ -700,46 +644,7 @@ function validateLineNumber() {
 }
 
 //################### LINE HIGHLIGHTING ##################################################################################################################
-const hlManager = new HighlightManager(highlighting, isOperation);
-
-/**Checks if the given QASM- or Real-line is an operation
- *
- * @param line of an algorithm
- * @param format of the line we check
- */
-function isOperation(line, format = algoFormat) {
-    if(line) {
-        if(format === QASM_FORMAT) {
-            if( line.trim() === "" ||
-                line.includes("OPENQASM") ||
-                line.includes("include") ||
-                line.includes("reg") ||
-                isComment(line, format)
-            ) return false;
-            return true;
-
-        } else if(format === REAL_FORMAT) {
-            if( line.startsWith(".") ||   //all non-operation lines start with "."
-                isComment(line, format)
-            ) return false;
-            return true;
-
-        } else {
-            //showError("Format not recognized. Please try again.");  //todo change message?
-            console.log("Format not recognized");
-            return false;
-        }
-    } else return false;
-}
-
-function isComment(line, format) {
-    if(format === QASM_FORMAT) return line.trimStart().startsWith("//");
-    else if(format === REAL_FORMAT) return line.trimStart().startsWith("#");
-    else {
-        console.log("Format not recognized");
-        return true;
-    }
-}
+const hlManager = new HighlightManager(highlighting, AlgoArea.isOperation);
 
 function bindEvents() {
     q_algo.on({
@@ -750,24 +655,19 @@ function bindEvents() {
 bindEvents();
 
 //################### LINE NUMBERING ##################################################################################################################
-/*
-Only works for integers!
- */
-function _numOfDigits(num) {
-    return String(num).length;
-}
+
 
 function setLineNumbers() {
-    const digits = _numOfDigits(numOfOperations);
+    const digits = numOfDigits(numOfOperations);
 
     const lines = q_algo.val().split('\n');
     let num = 0;
     for(let i = 0; i < lines.length; i++) {
         if(i <= hlManager.offset) lines[i] = "";
         else {
-            if(isOperation(lines[i])) {
+            if(AlgoArea.isOperation(lines[i])) {
                 num++;
-                const numDigits = _numOfDigits(num);
+                const numDigits = numOfDigits(num);
 
                 let space = "";
                 for(let j = 0; j < digits - numDigits; j++) space += "  ";
@@ -794,7 +694,7 @@ function removeLineNumbers() {
 function handleScroll() {
     const scrollTop = q_algo.scrollTop();
 
-    backdrop.scrollTop(scrollTop);
+    highlighting.scrollTop(scrollTop);
     line_numbers.scrollTop(scrollTop);
 }
 
@@ -909,3 +809,6 @@ function print(dot) {
         qdd_div.html(qdd_text);
     }
 }
+
+
+new AlgoArea(qdd_div, "test", changeState, print);
