@@ -127,12 +127,21 @@ algoAreas.push(algoArea);   //register at main for resizing
 //append the navigation div below algoArea
 algo_div.append(
   '<div id="nav_div">\n' +
-    '        <button type="button" id="toStart" onclick="sim_gotoStart()">&#8606</button>\n' +
-    '        <button type="button" id="prev" onclick="sim_goBack()">&#8592</button>\n' +
-    '        <button type="button" id="automatic">&#9654</button>\n' +
-    '        <button type="button" id="next" onclick="sim_goForward()">&#8594</button>\n' +
-    '        <button type="button" id="toEnd" onclick="sim_gotoEnd()">&#8608</button>\n' +
-    '\n' +
+    '        <button type="button" id="toStart" onclick="sim_gotoStart()" ' +
+    'title="Go back to the initial State"' +
+    '        >&#8606</button>\n' +
+    '        <button type="button" id="prev" onclick="sim_goBack()" ' +
+    'title="Go to the previous Operation"' +
+    '        >&#8592</button>\n' +
+    '        <button type="button" id="automatic"' +
+    'title="Start a Diashow"' +
+    '        >&#9654</button>\n' +
+    '        <button type="button" id="next" onclick="sim_goForward()"' +
+    'title="Apply the current Operation"' +
+    '        >&#8594</button>\n' +
+    '        <button type="button" id="toEnd" onclick="sim_gotoEnd()"' +
+    'title="Apply all remaining Operations"' +
+    '        >&#8608</button>\n' +
     '        <p></p>\n' +
     '        <button type="button" onclick="sim_gotoLine()" id="toLine">Go to Line</button>\n' +
     '        <input type="number" min="0" id="line_to_go" value="0" onchange="validateLineNumber()"/>\n' +
