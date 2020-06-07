@@ -224,12 +224,9 @@ class AlgoArea {
     }
 
     updateSizes() {
-        const dzInnerWidth = parseFloat(this._drop_zone.css('width'))
-                            - 2 * parseFloat(this._drop_zone.css('border'));  //width of drop_zone between its borders
+        const dzInnerWidth = this._drop_zone.innerWidth();
         const width = dzInnerWidth - parseFloat(this._q_algo.css('margin-left'));
         this._q_algo.css('width', width);
-
-        //console.log(this._drop_zone.css('width') + ", " + this._q_algo.css('margin-left'));
 
         if(dzInnerWidth > 0) {
             let lh = "<mark>";
@@ -278,7 +275,6 @@ class AlgoArea {
     }
 
     handleDrop(event) {
-        console.log(this._idPrefix + "'s _handleDrop");
         if(event.dataTransfer.items) {  //check if a file was transmitted/dropped
             for(let i = 0; i < event.dataTransfer.files.length; i++) {
                 //determine which format to load or show an error

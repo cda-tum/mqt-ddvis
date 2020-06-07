@@ -51,6 +51,7 @@ const dropListeners = new Map();
 function registerDropListener(idPrefix, listener) {
     dropListeners.set(idPrefix, listener);
 }
+//we need a global dropHandler because otherwise the event is different and doesn't provide the needed data (dropped files)
 function dropHandler(event) {
     event.preventDefault();     //prevents the browser from opening the file and therefore leaving the website
 
@@ -65,3 +66,9 @@ function dropHandler(event) {
 function dragOverHandler(event) {
     event.preventDefault(); //needed for all q_algos
 }
+
+
+const algoAreas = [];
+window.addEventListener('resize', (event) => {
+    for(const area of algoAreas) area.updateSizes();
+});

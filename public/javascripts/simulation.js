@@ -100,9 +100,6 @@ for (let i = 0; i < acc.length; i++) {
     });
 }
 
-window.addEventListener('resize', (event) => {
-    algoArea.updateSizes();
-});
 
 function validateStepDuration() {
     const input = step_duration.val();
@@ -125,6 +122,8 @@ function validateStepDuration() {
 
 
 const algoArea = new AlgoArea(algo_div, "sim", changeState, print, showError);
+algoAreas.push(algoArea);   //register at main for resizing
+
 //append the navigation div below algoArea
 algo_div.append(
   '<div id="nav_div">\n' +
@@ -139,9 +138,8 @@ algo_div.append(
     '        <input type="number" min="0" id="line_to_go" value="0" onchange="validateLineNumber()"/>\n' +
     '</div>'
 );
-const line_to_go = $('#line_to_go');
+const line_to_go = $('#line_to_go');    //must be created here since it doesn't exist before
 
-//algoArea.updateSizes();  //todo at this point the width of the elements hasn't been calculated so updateSizes() updates to wrong sizes!
 changeState(STATE_NOTHING_LOADED);      //initial state
 
 
