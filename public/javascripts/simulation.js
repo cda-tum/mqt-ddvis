@@ -100,7 +100,9 @@ for (let i = 0; i < acc.length; i++) {
     });
 }
 
-window.addEventListener('resize', (event) => algoArea.updateSizes());
+window.addEventListener('resize', (event) => {
+    algoArea.updateSizes();
+});
 
 function validateStepDuration() {
     const input = step_duration.val();

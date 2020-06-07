@@ -71,6 +71,11 @@
     color: #000;
     background-color: transparent;
 }
+/*
+.q_algo::-webkit-scrollbar {
+    height: 30px;
+}
+*/
 
 mark {
     color: transparent;

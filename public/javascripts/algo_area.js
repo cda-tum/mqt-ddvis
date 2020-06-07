@@ -14,6 +14,7 @@ function numOfDigits(num) {
 }
 
 class AlgoArea {
+    _idPrefix;
     _drop_zone;
     _line_numbers;
     _backdrop;
@@ -34,7 +35,7 @@ class AlgoArea {
     _lastCursorPos = 0;
 
     constructor(div, idPrefix, changeState, print, error) {
-        console.log("Creating with prefix '" + idPrefix + "'");
+        this._idPrefix = idPrefix;
         //todo what about resizing?
 
         //todo dropHandler and dragOverHandler
@@ -88,6 +89,7 @@ class AlgoArea {
         this._backdrop.append(this._highlighting);
 
 
+        //this._ogHeight_q_algo = parseInt(this._q_algo.css('height')); //result is 100, which is wrong :(
 
         this._hlManager = new HighlightManager(this._highlighting, this);
         this._changeState = changeState;
@@ -114,7 +116,6 @@ class AlgoArea {
 
     set algoFormat(f) {
         this._algoFormat = f;   //todo check if value is valid?
-        console.log(this._algoFormat);
     }
 
     set emptyAlgo(flag) {
@@ -236,6 +237,8 @@ class AlgoArea {
         const width = dzInnerWidth - parseFloat(this._q_algo.css('margin-left'));
         this._q_algo.css('width', width);
 
+        //console.log(this._drop_zone.css('width') + ", " + this._q_algo.css('margin-left'));
+
         if(dzInnerWidth > 0) {
             let lh = "<mark>";
             for(let i = 0; i < dzInnerWidth / 4; i++) lh += " ";
@@ -267,6 +270,12 @@ class AlgoArea {
         let text = "";
         lines.forEach(l => text += l + "\n");
         this._line_numbers.html(text);
+
+
+        //const height = parseInt(this._q_algo.css('height'));
+        const clientHeight = document.getElementById(this._idPrefix + "_q_algo").clientHeight;
+        //set the height of line_numbers to the height of q_algo without scrollbar, so no offset can occur
+        this._line_numbers.css('height', clientHeight);
     }
 
     _setQAlgoMarginLeft(digits = 1) {
