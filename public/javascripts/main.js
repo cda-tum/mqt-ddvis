@@ -28,3 +28,17 @@ function showResponseError(res, altMsg = "Unknown Error!") {
 function showError(error) {
     alert(error);
 }
+
+
+function startLoadingAnimation() {
+    console.log("loading started");
+    document.getElementById('loader').style.display = 'block';
+}
+
+function endLoadingAnimation() {
+    document.getElementById('loader').style.display = 'none';
+    console.log("loading ended");
+}
+
+//setTimeout(() => startLoadingAnimation(), 2000);
+//setTimeout(() => endLoadingAnimation(), 5000);

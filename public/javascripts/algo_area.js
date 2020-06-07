@@ -141,16 +141,17 @@ class AlgoArea {
     loadAlgorithm(format = this._algoFormat, reset = false, algorithm) {
         if(this._emptyAlgo || !this._algoChanged) return;
 
+
+        startLoadingAnimation();
+
+
         let algo = algorithm || this._q_algo.val();   //usually q_algo.val() is taken
         const opNum = reset ?
             0 : //parseInt(line_to_go.val()) :
             this._hlManager.highlightedLines;   //we want to continue simulating after the last processed line, which is after the highlighted ones
 
-        if(format === FORMAT_UNKNOWN) {
-            //find out of which format the input text is
-            if(algo.includes("OPENQASM")) format = QASM_FORMAT;
-            else format = REAL_FORMAT;      //right now only these two formats are supported, so if it is not QASM, it must be Real
-        }
+        //find out of in which format the input text is if we don't know it yet
+        if(format === FORMAT_UNKNOWN) format = this.findFormat(algo);
 
         if(algo) {
             const temp = this._hlManager._preformatAlgorithm(algo, format);
@@ -164,6 +165,8 @@ class AlgoArea {
                 if(opNum === 0) this._changeState(STATE_LOADED_START);
                 else if(opNum === this._numOfOperations) this._changeState(STATE_LOADED_END);
                 else this._changeState(STATE_LOADED);
+
+                endLoadingAnimation();
             });
             call.fail((res) => {
                 if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
@@ -187,9 +190,16 @@ class AlgoArea {
                     // });
                 }
                 changeState(STATE_NOTHING_LOADED);
+                endLoadingAnimation();
                 showResponseError(res, "Couldn't connect to the server.");
             });
         }
+    }
+
+    findFormat(algo) {
+        if(algo.includes("OPENQASM")) return QASM_FORMAT;
+        else return REAL_FORMAT;      //right now only these two formats are supported, so if it is not QASM, it must be Real
+
     }
 
     _loadingSuccess(res, algo, opNum, format, reset) {
@@ -271,7 +281,6 @@ class AlgoArea {
         lines.forEach(l => text += l + "\n");
         this._line_numbers.html(text);
 
-
         //const height = parseInt(this._q_algo.css('height'));
         const clientHeight = document.getElementById(this._idPrefix + "_q_algo").clientHeight;
         //set the height of line_numbers to the height of q_algo without scrollbar, so no offset can occur
@@ -323,6 +332,8 @@ class AlgoArea {
         this._lastCursorPos = this._q_algo.prop('selectionStart');
 
         const newAlgo = this._q_algo.val();
+        //we need to find out the format if possible
+        if(this._algoFormat === FORMAT_UNKNOWN) this._algoFormat = this.findFormat(newAlgo);
         if(newAlgo.trim().length === 0) {   //user deleted everything, so we reset
             this.resetAlgorithm();
             return;
