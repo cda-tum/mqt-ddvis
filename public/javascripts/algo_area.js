@@ -40,12 +40,10 @@ class AlgoArea {
 
 
         this._drop_zone = $(
-            '<div id="' + idPrefix + '_drop_zone" class="drop_zone"></div>'
+            '<div id="' + idPrefix + '_drop_zone" ' +
+            'ondrop="dropHandler(event)" ondragover="dragOverHandler(event)" ' +  //somehow in the case of these global functions, they need to be set in this way
+            'class="drop_zone"></div>'
         );
-        this._drop_zone.on({
-           'drop': (event) => dropHandler(event),//this._handleDrop(event),  //todo doesn't seem to work
-           'dragover': (event) => dragOverHandler(event)
-        });
         registerDropListener(idPrefix, this);
 
         this._line_numbers = $(
@@ -294,16 +292,14 @@ class AlgoArea {
 
                 const file = event.dataTransfer.files[i];
                 const reader = new FileReader();
-                reader.onload = (e) => this._dropLoad(e);
+                reader.onload = (e) => {
+                    this._q_algo.val(e.target.result);
+                    this._algoChanged = true;
+                    this.loadAlgorithm(format, true);    //since a completely new algorithm has been uploaded we have to throw away the old simulation data
+                };
                 reader.readAsBinaryString(file);
             }
         }
-    }
-
-    _dropLoad(e) {
-        this._q_algo.val(e.target.result);
-        this._algoChanged = true;
-        this.loadAlgorithm(format, true);    //since a completely new algorithm has been uploaded we have to throw away the old simulation data
     }
 
     _handleInput() {
