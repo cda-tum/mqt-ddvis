@@ -40,5 +40,34 @@ function endLoadingAnimation() {
     console.log("loading ended");
 }
 
+
+const dropListeners = new Map();
+
+/**
+ *
+ * @param id the listener-function only is called when the target of the drop has this id
+ * @param listener function that is called when the drop's target has the given id
+ */
+function registerDropListener(idPrefix, listener) {
+    dropListeners.set(idPrefix, listener);
+}
+function dropHandler(event) {
+    event.preventDefault();     //prevents the browser from opening the file and therefore leaving the website
+
+    console.log(event.dataTransfer);
+
+    const target = event.target.id;
+    for(const listener of dropListeners.entries()) {
+        const idPrefix = listener[0];
+        //call the listener if the event affected its target
+        if(target.startsWith(idPrefix)) listener[1].handleDrop(event);
+        else console.log(listener[0] + " !== " + target);
+    }
+}
+
+function dragOverHandler(event) {
+    event.preventDefault(); //needed for all q_algos
+}
+
 //setTimeout(() => startLoadingAnimation(), 2000);
 //setTimeout(() => endLoadingAnimation(), 5000);

@@ -38,20 +38,15 @@ class AlgoArea {
         this._idPrefix = idPrefix;
         //todo what about resizing?
 
-        //todo dropHandler and dragOverHandler
-        //this._drop_zone = $('<div></div>');//<div id="drop_zone" class=".container" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
-        //this._drop_zone.attr('id', idPrefix + '_drop_zone');
-        //div.append(this._drop_zone);
+
         this._drop_zone = $(
-            '<div id="' + idPrefix + '_drop_zone" class="drop_zone" ' +
-            //'ondrop="dropHandler(event)" ondragover="dragOverHandler(event)"' +
-            '>' +
-            '</div>'
+            '<div id="' + idPrefix + '_drop_zone" class="drop_zone"></div>'
         );
         this._drop_zone.on({
-           'drop': (event) => this._handleDrop(event),  //todo doesn't seem to work
-           'dragover': (event) => this._handleDragOver(event)
+           'drop': (event) => dropHandler(event),//this._handleDrop(event),  //todo doesn't seem to work
+           'dragover': (event) => dragOverHandler(event)
         });
+        registerDropListener(idPrefix, this);
 
         this._line_numbers = $(
             '<div id="' + idPrefix + '_line_numbers" class="line_numbers">' +
@@ -69,12 +64,10 @@ class AlgoArea {
 
         this._q_algo = $(
             '<textarea id="' + idPrefix + '_q_algo" type="text" class="q_algo"' +
-            //'onfocusout="aaloadAlgorithm(' + 'lineHighlight' + ')" ' +
             'placeholder="Enter Algorithm or drop .qasm-/.real-File here."' +
             'autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">' +
             '</textarea>'
         );
-        //this._q_algo.focusout(() => this.loadAlgorithm());
         this._q_algo.on({
             'focusout': () => this.loadAlgorithm(),
             'input': () => this._handleInput(),
@@ -87,9 +80,6 @@ class AlgoArea {
         this._drop_zone.append(this._q_algo);
 
         this._backdrop.append(this._highlighting);
-
-
-        //this._ogHeight_q_algo = parseInt(this._q_algo.css('height')); //result is 100, which is wrong :(
 
         this._hlManager = new HighlightManager(this._highlighting, this);
         this._changeState = changeState;
@@ -196,12 +186,6 @@ class AlgoArea {
         }
     }
 
-    findFormat(algo) {
-        if(algo.includes("OPENQASM")) return QASM_FORMAT;
-        else return REAL_FORMAT;      //right now only these two formats are supported, so if it is not QASM, it must be Real
-
-    }
-
     _loadingSuccess(res, algo, opNum, format, reset) {
         this.algoFormat = format;
         this._oldAlgo = algo;
@@ -295,10 +279,8 @@ class AlgoArea {
         this._q_algo.css('width', width);
     }
 
-    _handleDrop(event) {
-        console.log(event);
-        event.preventDefault();     //prevents the browser from opening the file and therefore leaving the website
-
+    handleDrop(event) {
+        console.log(this._idPrefix + "'s _handleDrop");
         if(event.dataTransfer.items) {  //check if a file was transmitted/dropped
             for(let i = 0; i < event.dataTransfer.files.length; i++) {
                 //determine which format to load or show an error
@@ -322,10 +304,6 @@ class AlgoArea {
         this._q_algo.val(e.target.result);
         this._algoChanged = true;
         this.loadAlgorithm(format, true);    //since a completely new algorithm has been uploaded we have to throw away the old simulation data
-    }
-
-    _handleDragOver(event) {
-        event.preventDefault();
     }
 
     _handleInput() {
@@ -403,6 +381,11 @@ class AlgoArea {
 
         this._line_numbers.scrollTop(scrollTop);
         this._highlighting.scrollTop(scrollTop);
+    }
+
+    findFormat(algo) {
+        if(algo.includes("OPENQASM")) return QASM_FORMAT;
+        else return REAL_FORMAT;      //right now only these two formats are supported, so if it is not QASM, it must be Real
     }
 
     /**Checks if the given QASM- or Real-line is an operation
