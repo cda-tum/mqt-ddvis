@@ -495,14 +495,7 @@ function validateLineNumber() {
 }
 
 //################### ERROR HANDLING ##################################################################################################################
-function showResponseError(res, altMsg = "Unknown Error!") {
-    if(res.responseJSON && res.responseJSON.msg) showError(res.responseJSON.msg);
-    else showError(altMsg);
-}
-
-function showError(error) {
-    alert(error);
-}
+//moved to main.js
 
 //$( document ).ajaxError(function( event, request, settings ) {
 //    showError( "Unhandled error occured! Error requesting page " + settings.url);

@@ -7,7 +7,7 @@ function updateLineHighlight(newLH) {
 
 class HighlightManager {
     _div;
-    _isOperation;       //todo fix: right now this is an AlgoArea (needed because the default format of algoArea.algoFormat isn't used if we just provide the function)
+    _algoArea;       //todo fix: right now this is an AlgoArea (needed because the default format of algoArea.algoFormat isn't used if we just provide the function)
     _hl;    //an array that tells us for each line if it is an operation or not
     _operationOffset = 0;
     _highlightedOps = 0;      //how many lines with Operations are highlighted
@@ -16,11 +16,11 @@ class HighlightManager {
     _processedText = "";
     _pendingText = "";
 
-    constructor(highlightDiv, isOperation) {
+    constructor(highlightDiv, algoArea) {
         if(highlightDiv) this._div = highlightDiv;
         else throw Error("HighlightManager needs a div to apply the highlighting to!");
 
-        if(isOperation) this._isOperation = isOperation;
+        if(algoArea) this._algoArea = algoArea;
         else throw Error("HighlightManager needs a function to determine if a line is an operation!");
     }
 
@@ -34,14 +34,14 @@ class HighlightManager {
         this._hl = [];
         for(let i = 0; i < lines.length; i++) {
             if(this._operationOffset < 0) {             //operation offset hasn't been found yet
-                if(this._isOperation.isOperation(lines[i])) {
+                if(this._algoArea.isOperation(lines[i])) {
                     //we found the first operation so the offset is one line before the current one
                     this._operationOffset = i-1;
                     this._hl.push(true);
 
                 } else this._hl.push(false);
 
-            } else this._hl.push(this._isOperation.isOperation(lines[i]));
+            } else this._hl.push(this._algoArea.isOperation(lines[i]));
         }
 
         this._pendingText = "";
@@ -235,7 +235,7 @@ class HighlightManager {
             for(let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 //"\n" needs to be added separately because it was removed while splitting
-                if(this._isOperation.isOperation(line, format)) {
+                if(this._algoArea.isOperation(line, format)) {
                     let l = line;
                     while(l.length !== 0) {
                         const i = l.indexOf(';');

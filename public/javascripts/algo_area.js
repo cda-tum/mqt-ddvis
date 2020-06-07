@@ -34,6 +34,7 @@ class AlgoArea {
     _lastCursorPos = 0;
 
     constructor(div, idPrefix, changeState, print, error) {
+        console.log("Creating with prefix '" + idPrefix + "'");
         //todo what about resizing?
 
         //todo dropHandler and dragOverHandler

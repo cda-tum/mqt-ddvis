@@ -1,51 +1,14 @@
 
+const ver1_algo_div = $('#ver1_algo_div');
+const ver2_algo_div = $('#ver2_algo_div');
 
-
-function dropHandler1(event) {
-    event.preventDefault();
-
-    if(event.dataTransfer.items) {
-        for(let i = 0; i < event.dataTransfer.files.length; i++) {
-            //if(event.dataTransfer.items[i].kind === 'file') {
-            if(event.dataTransfer.files[i].name.endsWith(".qasm")) {
-                let file = event.dataTransfer.files[i];
-
-                let reader = new FileReader();
-                reader.onload = function(e) {
-                    const algo = document.getElementById("ver_algo1");
-                    algo.textContent = e.target.result;
-                };
-                reader.readAsBinaryString(file);
-
-            } else {
-                //todo show error
-            }
-            //}
-        }
-    }
+function ver_changeState(state) {
+    console.log("Verification changed state to " + state);
 }
 
-
-function dropHandler2(event) {
-    event.preventDefault();
-
-    if(event.dataTransfer.items) {
-        for(let i = 0; i < event.dataTransfer.files.length; i++) {
-            //if(event.dataTransfer.items[i].kind === 'file') {
-            if(event.dataTransfer.files[i].name.endsWith(".qasm")) {
-                let file = event.dataTransfer.files[i];
-
-                let reader = new FileReader();
-                reader.onload = function(e) {
-                    const algo = document.getElementById("ver_algo2");
-                    algo.textContent = e.target.result;
-                };
-                reader.readAsBinaryString(file);
-
-            } else {
-                //todo show error
-            }
-            //}
-        }
-    }
+function ver_print(dd) {
+    console.log("Verification should print " + dd);
 }
+
+const ver_algoArea1 = new AlgoArea(ver1_algo_div, "ver1", ver_changeState, print, showError);
+const ver_algoArea2 = new AlgoArea(ver2_algo_div, "ver2", ver_changeState, print, showError);

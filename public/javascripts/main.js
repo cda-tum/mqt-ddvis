@@ -20,7 +20,11 @@ function openTab(event, tabId) {
     event.currentTarget.className += " active";
 }
 
+function showResponseError(res, altMsg = "Unknown Error!") {
+    if(res.responseJSON && res.responseJSON.msg) showError(res.responseJSON.msg);
+    else showError(altMsg);
+}
 
-function dragOverHandler(event) {
-    event.preventDefault();
+function showError(error) {
+    alert(error);
 }
