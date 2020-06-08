@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 
     <link rel="stylesheet" href="./stylesheets/style.css"/>
+    <link rel="stylesheet" href="./stylesheets/algo_area.css"/>
 
 
     <script
@@ -26,6 +27,8 @@
     <script src="https://unpkg.com/@hpcc-js/wasm/dist/index.min.js"></script>
     <script src="https://unpkg.com/d3-graphviz@3.1.0/build/d3-graphviz.js"></script>
 
+    <script src="./javascripts/highlighting.js"></script>
+    <script src="./javascripts/algo_area.js"></script>
     <script src="./javascripts/main.js"></script>
 
     <!-- load the html of the three main tabs -->
@@ -59,6 +62,8 @@
         <button class="tablinks" onclick="openTab(event, 'emulation')">Emulation</button>
     </div>
 
+    <div id="loader"></div>
+
     <section id="simulation" class="tabcontent">
     </section>
 
@@ -67,19 +72,6 @@
 
     <section id="emulation" class="tabcontent">
     </section>
-
-
-<!-- 
-    <footer>
-        <h1>JKU</h1>
-    </footer>
--->
-<!--
-    <section id="debug">
-        <h4>Debug Text:</h4>
-        <p id="output"> </p>
-    </section>
--->
 
 </body>
 </html>

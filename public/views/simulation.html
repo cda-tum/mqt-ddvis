@@ -1,8 +1,6 @@
 
 <!-- IDs should be unique among all views! (if they are not, they will all get the same styling and script-behaviour) -->
 
-<link href="../modules/highlight-within-textarea/jquery.highlight-within-textarea.css" rel="stylesheet">
-<script src="../modules/highlight-within-textarea/jquery.highlight-within-textarea.js"></script>
 
 
 <link rel="stylesheet" href="../stylesheets/simulation.css"/>
@@ -19,18 +17,13 @@ et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata san
 <!--   Accordion     -->
 <button class="accordion" >Example Algorithms</button>
 <div class="panel">
-    <button id="ex_qasm" class="example-algo" onclick="loadQASM()">Empty QASM</button>
     <button id="ex_real" class="example-algo" onclick="loadReal()">Empty Real</button>
+    <button id="ex_qasm" class="example-algo" onclick="loadQASM()">Empty QASM</button>
     <button id="ex_deutsch" class="example-algo" onclick="loadDeutsch()">Deutsch</button>
     <button id="ex_alu" class="example-algo" onclick="loadAlu()">Alu</button>
 </div>
 <button class="accordion" >Advanced Settings</button>
 <div class="panel">
-    <!--
-    <label for="basis_states">Basis States:</label>
-    <input type="text" id="basis_states"/>
-    <button onclick="validate()">Validate Input</button>
-    -->
     <label for="stepDuration">Step Duration in ms: </label>
     <input type="number" min="0" id="stepDuration" onchange="validateStepDuration()" value="700"/>
 </div>
@@ -45,6 +38,7 @@ et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata san
       </div>
     </form>
     -->
+    <!--
     <div id="drop_zone" class=".container" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
         <div id="line_numbers" class="backdrop"></div>
         <div id="backdrop" class="backdrop">
@@ -53,26 +47,7 @@ et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata san
         <textarea id="q_algo" type="text" onfocusout="loadAlgorithm()" placeholder="Enter Algorithm or drop .qasm-/.real-File here."
                   autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
     </div>
-
-    <div id="nav_div">
-        <!-- <button type="button" id="load" class="btn btn-primary">Load</button> -->
-        <button type="button" id="toStart">&#8606</button>
-        <button type="button" id="prev">&#8592</button>
-        <button type="button" id="automatic">&#9654</button>
-        <button type="button" id="next">&#8594</button>
-        <button type="button" id="toEnd">&#8608</button>
-
-        <!--
-            <p></p>
-            <button type="button" id="stop">O</button>
-        -->
-
-        <p></p>
-        <label for="startLine">Start at line </label>
-        <input type="number" min="0" id="startLine" value="0"/>
-
-    </div>
-
+    -->
 </div>
 
 <div id="qdd_div">

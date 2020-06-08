@@ -23,10 +23,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use('/', (req, res, next) => {
-    //console.log(req.ip + " entered (server.js)");
-    //const old = dm.length();
-    dm.register(req);
-    //console.log(old + " -> " + dm.length());
+    const url = req.url;
+    //only register a user on the start of the page (also on loading should work since everything resets there)
+    if(url === '/' || url === '/load') dm.register(req);
     next();
 });
 
@@ -36,6 +35,3 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 module.exports = app;
-
-const data_path = "./data";
-if(!fs.existsSync(data_path)) fs.mkdirSync(data_path, () => {});

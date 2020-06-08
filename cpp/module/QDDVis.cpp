@@ -12,6 +12,7 @@
 #include "algorithms/Grover.hpp"
 #include "algorithms/GoogleRandomCircuitSampling.hpp"
 #include "DDcomplex.h"
+#include "DDexport.h"
 #include "DDpackage.h"
 
 #include "QDDVis.h"
@@ -32,6 +33,7 @@ Napi::Object QDDVis::Init(Napi::Env env, Napi::Object exports) {
                             InstanceMethod("prev", &QDDVis::Prev),
                             InstanceMethod("next", &QDDVis::Next),
                             InstanceMethod("toEnd", &QDDVis::ToEnd),
+                            InstanceMethod("toLine", &QDDVis::ToLine),
                             InstanceMethod("getDD", &QDDVis::GetDD)
                         }
                     );
@@ -65,15 +67,7 @@ QDDVis::QDDVis(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVis>(info) 
 
     line.fill(qc::LINE_DEFAULT);
     this->iterator = this->qc->begin();
-}
-
-
-void QDDVis::reset() {
-    this->qc->reset();
-    sim = { };
-    ready = false;
-    atInitial = true;
-    atEnd = false;
+    this->position = 0;
 }
 
 void QDDVis::stepForward() {
@@ -88,6 +82,7 @@ void QDDVis::stepForward() {
     dd->garbageCollect();
 
     iterator++; // advance iterator
+    position++;
     if (iterator == qc->end()) {    //qc->end() is after the last operation in the iterator
         atEnd = true;
     }
@@ -102,6 +97,7 @@ void QDDVis::stepBack() {
     }
 
     iterator--; //set iterator back to the desired operation
+    position--;
     const dd::Edge currDD = (*iterator)->getInverseDD(dd, line); // get the inverse of the current operation
 
     auto temp = dd->multiply(currDD, sim);   //"remove" the current operation by multiplying with its inverse
@@ -113,7 +109,8 @@ void QDDVis::stepBack() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/**Parameters: String algorithm, Object basicStates
+/**Parameters: String algorithm, unsigned int formatCode, unsigned int num of operations to step forward, bool whether the
+ * operations should be processed or just the iterator needs to be advanced
  * Returns: true or false 
  * 
  * Tries to import the passed algorithm and returns whether it was successful or not.
@@ -124,7 +121,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
 
     //check if the correct parameters have been passed
     if(info.Length() != 4) {
-        Napi::RangeError::New(env, "Need 3 (String, unsigned int, unsigned int) arguments!").ThrowAsJavaScriptException();
+        Napi::RangeError::New(env, "Need 4 (String, unsigned int, unsigned int, bool) arguments!").ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
     }
     if (!info[0].IsString()) {  //algorithm
@@ -149,41 +146,6 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     const std::string algo = arg.Utf8Value();
     std::stringstream ss{algo};
 
-    //basis state functionality not a priority and therefore further work on it is delayed
-    /*
-    if(info.Length() == 2) {      //also basic states have been passed
-        if(info[1].IsArray()) {
-            Napi::Array compVals = info[1].As<Napi::Array>();
-
-            if(compVals.Length() % 2 == 0) {
-                const unsigned int length = compVals.Length() / 2;
-                Comp* basicStates = (Comp*)malloc(length * sizeof(Comp));
-
-                for(unsigned int i = 0; i < compVals.Length(); i++) {
-                    const Napi::Value val = compVals[i];
-                    const double num = (double)val.As<Napi::Number>();
-                    const Comp* bs = basicStates + (i/2);
-
-                    //the first value of the pair is always the real part, the second value the imaginary part
-                    if(i % 2 == 0) bs->re = num;
-                    else bs->im = num;
-                }
-
-                for(unsigned int i = 0; i < length; i++) {
-                    const Comp* bs = (basicStates + i);
-                    std::cout << "#" << i << "\tRe=" << bs->re << "\tIm=" << bs->im << std::endl;
-                }
-
-            } else {
-                //todo error
-                std::cout << "error, param 2 must have an even length!" << std::endl;
-            }
-        } else {
-            std::cout << "error, param 2 is not an array either!" << std::endl;
-        }
-    }
-     */
-
     try {
         //second parameter describes the format of the algorithm
         const unsigned int formatCode = (unsigned int)info[1].As<Napi::Number>();
@@ -196,9 +158,8 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
 
     } catch(std::exception& e) {
         std::cout << "Exception while loading the algorithm: " << e.what() << std::endl;
-        reset();
-        std::string err = "Invalid Algorithm! ";// + e.what();
-        Napi::Error::New(env, err).ThrowAsJavaScriptException();
+        std::string err("");//e.what());    //todo e.what() gives unreadable characters?
+        Napi::Error::New(env, "Invalid Algorithm! " + err).ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
     }
 
@@ -206,9 +167,10 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     atInitial = true;
     atEnd = false;
     iterator = qc->begin();
+    position = 0;
 
     //the third parameter (how many operations to apply immediately)
-    const unsigned int opNum = (unsigned int)info[2].As<Napi::Number>();
+    const unsigned int opNum = (unsigned int)info[2].As<Napi::Number>();    //at this point opNum may be bigger than the number of operations the algorithm has!
     if(opNum > 0) {
         //todo check if iterator has elements? because if not we will get a segmentation fault because iterator++ points to memory of something else
         atInitial = false;
@@ -221,7 +183,10 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
                 stepForward();
             }
         } else {
-            for(unsigned int i = 0; i < opNum; i++) iterator++; //just advance the iterator so it points to the operations where we stopped before the edit
+            for(unsigned int i = 0; i < opNum; i++) {
+                iterator++; //just advance the iterator so it points to the operations where we stopped before the edit
+                position++;
+            }
         }
 
     } else {    //sim needs to be initialized in some cases
@@ -229,7 +194,6 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         sim = dd->makeZeroState(qc->getNqubits());
         dd->incRef(sim);
     }
-
     return Napi::Number::New(env, qc->getNops());
 }
 
@@ -252,6 +216,7 @@ Napi::Value QDDVis::ToStart(const Napi::CallbackInfo& info) {
             atInitial = true;
             atEnd = false;
             iterator = qc->begin();
+            position = 0;
 
             return Napi::Boolean::New(env, true);   //something changed
 
@@ -325,8 +290,8 @@ Napi::Value QDDVis::ToEnd(const Napi::CallbackInfo& info) {
     if(!ready) {
         Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
         return Napi::Boolean::New(env, false);
-    } else if (qc->empty()) {   //todo should never be reached since ready must be false if there is no algorithm (or is an empty algorithm valid and normally loaded?)
-        return Napi::Boolean::New(env, false);  //todo ask if in this case any error should be thrown or if an empty algorithm is okay
+    } else if (qc->empty()) {
+        return Napi::Boolean::New(env, false);
     }
 
     if(atEnd) return Napi::Boolean::New(env, false); //nothing changed
@@ -347,18 +312,73 @@ Napi::Value QDDVis::ToEnd(const Napi::CallbackInfo& info) {
     }
 }
 
+Napi::Value QDDVis::ToLine(const Napi::CallbackInfo &info) {
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+
+    //check if the correct parameters have been passed
+    if(info.Length() != 1) {
+        Napi::RangeError::New(env, "Need 1 (unsigned int) argument!").ThrowAsJavaScriptException();
+        return Napi::Boolean::New(env, false);
+    }
+    if (!info[0].IsNumber()) {  //algorithm
+        Napi::TypeError::New(env, "arg1: unsigned int expected!").ThrowAsJavaScriptException();
+        return Napi::Boolean::New(env, false);
+    }
+
+    unsigned int param = (unsigned int)info[0].As<Napi::Number>();
+    if(param > qc->getNops()) param = qc->getNops();    //we can't go further than to the end
+    const unsigned int targetPos = param;
+
+    try {
+        if(position == targetPos) return Napi::Boolean::New(env, false);   //nothing changed
+
+        //only one of the two loops can be entered
+        while(position > targetPos) stepBack();
+        while(position < targetPos) stepForward();
+
+        atInitial = false;
+        atEnd = false;
+        if(position == 0) atInitial = true;
+        else if(position == qc->getNops()) atEnd = true;
+
+        return Napi::Boolean::New(env, true);   //something changed
+
+    } catch(std::exception& e) {
+        std::string msg = "Exception while going to line ";// + position + " to " + targetPos;
+        //msg += position + " to " + targetPos;
+        //msg.append(position);
+        //msg.append(" to ");
+        //msg.append(targetPos);
+        std::cout << "Exception while going from " << position << " to " << targetPos << std::endl;
+        std::cout << e.what() << std::endl;
+        Napi::Error::New(env, msg).ThrowAsJavaScriptException();
+        return Napi::Boolean::New(env, false);
+    }
+
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     if(!ready) {
         Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
-        return Napi::Boolean::New(env, false);
-    } else if (qc->empty()) {   //todo should never be reached since ready must be false if there is no algorithm (or is an empty algorithm valid and normally loaded?)
-        return Napi::Boolean::New(env, false);  //todo ask if in this case any error should be thrown or if an empty algorithm is okay
+        return Napi::String::New(env, "-1");
+    } else if (qc->empty()) {
+        return Napi::String::New(env, "");
     }
 
     std::stringstream ss{};
-    dd->toDot(sim, ss, true);
+    try {
+        dd::toDot(sim, ss, true, true, true);
+        std::string str = ss.str();
+        return Napi::String::New(env, str);
 
-    return Napi::String::New(env, ss.str());
+    } catch(std::exception& e) {
+        std::cout << "Exception while getting the DD: " << e.what() << std::endl;
+        std::string err = "Invalid getDD()-call! ";// + e.what();
+        Napi::Error::New(env, err).ThrowAsJavaScriptException();
+        return Napi::String::New(env, "-1");
+    }
+
 }
