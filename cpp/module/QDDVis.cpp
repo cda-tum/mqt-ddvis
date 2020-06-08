@@ -12,6 +12,7 @@
 #include "algorithms/Grover.hpp"
 #include "algorithms/GoogleRandomCircuitSampling.hpp"
 #include "DDcomplex.h"
+#include "DDexport.h"
 #include "DDpackage.h"
 
 #include "QDDVis.h"
@@ -369,7 +370,7 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
 
     std::stringstream ss{};
     try {
-        dd->toDot2(sim, ss, true);
+        dd::toDot(sim, ss, true, true, true);
         std::string str = ss.str();
         return Napi::String::New(env, str);
 
