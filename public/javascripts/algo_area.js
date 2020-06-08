@@ -3,6 +3,19 @@ const FORMAT_UNKNOWN = 0;
 const QASM_FORMAT = 1;
 const REAL_FORMAT = 2;
 
+//a default algorithm is needed for initialization
+const deutschAlgorithm =    "OPENQASM 2.0;\n" +
+                            "include \"qelib1.inc\";\n" +
+                            "\n" +
+                            "qreg q[2];\n" +
+                            "creg c[2];\n" +
+                            "\n" +
+                            "x q[1];\n" +
+                            "h q[0];\n" +
+                            "h q[1];\n" +
+                            "cx q[0],q[1];\n" +
+                            "h q[0];\n";
+
 const paddingLeftOffset = 15;   //10px is the padding of lineNumbers, so q_algo also needs at least this much padding
 const paddingLeftPerDigit = 10; //padding of q_algo based on the number of digits the line-numbering needs
 
@@ -29,9 +42,9 @@ class AlgoArea {
     _algoFormat = FORMAT_UNKNOWN;
     _emptyAlgo = false;
     _algoChanged = true;
-    _lastValidAlgorithm;    //todo initialize
+    _lastValidAlgorithm = deutschAlgorithm;
     _numOfOperations = 0;
-    _oldAlgo;           //the old input (maybe not valid, but needed if the user edit lines they are not allowed to change)
+    _oldAlgo = "";           //the old input (maybe not valid, but needed if the user edit lines they are not allowed to change)
     _lastCursorPos = 0;
 
     constructor(div, idPrefix, changeState, print, error) {
@@ -304,6 +317,7 @@ class AlgoArea {
         const newAlgo = this._q_algo.val();
         //we need to find out the format if possible
         if(this._algoFormat === FORMAT_UNKNOWN) this._algoFormat = this.findFormat(newAlgo);
+
         if(newAlgo.trim().length === 0) {   //user deleted everything, so we reset
             this.resetAlgorithm();
             return;
@@ -342,9 +356,18 @@ class AlgoArea {
                 if((i < this._hlManager.offset || this._hlManager.isHighlighted(i)) //highlighted lines and the header are not allowed to change (but comments are)
                     && curLines[i] !== oldLines[i]) {   //illegal change!
                     this._q_algo.val(this._oldAlgo);   //reset algorithm to old input
-                    this._error("You are not allowed to change already processed lines!");
                     this._selectLineWithCursor();
+                    this._error("You are not allowed to change already processed lines!");
                     return;
+
+                } else if(!this._hlManager.isHighlighted(i)) {
+                    //you are not allowed to change a line with a comment to something else than a different comment!
+                    if(AlgoArea.isComment(oldLines[i], this._algoFormat) && !AlgoArea.isComment(curLines[i], this._algoFormat)) {
+                        this._q_algo.val(this._oldAlgo);   //reset algorithm to old input
+                        this._selectLineWithCursor();
+                        this._error("You are not allowed to change a comment to an operation that should already have been processed!");
+                        return;
+                    }
                 }
             }
         }

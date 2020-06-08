@@ -187,17 +187,6 @@ function loadReal() {
     algoArea.algo = emptyReal;
 }
 
-const deutschAlgorithm =    "OPENQASM 2.0;\n" +
-                            "include \"qelib1.inc\";\n" +
-                            "\n" +
-                            "qreg q[2];\n" +
-                            "creg c[2];\n" +
-                            "\n" +
-                            "x q[1];\n" +
-                            "h q[0];\n" +
-                            "h q[1];\n" +
-                            "cx q[0],q[1];\n" +
-                            "h q[0];\n";
 function loadDeutsch() {
     algoArea.emptyAlgo = false;
     algoArea.algoChanged = true;

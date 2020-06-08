@@ -31,13 +31,11 @@ function showError(error) {
 
 
 function startLoadingAnimation() {
-    console.log("loading started");
     document.getElementById('loader').style.display = 'block';
 }
 
 function endLoadingAnimation() {
     document.getElementById('loader').style.display = 'none';
-    console.log("loading ended");
 }
 
 
