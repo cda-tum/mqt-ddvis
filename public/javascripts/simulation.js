@@ -348,6 +348,8 @@ $(() =>  {
 
 function sim_gotoStart() {
     changeState(STATE_SIMULATING);
+    startLoadingAnimation();
+
     const call = $.ajax({
         url: '/tostart',
         contentType: 'application/json',
@@ -356,6 +358,7 @@ function sim_gotoStart() {
                 print(res.dot);
                 algoArea.hlManager.initialHighlighting();
             }
+            endLoadingAnimation();
             changeState(STATE_LOADED_START);
         }
     });
@@ -369,6 +372,8 @@ function sim_gotoStart() {
 
 function sim_goBack() {
     changeState(STATE_SIMULATING);
+    startLoadingAnimation();
+
     const call = $.ajax({
         url: '/prev',
         contentType: 'application/json',
@@ -376,10 +381,15 @@ function sim_goBack() {
             if(res.dot) {
                 print(res.dot);
                 algoArea.hlManager.decreaseHighlighting();
+
+                endLoadingAnimation();
                 if(algoArea.hlManager.highlightedLines <= 0) changeState(STATE_LOADED_START);
                 else changeState(STATE_LOADED);
 
-            } else changeState(STATE_LOADED_START); //should never reach this code because the button should be disabled when we reach the start
+            } else {
+                endLoadingAnimation();
+                changeState(STATE_LOADED_START);
+            } //should never reach this code because the button should be disabled when we reach the start
         }
     });
     call.fail((res) => {
@@ -392,6 +402,8 @@ function sim_goBack() {
 
 function sim_goForward() {
     changeState(STATE_SIMULATING);
+    startLoadingAnimation();
+
     const call = $.ajax({
         url: '/next',
         contentType: 'application/json',
@@ -401,10 +413,14 @@ function sim_goForward() {
 
                 algoArea.hlManager.increaseHighlighting();
 
+                endLoadingAnimation();
                 if(algoArea.hlManager.highlightedLines >= algoArea.numOfOperations) changeState(STATE_LOADED_END);
                 else changeState(STATE_LOADED);
 
-            } else changeState(STATE_LOADED_END); //should never reach this code because the button should be disabled when we reach the end
+            } else {
+                endLoadingAnimation();
+                changeState(STATE_LOADED_END); //should never reach this code because the button should be disabled when we reach the end
+            }
         }
     });
     call.fail((res) => {
@@ -417,6 +433,8 @@ function sim_goForward() {
 
 function sim_gotoEnd() {
     changeState(STATE_SIMULATING);
+    startLoadingAnimation();
+
     const call = $.ajax({
         url: '/toend',
         contentType: 'application/json',
@@ -425,6 +443,7 @@ function sim_gotoEnd() {
                 print(res.dot);
                 algoArea.hlManager.highlightEverything();
             }
+            endLoadingAnimation();
             changeState(STATE_LOADED_END);
         }
     });
@@ -438,6 +457,8 @@ function sim_gotoEnd() {
 
 function sim_gotoLine() {
     changeState(STATE_SIMULATING);
+    startLoadingAnimation();
+
     const line = Math.min(parseInt(line_to_go.val()), algoArea.numOfOperations);
     const call = $.ajax({
         url: '/toline?line=' + line,
@@ -447,10 +468,7 @@ function sim_gotoLine() {
                 print(res.dot);
                 algoArea.hlManager.highlightToXOps(line);
             }
-            //determine our current position in the algorithm
-            if(algoArea.hlManager.highlightedLines === 0) changeState(STATE_LOADED_START);
-            else if(algoArea.hlManager.highlightedLines === algoArea.numOfOperations) changeState(STATE_LOADED_END);
-            else changeState(STATE_LOADED);
+            _onErrorChangeState();  //even though no error occurred, it is still possible for every LOADED-state to be the correct one
         }
     });
     call.fail((res) => {
@@ -462,6 +480,8 @@ function sim_gotoLine() {
 }
 
 function _onErrorChangeState() {
+    endLoadingAnimation();
+
     //determine our current position in the algorithm
     if(algoArea.hlManager.highlightedLines <= 0) changeState(STATE_LOADED_START);
     else if(algoArea.hlManager.highlightedLines >= algoArea.numOfOperations) changeState(STATE_LOADED_END);
