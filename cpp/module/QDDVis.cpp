@@ -369,7 +369,7 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
 
     std::stringstream ss{};
     try {
-        dd->toDot2(sim, ss, true, false);
+        dd->toDot2(sim, ss, true);
         std::string str = ss.str();
         return Napi::String::New(env, str);
 

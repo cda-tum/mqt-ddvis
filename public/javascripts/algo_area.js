@@ -329,6 +329,7 @@ class AlgoArea {
             //check if a highlighted line changed, if yes abort the changes
             const curLines = newAlgo.split('\n');
             const lastLineWithHighlighting = this._hlManager.highlightedLines + this._hlManager.nopsInHighlighting;
+            console.log("llwh: " + lastLineWithHighlighting + " (=" + this._hlManager.highlightedLines + " + " + this._hlManager.nopsInHighlighting);
 
             /*
             if(curLines.length < lastLineWithHighlighting) { //illegal change because at least the last line has been deleted
@@ -351,7 +352,7 @@ class AlgoArea {
             }
              */
             //the header is not allowed to change as well as all processed lines
-            for(let i = 0; i <= lastLineWithHighlighting; i++) {
+            for(let i = 0; i < lastLineWithHighlighting; i++) {
                 //non-highlighted lines may change, because they are no operations
                 if((i < this._hlManager.offset || this._hlManager.isHighlighted(i)) //highlighted lines and the header are not allowed to change (but comments are)
                     && curLines[i] !== oldLines[i]) {   //illegal change!
@@ -370,6 +371,8 @@ class AlgoArea {
                     }
                 }
             }
+
+            //if(curLines.length !== oldLines.length) this._setLineNumbers();
         }
 
         this._oldAlgo = this._q_algo.val();  //changes are legal so they are "saved"
