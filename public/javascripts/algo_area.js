@@ -312,7 +312,12 @@ class AlgoArea {
     }
 
     _handleInput() {
+        //todo maybe could be implemented more efficiently if only the lines with the cursor are considered?
         this._lastCursorPos = this._q_algo.prop('selectionStart');
+
+        console.log("Lines with Cursor are: ");
+        console.log(this._debugGetLinesWithCursor());
+        console.log("__________________________________");
 
         const newAlgo = this._q_algo.val();
         //we need to find out the format if possible
@@ -371,12 +376,10 @@ class AlgoArea {
                     }
                 }
             }
-
-            //if(curLines.length !== oldLines.length) this._setLineNumbers();
         }
 
         this._oldAlgo = this._q_algo.val();  //changes are legal so they are "saved"
-        this._setLineNumbers();
+        //this._setLineNumbers();
     }
 
     _selectLineWithCursor() {
@@ -392,6 +395,20 @@ class AlgoArea {
 
         this._q_algo.prop('selectionStart', lineStart);
         this._q_algo.prop('selectionEnd', lineEnd);
+    }
+
+    _debugGetLinesWithCursor() {
+        const algo = this._q_algo.val();
+        let lineStart = algo.lastIndexOf("\n", this._lastCursorPos) + 1;  //+1 because we need the index of the first character in the line
+        let lineEnd;
+        //special case where lastCursorPos is directly at the end of a line
+        if(lineStart === this._lastCursorPos) {
+            lineStart = algo.lastIndexOf("\n", this._lastCursorPos-2) + 1;    //lastCursorPos-1 would be the current lineStart, but we need one character before that
+            lineEnd = this._lastCursorPos-1;  //the position right before \n
+
+        } else lineEnd = algo.indexOf("\n", lineStart);
+
+        return algo.substring(lineStart, lineEnd+1);
     }
 
     _handleScroll() {
