@@ -1,17 +1,11 @@
 
 #include <iostream>
-#include <cstdlib>
 #include <string>
-#include <functional>
 #include <memory>
-#include <stdexcept>
 
 #include "operations/StandardOperation.hpp"
 #include "QuantumComputation.hpp"
-#include "algorithms/QFT.hpp"
-#include "algorithms/Grover.hpp"
 #include "algorithms/GoogleRandomCircuitSampling.hpp"
-#include "DDcomplex.h"
 #include "DDexport.h"
 #include "DDpackage.h"
 
@@ -34,7 +28,9 @@ Napi::Object QDDVis::Init(Napi::Env env, Napi::Object exports) {
                             InstanceMethod("next", &QDDVis::Next),
                             InstanceMethod("toEnd", &QDDVis::ToEnd),
                             InstanceMethod("toLine", &QDDVis::ToLine),
-                            InstanceMethod("getDD", &QDDVis::GetDD)
+                            InstanceMethod("getDD", &QDDVis::GetDD),
+                            InstanceMethod("updateExportOptions", &QDDVis::UpdateExportOptions),
+                            InstanceMethod("isReady", &QDDVis::IsReady)
                         }
                     );
 
@@ -368,7 +364,8 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
 
     std::stringstream ss{};
     try {
-        dd::toDot(sim, ss, true, true, false);
+        std::cout << "Export DD with options: colored=" << this->showColors << ", edgeLabels=" << this->showEdgeLabels << ", classic=" << this->showClassic << std::endl;
+        dd::toDot(sim, ss, true, this->showColors, this->showEdgeLabels);
         std::string str = ss.str();
         return Napi::String::New(env, str);
 
@@ -378,4 +375,34 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
         Napi::Error::New(env, err).ThrowAsJavaScriptException();
         return Napi::String::New(env, "-1");
     }
+}
+
+void QDDVis::UpdateExportOptions(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    //check if the correct parameters have been passed
+    if(info.Length() != 3) {
+        Napi::RangeError::New(env, "Need 3 (bool, bool, bool) arguments!").ThrowAsJavaScriptException();
+        return;
+    }
+    if (!info[0].IsBoolean()) {  //algorithm
+        Napi::TypeError::New(env, "arg1: Boolean expected!").ThrowAsJavaScriptException();
+        return;
+    }
+    if (!info[1].IsBoolean()) {  //algorithm
+        Napi::TypeError::New(env, "arg2: Boolean expected!").ThrowAsJavaScriptException();
+        return;
+    }
+    if (!info[2].IsBoolean()) {  //algorithm
+        Napi::TypeError::New(env, "arg3: Boolean expected!").ThrowAsJavaScriptException();
+        return;
+    }
+
+    this->showColors = (bool)info[0].As<Napi::Boolean>();
+    this->showEdgeLabels = (bool)info[1].As<Napi::Boolean>();
+    this->showClassic = (bool)info[2].As<Napi::Boolean>();
+}
+
+Napi::Value QDDVis::IsReady(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    return Napi::Boolean::New(env, this->ready);
 }

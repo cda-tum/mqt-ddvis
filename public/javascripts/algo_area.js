@@ -187,11 +187,15 @@ class AlgoArea {
                 endLoadingAnimation();
 
                 if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-                else if(res.status === 500) showResponseError(res, "Couldn't connect to the server.");
+                else if(res.status === 500) {
+                    //showResponseError(res, "Couldn't connect to the server.");
+                    if(res.responseJSON && res.responseJSON.msg) this._error(res.responseJSON.msg);
+                    else this._error("Internal Server Error");
+                }
                 else {  //this should be invalid-algorithm-error
-                    console.log("here");
                     this._inv_algo_warning.css('display', 'block');
-                    showResponseError(res, "Your algorithm was invalid!");
+
+                    this._error(this._parseErrorMessage(res));
                     this._setLineNumbers();
                 }
             });
@@ -222,6 +226,54 @@ class AlgoArea {
         //if(line_to_go && opNum > this._numOfOperations) line_to_go.val(this._numOfOperations);  //todo maybe change this, because it is only "needed" for Simulation
     }
 
+    _parseErrorMessage(res) {
+        let errMsg = "Invalid Algorithm at ";
+        if(res.responseJSON && res.responseJSON.msg) {
+            const parserError = res.responseJSON.msg;
+
+            let lineStart = parserError.indexOf("l:");
+            if(lineStart > -1) {
+                lineStart += 2; //skip "l:"
+
+                const lineEnd = parserError.indexOf(":", lineStart);
+                if(lineEnd > -1) {
+
+                    const lineMsg = parseInt(parserError.substring(lineStart, lineEnd));    //the line that is stated in the parser message
+
+                    const temp = this._line_numbers.html().split('\n');
+                    let lineNumber;
+                    if(temp.length < lineMsg || lineMsg <= 0) lineNumber = lineMsg;
+                    else lineNumber = parseInt(temp[lineMsg-1]);   //use the number that the line numbering displays
+
+                    const line = lineNumber;
+
+                    let colStart = parserError.indexOf("c:", lineEnd-1);
+                    if(colStart > -1) {
+                        colStart += 2;
+
+                        const colEnd = parserError.indexOf("msg:", colStart);
+                        if(colEnd > -1) {
+                            const column = parseInt(parserError.substr(colStart, colEnd));
+
+                            errMsg += "line " + line + ", column " + column + "\n";
+
+                        } else errMsg += "line " + line + "\n";
+                    } else errMsg += "line " + line + "\n";
+                }
+            }
+
+            const msgStart = parserError.indexOf("msg:") + 4;
+            if(msgStart > -1) {
+                //don't show the position information of the error, if there is any additionally (because the line is wrong and we've already created the information)
+                const msgEnd = parserError.lastIndexOf(" in line");
+                if(msgEnd > -1) errMsg += parserError.substring(msgStart, msgEnd);
+                else errMsg += parserError.substring(msgStart);
+            }
+        }
+
+        return errMsg;
+    }
+
 
     resetAlgorithm() {
         //todo maybe just call this when set algo("")
@@ -240,9 +292,13 @@ class AlgoArea {
 
     updateSizes() {
         const dzInnerWidth = this._drop_zone.innerWidth();
-        const width = dzInnerWidth - parseFloat(this._q_algo.css('margin-left'));
-        console.log(dzInnerWidth + " | " + width);
-        this._q_algo.css('width', width);
+        const marginLeft = parseFloat(this._q_algo.css('margin-left'));
+        const width = dzInnerWidth - marginLeft;
+        console.log(width + " = " + dzInnerWidth + " - " + marginLeft);
+        if(isOpera) this._q_algo.css('width', width);
+        else {
+            this._q_algo.css('width', width);
+        }
 
         if(dzInnerWidth > 0) {
             let lh = "<mark>";
@@ -286,7 +342,7 @@ class AlgoArea {
         const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
         this._q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
 
-        const width = parseInt(this._drop_zone.css('width')) - margin - 2 * parseInt(this._drop_zone.css('border'));
+        const width = this._drop_zone.innerWidth() - margin;
         this._q_algo.css('width', width);
     }
 
@@ -338,7 +394,6 @@ class AlgoArea {
         if(this._hlManager.highlightedLines > 0) {  //if nothing is highlighted yet, the user may also edit the lines before the first operation
             //check if a highlighted line changed, if yes abort the changes
             const lastLineWithHighlighting = this._hlManager.highlightedLines + this._hlManager.nopsInHighlighting;
-            console.log("llwh: " + lastLineWithHighlighting + " (=" + this._hlManager.highlightedLines + " + " + this._hlManager.nopsInHighlighting);
 
             /*
             if(curLines.length < lastLineWithHighlighting) { //illegal change because at least the last line has been deleted

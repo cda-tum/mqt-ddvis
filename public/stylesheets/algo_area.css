@@ -71,20 +71,18 @@
     color: #000;
     background-color: transparent;
 }
-/*
-.q_algo::-webkit-scrollbar {
-    height: 30px;
-}
-*/
 
 .inv_algo_warning {
     display: none;
     position: relative;
-    top: 90%;
-    left: 90%;
+    top: 85%;
+    left: 80%;
     height: 10%;
     width: 10%;
-    background: coral;
+    background-image: url("../assets/Warning_medium.png");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
 }
 
 mark {

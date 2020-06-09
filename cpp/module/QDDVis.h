@@ -30,6 +30,8 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
         Napi::Value ToEnd(const Napi::CallbackInfo& info);
         Napi::Value ToLine(const Napi::CallbackInfo& info);
         Napi::Value GetDD(const Napi::CallbackInfo& info);
+        void UpdateExportOptions(const Napi::CallbackInfo& info);
+        Napi::Value IsReady(const Napi::CallbackInfo& info);
 
         //fields
         const long id = NextID++;
@@ -45,6 +47,11 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
         bool ready = false;     //true if a valid algorithm is imported, false otherwise
         bool atInitial = true; //whether we currently visualize the initial state or not
         bool atEnd = false; // whether we currently visualize the end of the given circuit
+
+        //options for the DD export
+        bool showColors = true;
+        bool showEdgeLabels = false;
+        bool showClassic = false;
 };
 
 #endif

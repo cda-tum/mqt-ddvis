@@ -73,6 +73,14 @@ class HighlightManager {
         else return false;  //line is definitely not highlighted (yet)
     }
 
+    getNopsUpToLine(lineNum) {
+        let num = 0;
+        for(let i = 0; i < lineNum && i < this._hl.length; i++) {
+            if(!this._hl[i]) num++;
+        }
+        return num;
+    }
+
     resetHighlighting(newText) {
         this._highlightedOps = 0;
         this._nopsInHighlighting = 0;
@@ -263,6 +271,11 @@ class HighlightManager {
                                 if(index === -1) temp += l;
                                 else break;     //if we found a semicolon we can continue in the normal (outer) loop
                                 i++;
+                            }
+
+                            if(index === -1) {  //we are in the last line and no ; was found
+                                temp += "\n";
+                                break;
                             }
                         }
 
