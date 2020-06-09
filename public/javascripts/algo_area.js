@@ -172,24 +172,6 @@ class AlgoArea {
             call.fail((res) => {
                 if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
 
-                //todo ask if this really is necessary or has any benefit, because disabling the buttons seems far more intuitive and cleaner
-                if(res.responseJSON && res.responseJSON.retry && !algorithm) {
-                    const call2 = $.post("/load", { basisStates: null, algo: this._lastValidAlgorithm, opNum: opNum, format: format, reset: reset });
-                    call2.done((res2) => {
-                        this._loadingSuccess(res2, this._lastValidAlgorithm, opNum, format, reset);
-
-                        this._q_algo.prop('selectionStart', this._lastCursorPos);
-                        this._q_algo.prop('selectionEnd', this._lastCursorPos+1);
-
-                        //set the focus and scroll to the cursor positoin - doesn't work on Opera
-                        this._q_algo.blur();
-                        this._q_algo.focus();
-                        $.trigger({ type: 'keypress' });
-                    });
-                    // call2.fail((res2) => {
-                    //    showResponseError(res, )
-                    // });
-                }
                 changeState(STATE_NOTHING_LOADED);
                 endLoadingAnimation();
                 showResponseError(res, "Couldn't connect to the server.");
