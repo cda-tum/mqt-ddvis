@@ -4,10 +4,15 @@
     box-sizing: border-box;
 }
 
-body * {
+body * { /* the whitespace indicates that all children are affected - in this case all children of body */
     font-family: 'Lucida Grande', 'Lucida Sans Unicode', 'Trebuchet MS', sans-serif;
+}
+
+/*
+:not(svg *) {
     font-size: 12px;
 }
+ */
 
 
 /* Style the header and the footer */
@@ -72,7 +77,6 @@ h4 {
 
 svg {
     border: 2px solid #685972;
-    font-size: 3px !important;
 }
 
 

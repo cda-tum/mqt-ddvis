@@ -378,6 +378,9 @@ class AlgoArea {
             }
         }
 
+
+        //TODO ADD PENDING LINE IF CURLINES HAS MORE ELEMENTS THAN OLDLINES
+
         this._oldAlgo = this._q_algo.val();  //changes are legal so they are "saved"
         //this._setLineNumbers();
     }
