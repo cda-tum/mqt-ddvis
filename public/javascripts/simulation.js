@@ -4,6 +4,10 @@ const step_duration = $('#stepDuration');
 const algo_div = $('#algo_div');
 const qdd_div = $('#qdd_div');
 const qdd_text = $('#qdd_text');
+
+const cb_colored = $('#cb_colored');
+const cb_edge_labels = $('#cb_edge_labels');
+const cb_classic = $('#cb_classic');
 //todo also initialize all other selectors once?
 
 
@@ -29,31 +33,32 @@ function changeState(state) {
     let disable;
     switch (state) {
         case STATE_NOTHING_LOADED:
-            enable = [ "sim_drop_zone", "sim_q_algo", "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
+            enable = [ "sim_drop_zone", "sim_q_algo", "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic" ];
             disable = [ "toStart", "prev", "automatic", "next", "toEnd", "toLine" ];
             break;
 
         case STATE_LOADED:
             enable = [  "sim_drop_zone", "sim_q_algo", "toStart", "prev", "automatic", "next", "toEnd", "toLine",
-                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
+                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic" ];
             disable = [  ];
             break;
 
         case STATE_LOADED_START:
             enable = [  "sim_drop_zone", "sim_q_algo", "automatic", "next", "toEnd", "toLine", "ex_real", "ex_qasm",
-                        "ex_deutsch", "ex_alu", "stepDuration" ];
+                        "ex_deutsch", "ex_alu", "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic" ];
             disable = [ "toStart", "prev" ];
             break;
 
         case STATE_LOADED_END:
-            enable = [ "sim_drop_zone", "sim_q_algo", "toStart", "prev", "toLine", "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
+            enable = [ "sim_drop_zone", "sim_q_algo", "toStart", "prev", "toLine", "ex_real", "ex_qasm", "ex_deutsch",
+                        "ex_alu", "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic" ];
             disable = [ "toEnd", "next", "automatic" ];   //don't disable q_algo because the user might want to add lines to the end
             break;
 
         case STATE_SIMULATING:
             enable = [];
             disable = [ "sim_drop_zone", "sim_q_algo", "toStart", "prev", "automatic", "next", "toEnd", "toLine",
-                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
+                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic" ];
             break;
 
         case STATE_DIASHOW:
@@ -123,6 +128,62 @@ function validateStepDuration() {
             return false;
         }
     }
+}
+
+function updateExportOptions() {
+    const colored = cb_colored.prop('checked');
+    const edgeLabels = cb_edge_labels.prop('checked');
+    const classic = cb_classic.prop('checked');
+
+    changeState(STATE_SIMULATING);
+    startLoadingAnimation();
+
+    const call = jQuery.ajax({
+        type: 'PUT',
+        url: '/updateExportOptions',
+        data: { colored: colored, edgeLabels: edgeLabels, classic: classic },
+        success: (res) => {
+            if (res.dot) print(res.dot);
+            endLoadingAnimation();
+            _generalStateChange();  //every LOAD state is possible
+        }
+    });
+    call.fail((res) => {
+        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
+        endLoadingAnimation();
+        showResponseError(res, "");
+        _generalStateChange();
+    });
+
+    /*
+    const call = $.put("/updateExportOptions", { colored: colored, edgeLabels: edgeLabels, classic: classic });
+    call.success(res => {
+        const call2 = $.ajax({
+            url: '/getDD',
+            contentType: 'application/json',
+            success: (res) => {
+                if(res.dot) print(res.dot);
+                endLoadingAnimation();
+                _generalStateChange();  //every LOAD state is possible
+            }
+        });
+        call2.fail((res) => {
+            if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
+            endLoadingAnimation();
+            showResponseError(res, "Couldn't retrieve DD from server!");
+            _generalStateChange();
+        });
+    });
+    call.fail((res) => {
+        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
+        endLoadingAnimation();
+        showResponseError(res, "Going back to the start failed!");
+        _generalStateChange();
+    });
+    */
 }
 
 
@@ -324,7 +385,7 @@ function sim_gotoStart() {
         if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
 
         showResponseError(res, "Going back to the start failed!");
-        _onErrorChangeState();
+        _generalStateChange();
     });
 }
 
@@ -354,7 +415,7 @@ function sim_goBack() {
         if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
 
         showResponseError(res, "Going a step back failed!");
-        _onErrorChangeState();
+        _generalStateChange();
     });
 }
 
@@ -363,7 +424,7 @@ function sim_diashow() {
         pauseDia = true;
         runDia = false;
 
-        _onErrorChangeState();  //in error-cases we also call endDia(), and in normal cases it doesn't matter that we call this function
+        _generalStateChange();  //in error-cases we also call endDia(), and in normal cases it doesn't matter that we call this function
         automatic.text("\u25B6");   //play-symbol in unicode
     }
 
@@ -432,7 +493,7 @@ function sim_goForward() {
         if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
 
         showResponseError(res, "Going a step ahead failed!");
-        _onErrorChangeState();
+        _generalStateChange();
     });
 }
 
@@ -456,7 +517,7 @@ function sim_gotoEnd() {
         if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
 
         showResponseError(res, "Going to the end failed!");
-        _onErrorChangeState();
+        _generalStateChange();
     });
 }
 
@@ -473,18 +534,18 @@ function sim_gotoLine() {
                 print(res.dot);
                 algoArea.hlManager.highlightToXOps(line);
             }
-            _onErrorChangeState();  //even though no error occurred, it is still possible for every LOADED-state to be the correct one
+            _generalStateChange();  //even though no error occurred, it is still possible for every LOADED-state to be the correct one
         }
     });
     call.fail((res) => {
         if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
 
         showResponseError(res, "Going to line " + line + " failed!");
-        _onErrorChangeState();
+        _generalStateChange();
     });
 }
 
-function _onErrorChangeState() {
+function _generalStateChange() {
     endLoadingAnimation();
 
     //determine our current position in the algorithm

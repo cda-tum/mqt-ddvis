@@ -52,9 +52,9 @@ function openTab(event, tabId) {
     //}
 }
 
-function showResponseError(res, altMsg = "Unknown Error!") {
+function showResponseError(res, altMsg) {
     if(res.responseJSON && res.responseJSON.msg) showError(res.responseJSON.msg);
-    else showError(altMsg);
+    else if(altMsg) showError(altMsg);
 }
 
 function showError(error) {
