@@ -128,22 +128,22 @@ algoAreas.push(algoArea);   //register at main for resizing
 algo_div.append(
   '<div id="nav_div">\n' +
     '        <button type="button" id="toStart" onclick="sim_gotoStart()" ' +
-    'title="Go back to the initial State"' +
+    'title="Go back to the initial state"' +
     '        >&#8606</button>\n' +
     '        <button type="button" id="prev" onclick="sim_goBack()" ' +
-    'title="Go to the previous Operation"' +
+    'title="Go to the previous operation"' +
     '        >&#8592</button>\n' +
     '        <button type="button" id="automatic"' +
-    'title="Start a Diashow"' +
+    'title="Start a diashow"' +
     '        >&#9654</button>\n' +
     '        <button type="button" id="next" onclick="sim_goForward()"' +
-    'title="Apply the current Operation"' +
+    'title="Apply the current operation"' +
     '        >&#8594</button>\n' +
     '        <button type="button" id="toEnd" onclick="sim_gotoEnd()"' +
-    'title="Apply all remaining Operations"' +
+    'title="Apply all remaining operations"' +
     '        >&#8608</button>\n' +
     '        <p></p>\n' +
-    '        <button type="button" onclick="sim_gotoLine()" id="toLine">Go to Line</button>\n' +
+    '        <button type="button" onclick="sim_gotoLine()" id="toLine">Go to line</button>\n' +
     '        <input type="number" min="0" id="line_to_go" value="0" onchange="validateLineNumber()"/>\n' +
     '</div>'
 );
