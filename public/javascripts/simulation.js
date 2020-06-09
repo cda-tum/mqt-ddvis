@@ -526,6 +526,7 @@ function validateLineNumber() {
 let svgHeight = 0;  //can't be initialized beforehand
 function print(dot) {
     if(dot) {
+        //document.getElementById('color_map').style.display = 'block';
         if(svgHeight === 0) {
             //subtract the whole height of the qdd-text from the height of qdd-div to get the space that is available for the graph
             svgHeight = parseInt($('#qdd_div').css('height')) - (
@@ -539,8 +540,13 @@ function print(dot) {
             fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
         }).renderDot(dot);
 
+        //$('#color_map').html(
+        //    '<svg><rect width="20" height="20" fill="purple"></rect></svg>'
+        //);
+
     } else {
         qdd_div.html(qdd_text);
+        //document.getElementById('color_map').style.display = 'none';
     }
 }
 

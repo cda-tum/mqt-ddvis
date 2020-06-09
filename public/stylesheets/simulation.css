@@ -116,3 +116,16 @@
     resize: none;
     white-space: pre;
 }
+
+#color_map {
+    display: block;
+    position: relative;
+    background: #3498db;
+    left: 10%;
+    top: 10%;
+    height: 5%;
+    width: 5%;
+
+    margin: 0;
+    padding: 0;
+}
