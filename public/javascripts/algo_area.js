@@ -234,6 +234,7 @@ class AlgoArea {
     updateSizes() {
         const dzInnerWidth = this._drop_zone.innerWidth();
         const width = dzInnerWidth - parseFloat(this._q_algo.css('margin-left'));
+        console.log(dzInnerWidth + " | " + width);
         this._q_algo.css('width', width);
 
         if(dzInnerWidth > 0) {

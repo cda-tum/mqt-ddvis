@@ -7,6 +7,7 @@
  */
 //from: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_tabs
 function openTab(event, tabId) {
+
     let i, tabcontent, tablinks;
     tabcontent = document.getElementsByClassName("tabcontent");
     for (i = 0; i < tabcontent.length; i++) {
@@ -18,6 +19,12 @@ function openTab(event, tabId) {
     }
     document.getElementById(tabId).style.display = "block";
     event.currentTarget.className += " active";
+
+    updateAllAlgoAreaSizes();
+    //this would be a more efficient approach, but since we just have a couple of algoAreas it shouldn't matter
+    //if(tabId === "simulation") {
+    //    algoAreas.get("sim").updateSizes();
+    //}
 }
 
 function showResponseError(res, altMsg = "Unknown Error!") {
@@ -66,7 +73,10 @@ function dragOverHandler(event) {
 }
 
 
-const algoAreas = [];
+const algoAreas = new Map();
+function updateAllAlgoAreaSizes() {
+    for(const area of algoAreas.values()) area.updateSizes();
+}
 window.addEventListener('resize', (event) => {
-    for(const area of algoAreas) area.updateSizes();
+    updateAllAlgoAreaSizes();
 });

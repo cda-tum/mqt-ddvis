@@ -120,8 +120,8 @@ function validateStepDuration() {
 }
 
 
-const algoArea = new AlgoArea(algo_div, "sim", changeState, print, showError);
-algoAreas.push(algoArea);   //register at main for resizing
+const sim_algoArea = new AlgoArea(algo_div, "sim", changeState, print, showError);
+algoAreas.set("sim", sim_algoArea);   //register at main for resizing
 
 //append the navigation div below algoArea
 algo_div.append(
@@ -548,4 +548,3 @@ function print(dot) {
         //document.getElementById('color_map').style.display = 'none';
     }
 }
-
