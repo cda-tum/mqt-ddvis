@@ -342,7 +342,6 @@ class AlgoArea {
         if(this._hlManager.highlightedLines > 0) {  //if nothing is highlighted yet, the user may also edit the lines before the first operation
             //check if a highlighted line changed, if yes abort the changes
             const lastLineWithHighlighting = this._hlManager.highlightedLines + this._hlManager.nopsInHighlighting;
-            console.log("llwh: " + lastLineWithHighlighting + " (=" + this._hlManager.highlightedLines + " + " + this._hlManager.nopsInHighlighting);
 
             /*
             if(curLines.length < lastLineWithHighlighting) { //illegal change because at least the last line has been deleted
