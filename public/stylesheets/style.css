@@ -8,11 +8,11 @@ body * { /* the whitespace indicates that all children are affected - in this ca
     font-family: 'Lucida Grande', 'Lucida Sans Unicode', 'Trebuchet MS', sans-serif;
 }
 
-/*
-:not(svg *) {
+/* everything except SVG-texts have a set font-size */
+:not(text) {
     font-size: 12px;
 }
- */
+
 
 
 /* Style the header and the footer */
@@ -43,17 +43,9 @@ h3 {
     font-size: 16px;
 }
 
-h4 {
-    font-size: 12px;
-}
-
-#debug {
-    margin-top: 50px;
-    padding-top: 10px;
-    padding-left: 20px;
-    padding-right: 20px;
-    background-color: rgb(238, 40, 89);
-    color: #f1f1f1;
+/* manually define font-size for all elements so the texts inside svg are not changed */
+h4, p, span, textarea, button, div, input {
+    /*font-size: 12px;*/
 }
 
 /* clear the space after the tab-content so no content can slip into the tab */

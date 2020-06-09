@@ -75,7 +75,7 @@ class AlgoArea {
 
         this._q_algo = $(
             '<textarea id="' + idPrefix + '_q_algo" type="text" class="q_algo"' +
-            'placeholder="Enter Algorithm or drop .qasm-/.real-File here."' +
+            'placeholder="Enter algorithm or drop .qasm-/.real-file here."' +
             'autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">' +
             '</textarea>'
         );
@@ -330,9 +330,10 @@ class AlgoArea {
 
         this._emptyAlgo = false;
         this._algoChanged = true;
+        const curLines = newAlgo.split('\n');
+        const oldLines = this._oldAlgo.split('\n');
         if(this._hlManager.highlightedLines > 0) {  //if nothing is highlighted yet, the user may also edit the lines before the first operation
             //check if a highlighted line changed, if yes abort the changes
-            const curLines = newAlgo.split('\n');
             const lastLineWithHighlighting = this._hlManager.highlightedLines + this._hlManager.nopsInHighlighting;
             console.log("llwh: " + lastLineWithHighlighting + " (=" + this._hlManager.highlightedLines + " + " + this._hlManager.nopsInHighlighting);
 
@@ -344,7 +345,6 @@ class AlgoArea {
             }
             */
 
-            const oldLines = this._oldAlgo.split('\n');
             /*
             //header can be adapted, but lines can't be deleted (this would make a complete update of the highlighting necessary)
             for(let i = hlManager.offset; i <= lastLineWithHighlighting; i++) {
@@ -380,9 +380,21 @@ class AlgoArea {
 
 
         //TODO ADD PENDING LINE IF CURLINES HAS MORE ELEMENTS THAN OLDLINES
+        const lineDif = curLines.length - oldLines.length;
+        if(lineDif > 0) {
+            let text = "";
+            for(let i = 0; i < lineDif; i++) {
+                this._hlManager._addPendingLine();
+                text += "\n";
+            }
+            this._hlManager._updateDiv();
+
+            //const oldLNs = this._line_numbers.html();
+            //this._line_numbers.html(oldLNs + text);
+        }
 
         this._oldAlgo = this._q_algo.val();  //changes are legal so they are "saved"
-        //this._setLineNumbers();
+        this._setLineNumbers();
     }
 
     _selectLineWithCursor() {
