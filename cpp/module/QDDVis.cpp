@@ -158,8 +158,8 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
 
     } catch(std::exception& e) {
         std::cout << "Exception while loading the algorithm: " << e.what() << std::endl;
-        std::string err("");//e.what());    //todo e.what() gives unreadable characters?
-        Napi::Error::New(env, "Invalid Algorithm! " + err).ThrowAsJavaScriptException();
+        std::string err(e.what());    //todo e.what() gives unreadable characters?
+        Napi::Error::New(env, "Invalid Algorithm! 1" + err).ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
     }
 
@@ -370,7 +370,7 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
 
     std::stringstream ss{};
     try {
-        dd::toDot(sim, ss, true, true, true);
+        dd::toDot(sim, ss, true, true, false);
         std::string str = ss.str();
         return Napi::String::New(env, str);
 

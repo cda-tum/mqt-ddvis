@@ -33,6 +33,7 @@ class AlgoArea {
     _backdrop;
     _highlighting;
     _q_algo;
+    _inv_algo_warning;
 
     _hlManager;
     _changeState;   //function to change the state on the callers side  //todo how to handle the state codes?
@@ -85,10 +86,15 @@ class AlgoArea {
             'scroll': () => this._handleScroll()
         });
 
+        this._inv_algo_warning = $(
+          '<div id="' + idPrefix + '_inv_algo_warning" class="inv_algo_warning"></div>'
+        );
+
         div.append(this._drop_zone);
         this._drop_zone.append(this._line_numbers);
         this._drop_zone.append(this._backdrop);
         this._drop_zone.append(this._q_algo);
+        this._drop_zone.append(this._inv_algo_warning);
 
         this._backdrop.append(this._highlighting);
 
@@ -167,14 +173,20 @@ class AlgoArea {
                 else if(opNum === this._numOfOperations) this._changeState(STATE_LOADED_END);
                 else this._changeState(STATE_LOADED);
 
+                this._inv_algo_warning.css('display', 'none');
                 endLoadingAnimation();
             });
             call.fail((res) => {
-                if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-
                 changeState(STATE_NOTHING_LOADED);
                 endLoadingAnimation();
-                showResponseError(res, "Couldn't connect to the server.");
+
+                if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+                else if(res.status === 500) showResponseError(res, "Couldn't connect to the server.");
+                else {  //this should be invalid-algorithm-error
+                    console.log("here");
+                    this._inv_algo_warning.css('display', 'block');
+                    showResponseError(res, "Your algorithm was invalid!");
+                }
             });
         }
     }
@@ -202,6 +214,7 @@ class AlgoArea {
         //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
         //if(line_to_go && opNum > this._numOfOperations) line_to_go.val(this._numOfOperations);  //todo maybe change this, because it is only "needed" for Simulation
     }
+
 
     resetAlgorithm() {
         //todo maybe just call this when set algo("")

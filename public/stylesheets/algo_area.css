@@ -77,6 +77,16 @@
 }
 */
 
+.inv_algo_warning {
+    display: none;
+    position: relative;
+    top: 90%;
+    left: 90%;
+    height: 10%;
+    width: 10%;
+    background: coral;
+}
+
 mark {
     color: transparent;
     margin: 0;
