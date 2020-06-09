@@ -13,7 +13,7 @@ const cb_classic = $('#cb_classic');
 
 //################### CONFIGURATION ##################################################################################################################
 
-let stepDuration = 700;   //in ms
+let stepDuration = 1000;   //in ms
 
 //################### STATE MANAGEMENT ##################################################################################################################
 //states of the simulation tab
@@ -596,7 +596,7 @@ function print(dot) {
         if(svgHeight === 0) {
             //subtract the whole height of the qdd-text from the height of qdd-div to get the space that is available for the graph
             svgHeight = parseInt(qdd_div.css('height')) - (
-                parseInt(parseInt(qdd_text.css('height'))) + parseInt(qdd_text.css('margin-top')) + parseInt(qdd_text.css('margin-bottom'))    //height of the qdd-text
+                parseInt(qdd_text.css('height')) + parseInt(qdd_text.css('margin-top')) + parseInt(qdd_text.css('margin-bottom'))    //height of the qdd-text
             );
         }
 
@@ -604,7 +604,7 @@ function print(dot) {
             width: "70%",     //make it smaller so we have space around where we can scroll through the page - also the graphs are more high than wide so is shouldn't be a problem
             height: svgHeight,
             fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
-        }).renderDot(dot);
+        }).tweenPaths(true).tweenShapes(true).transition(function () { return d3.transition().ease(d3.easeLinear).duration(step_duration.val())}).renderDot(dot);
 
         //$('#color_map').html(
         //    '<svg><rect width="20" height="20" fill="purple"></rect></svg>'

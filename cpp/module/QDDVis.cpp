@@ -365,7 +365,7 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
     std::stringstream ss{};
     try {
         std::cout << "Export DD with options: colored=" << this->showColors << ", edgeLabels=" << this->showEdgeLabels << ", classic=" << this->showClassic << std::endl;
-        dd::toDot(sim, ss, true, this->showColors, this->showEdgeLabels);
+        dd::toDot(sim, ss, true, this->showColors, this->showEdgeLabels, this->showClassic);
         std::string str = ss.str();
         return Napi::String::New(env, str);
 

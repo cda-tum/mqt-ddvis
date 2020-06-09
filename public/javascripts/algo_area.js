@@ -27,26 +27,6 @@ function numOfDigits(num) {
 }
 
 class AlgoArea {
-    _idPrefix;
-    _drop_zone;
-    _line_numbers;
-    _backdrop;
-    _highlighting;
-    _q_algo;
-    _inv_algo_warning;
-
-    _hlManager;
-    _changeState;   //function to change the state on the callers side  //todo how to handle the state codes?
-    _print;         //function to print the DD on the callers side
-    _error;     //function on the callers side for handling errors
-
-    _algoFormat = FORMAT_UNKNOWN;
-    _emptyAlgo = true;
-    _algoChanged = false;
-    _lastValidAlgorithm = deutschAlgorithm;
-    _numOfOperations = 0;
-    _oldAlgo = "";           //the old input (maybe not valid, but needed if the user edit lines they are not allowed to change)
-    _lastCursorPos = 0;
 
     constructor(div, idPrefix, changeState, print, error) {
         this._idPrefix = idPrefix;
@@ -76,8 +56,8 @@ class AlgoArea {
 
         this._q_algo = $(
             '<textarea id="' + idPrefix + '_q_algo" type="text" class="q_algo"' +
-            'placeholder="Enter algorithm or drop .qasm-/.real-file here."' +
-            'autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">' +
+            ' placeholder="Enter algorithm or drop .qasm-/.real-file here."' +
+            ' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">' +
             '</textarea>'
         );
         this._q_algo.on({
@@ -99,9 +79,17 @@ class AlgoArea {
         this._backdrop.append(this._highlighting);
 
         this._hlManager = new HighlightManager(this._highlighting, this);
-        this._changeState = changeState;
-        this._print = print;
-        this._error = error;
+        this._changeState = changeState; //function to change the state on the callers side  //todo how to handle the state codes?
+        this._print = print; //function to print the DD on the callers side
+        this._error = error; //function on the callers side for handling errors
+
+        this._algoFormat = FORMAT_UNKNOWN;
+        this._emptyAlgo = true;
+        this._algoChanged = false;
+        this._lastValidAlgorithm = deutschAlgorithm;
+        this._numOfOperations = 0;
+        this._oldAlgo = "";           //the old input (maybe not valid, but needed if the user edit lines they are not allowed to change)
+        this._lastCursorPos = 0;
     }
 
     get algo() {
@@ -504,19 +492,17 @@ class AlgoArea {
     isOperation(line, format = this._algoFormat) {
         if(line) {
             if(format === QASM_FORMAT) {
-                if( line.trim() === "" ||
+                return !(line.trim() === "" ||
                     line.includes("OPENQASM") ||
                     line.includes("include") ||
                     line.includes("reg") ||
-                    AlgoArea.isComment(line, format)
-                ) return false;
-                return true;
+                    AlgoArea.isComment(line, format));
+
 
             } else if(format === REAL_FORMAT) {
-                if( line.startsWith(".") ||   //all non-operation lines start with "."
-                    AlgoArea.isComment(line, format)
-                ) return false;
-                return true;
+                return !(line.startsWith(".") ||   //all non-operation lines start with "."
+                    AlgoArea.isComment(line, format));
+
 
             } else {
                 //showError("Format not recognized. Please try again.");  //todo change message?
