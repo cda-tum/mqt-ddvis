@@ -41,8 +41,8 @@ class AlgoArea {
     _error;     //function on the callers side for handling errors
 
     _algoFormat = FORMAT_UNKNOWN;
-    _emptyAlgo = false;
-    _algoChanged = true;
+    _emptyAlgo = true;
+    _algoChanged = false;
     _lastValidAlgorithm = deutschAlgorithm;
     _numOfOperations = 0;
     _oldAlgo = "";           //the old input (maybe not valid, but needed if the user edit lines they are not allowed to change)
@@ -148,7 +148,7 @@ class AlgoArea {
     loadAlgorithm(format = this._algoFormat, reset = false, algorithm) {
         if(this._emptyAlgo || !this._algoChanged) return;
 
-
+        console.log("started from here");
         startLoadingAnimation();
 
 
