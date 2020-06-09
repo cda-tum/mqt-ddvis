@@ -2,7 +2,6 @@
 
 const step_duration = $('#stepDuration');
 const algo_div = $('#algo_div');
-const automatic = $('#automatic');
 const qdd_div = $('#qdd_div');
 const qdd_text = $('#qdd_text');
 //todo also initialize all other selectors once?
@@ -133,7 +132,7 @@ algo_div.append(
     '        <button type="button" id="prev" onclick="sim_goBack()" ' +
     'title="Go to the previous operation"' +
     '        >&#8592</button>\n' +
-    '        <button type="button" id="automatic"' +
+    '        <button type="button" id="automatic" onclick="sim_diashow()" ' +
     'title="Start a diashow"' +
     '        >&#9654</button>\n' +
     '        <button type="button" id="next" onclick="sim_goForward()"' +
@@ -148,6 +147,7 @@ algo_div.append(
     '</div>'
 );
 const line_to_go = $('#line_to_go');    //must be created here since it doesn't exist before
+const automatic = $('#automatic');
 
 changeState(STATE_NOTHING_LOADED);      //initial state
 
@@ -297,54 +297,53 @@ function loadAlu() {
 }
 
 //################### NAVIGATION ##################################################################################################################
-$(() =>  {
-    automatic.on('click', () => {
-        function endDia() {
-            pauseDia = true;
-            runDia = false;
 
-            _onErrorChangeState();  //in error-cases we also call endDia(), and in normal cases it doesn't matter that we call this function
-            automatic.text("\u25B6");   //play-symbol in unicode
-        }
+function sim_diashow() {
+    function endDia() {
+        pauseDia = true;
+        runDia = false;
 
-        if(runDia) {
-            endDia();
+        _onErrorChangeState();  //in error-cases we also call endDia(), and in normal cases it doesn't matter that we call this function
+        automatic.text("\u25B6");   //play-symbol in unicode
+    }
 
-        } else {
-            runDia = true;
-            changeState(STATE_DIASHOW);
+    if(runDia) {
+        endDia();
 
-            const func = () => {
-                if(!pauseDia) {
-                    const startTime = performance.now();
-                    const call = $.ajax({
-                        url: '/next',
-                        contentType: 'application/json',
-                        success: (res) => {
+    } else {
+        runDia = true;
+        changeState(STATE_DIASHOW);
 
-                            if(res.dot) {
-                                print(res.dot);
+        const func = () => {
+            if(!pauseDia) {
+                const startTime = performance.now();
+                const call = $.ajax({
+                    url: '/next',
+                    contentType: 'application/json',
+                    success: (res) => {
 
-                                algoArea.hlManager.increaseHighlighting();
+                        if(res.dot) {
+                            print(res.dot);
 
-                                const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
-                                setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
+                            algoArea.hlManager.increaseHighlighting();
 
-                            } else endDia();
-                        }
-                    });
-                    call.fail((res) => {
-                        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+                            const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
+                            setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
 
-                        showResponseError(res, "Going a step ahead failed! Aborting Diashow."); //todo notify user that the diashow was aborted if res-msg is shown?
-                        endDia();
-                    });
-                }
-            };
-            setTimeout(() => func(), stepDuration);
-        }
-    });
-});
+                        } else endDia();
+                    }
+                });
+                call.fail((res) => {
+                    if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
+                    showResponseError(res, "Going a step ahead failed! Aborting Diashow."); //todo notify user that the diashow was aborted if res-msg is shown?
+                    endDia();
+                });
+            }
+        };
+        setTimeout(() => func(), stepDuration);
+    }
+}
 
 function sim_gotoStart() {
     changeState(STATE_SIMULATING);
