@@ -65,58 +65,6 @@
     height: 15%;
 }
 
-
-
-/*
-#drop_zone {
-    width: 100%;
-    height: 80%;
-    border: 2px solid #685972;
-    display: block;
-    margin: 0 0;
-    transform: translateZ(0);
-    -webkit-text-size-adjust: none;
-}
-*/
-
-
-#backdrop, #q_algo, #line_numbers {
-    width: 100%;
-    height: 100%;
-}
-
-#q_algo, #line_numbers {
-    /*padding: 10px; works very nice in Opera, because the scrollbar ignores padding, but looks very bad in firefox,
-    where scrolling doesn't ignore padding (at least for textareas, the divs for linenumbering and highlighting seem to ignore padding*/
-    padding-top: 0;
-    letter-spacing: 1px;
-}
-
-/*
-#line_numbers {
-    z-index: 2;
-    border: none;
-    white-space: pre;
-    text-align: left;
-    padding-left: 10px;
-}
-*/
-
-#q_algo {
-    display: block;
-    position: absolute;
-    z-index: 3;
-    margin: 0 0 0 20px;     /* set initial margin-left for the template algorithms */
-    border: none;
-    outline: none;
-    border-radius: 0;
-    color: #000;
-    background-color: transparent;
-    overflow: auto;
-    resize: none;
-    white-space: pre;
-}
-
 #color_map {
     display: block;
     position: relative;
