@@ -1,3 +1,28 @@
+//for browser specific things, check which browser is used
+// Opera 8.0+
+const isOpera = (!!window.opr && !!opr.addons) || !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+
+// Firefox 1.0+
+const isFirefox = typeof InstallTrigger !== 'undefined';
+
+// Safari 3.0+ "[object HTMLElementConstructor]"
+const isSafari = /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification));
+
+// Internet Explorer 6-11
+const isIE = /*@cc_on!@*/false || !!document.documentMode;
+
+// Edge 20+
+const isEdge = !isIE && !!window.StyleMedia;
+
+// Chrome 1 - 79
+const isChrome = !!window.chrome && (!!window.chrome.webstore || !!window.chrome.runtime);
+
+// Edge (based on chromium) detection
+const isEdgeChromium = isChrome && (navigator.userAgent.indexOf("Edg") != -1);
+
+// Blink engine detection
+const isBlink = (isChrome || isOpera) && !!window.CSS;
+
 
 
 //todo on tab change certain things need to be done:
@@ -7,6 +32,7 @@
  */
 //from: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_tabs
 function openTab(event, tabId) {
+
     let i, tabcontent, tablinks;
     tabcontent = document.getElementsByClassName("tabcontent");
     for (i = 0; i < tabcontent.length; i++) {
@@ -18,6 +44,12 @@ function openTab(event, tabId) {
     }
     document.getElementById(tabId).style.display = "block";
     event.currentTarget.className += " active";
+
+    updateAllAlgoAreaSizes();
+    //this would be a more efficient approach, but since we just have a couple of algoAreas it shouldn't matter
+    //if(tabId === "simulation") {
+    //    algoAreas.get("sim").updateSizes();
+    //}
 }
 
 function showResponseError(res, altMsg = "Unknown Error!") {
@@ -66,7 +98,10 @@ function dragOverHandler(event) {
 }
 
 
-const algoAreas = [];
+const algoAreas = new Map();
+function updateAllAlgoAreaSizes() {
+    for(const area of algoAreas.values()) area.updateSizes();
+}
 window.addEventListener('resize', (event) => {
-    for(const area of algoAreas) area.updateSizes();
+    updateAllAlgoAreaSizes();
 });

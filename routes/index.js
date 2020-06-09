@@ -22,11 +22,13 @@ router.post('/load', (req, res) => {
             const reset = req.body.reset === "true";   //whether the algorithm should be reset to the start or if iterator and current DD should stay as they are
 
             const numOfOperations = vis.load(algo, format, opNum, reset);
-            if(numOfOperations > -1) sendDD(res, vis.getDD(), numOfOperations);
-            else res.status(400).json({ msg: "Error while loading the algorithm!" });
+            if(numOfOperations > -1) {
+                sendDD(res, vis.getDD(), numOfOperations);
+            }
+            else res.status(500).json({ msg: "Error while loading the algorithm!" });
 
         } catch(err) {
-            const retry = err.message.startsWith("Invalid Algorithm!"); //if the algorithm is invalid, we need to send the last valid algorithm
+            const retry = err.message.startsWith("Invalid algorithm!"); //if the algorithm is invalid, we need to send the last valid algorithm
             res.status(400).json({ msg: err.message, retry: retry});
         }
     } else {

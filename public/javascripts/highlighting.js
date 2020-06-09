@@ -111,19 +111,20 @@ class HighlightManager {
     }
 
     decreaseHighlighting() {
+        this._removeProcessedLine();
+        this._addPendingLine();
+        this._highlightedOps--;
+
         //remove possible nops inside the highlighting
         for(let i = this._highlightedOps + this._nopsInHighlighting - 1; //-1 because we want the last highlighted line, not the potential next one
             i >= 0 && !this._hl[i];    //abort as soon as we have found the last operation
             i--) {
+
             this._removeProcessedLine();
             this._addPendingLine();
 
             this._nopsInHighlighting--;
         }
-
-        this._removeProcessedLine();
-        this._addPendingLine();
-        this._highlightedOps--;
 
         if(this._highlightedOps === 0) {
             this.initialHighlighting();
@@ -223,8 +224,6 @@ class HighlightManager {
         this._pendingText = this._pendingText.substring(1); //remove one \n
     }
 
-
-
     _preformatAlgorithm(algo, format) {
         let setQAlgo = false;
 
@@ -238,17 +237,37 @@ class HighlightManager {
                 if(this._algoArea.isOperation(line, format)) {
                     let l = line;
                     while(l.length !== 0) {
-                        const i = l.indexOf(';');
-                        if(i === -1) {  //no semicolon found -> we insert it (though this might lead to an error if the ;
-                            // is at the start of a following line. but checking this would be complicated,
-                            // because there could be arbitrary many empty lines or comments or other operations
-                            // in between)
-                            temp += l + ";\n";  //insert the missing semicolon and the newline, then stop continue with the next line
-                            break;
+                        let index = l.indexOf(';');
+                        if(index === -1) {  //no semicolon found
+                            if(AlgoArea.containsComment(l, format)) {
+                                //don't search for the missing ; because there is definitely a comment in between
+                                temp += line + "\n";
+                                l = ""; //make sure to leave the outer loop and continue with the outer-outer-loop
+                                break;
+                            }
+
+                            //search for the missing ; in the following lines
+                            temp += l;
+                            i++;
+                            while(i < lines.length) {
+                                l = lines[i];
+                                if(AlgoArea.isComment(l, format)) {
+                                    temp += "\n";   //don't collapse the operation-line with the comment-line
+                                    index = -1;     //a bit hacky, but needed so I don't have to copy code in a strange way
+                                                    //what happens: since we immediately jump to the outer loop op will be empty and l will stay the same
+                                                    // this makes sure that the whole comment (in the if afterwards we know that the first branch must be
+                                                    // entered since l was a comment and didn't change) will be like it initially was
+                                    break;
+                                }
+                                index = l.indexOf(';');
+                                if(index === -1) temp += l;
+                                else break;     //if we found a semicolon we can continue in the normal (outer) loop
+                                i++;
+                            }
                         }
 
-                        const op =  l.substring(0, i+1);    //we need to include the semicolon, so it is i+1
-                        l = l.substring(i+1);
+                        const op =  l.substring(0, index+1);    //we need to include the semicolon, so it is index+1
+                        l = l.substring(index+1);
 
                         //special case for comments in the same line as an operation
                         if(AlgoArea.isComment(l, format)) {

@@ -152,14 +152,14 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         if(formatCode == 1)         qc->import(ss, qc::OpenQASM);
         else if(formatCode == 2)    qc->import(ss, qc::Real);
         else {
-            Napi::Error::New(env, "Invalid FormatCode!").ThrowAsJavaScriptException();
+            Napi::Error::New(env, "Invalid format-code!").ThrowAsJavaScriptException();
             return Napi::Number::New(env, -1);
         }
 
     } catch(std::exception& e) {
         std::cout << "Exception while loading the algorithm: " << e.what() << std::endl;
-        std::string err("");//e.what());    //todo e.what() gives unreadable characters?
-        Napi::Error::New(env, "Invalid Algorithm! " + err).ThrowAsJavaScriptException();
+        std::string err(e.what());    //todo e.what() gives unreadable characters?
+        Napi::Error::New(env, "Invalid algorithm!\n" + err).ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
     }
 
@@ -250,7 +250,7 @@ Napi::Value QDDVis::Prev(const Napi::CallbackInfo& info) {
         return Napi::Boolean::New(env, true);   //something changed
 
     } catch(std::exception& e) {
-        std::cout << "Exception while getting the current operation {src: prev}!" << std::endl;
+        std::cout << "Exception while getting the current operation {src: prev}!" << e.what() << std::endl;
         std::cout << e.what() << std::endl;
         return Napi::Boolean::New(env, false);
     }
@@ -278,7 +278,7 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
         return Napi::Boolean::New(env, true);   //something changed
 
     } catch(std::exception& e) {
-        std::cout << "Exception while getting the current operation {src: prev}!" << std::endl;
+        std::cout << "Exception while getting the current operation {src: next}!" << std::endl;
         std::cout << e.what() << std::endl;
         return Napi::Boolean::New(env, false);
     }
@@ -364,13 +364,11 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
     if(!ready) {
         Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
         return Napi::String::New(env, "-1");
-    } else if (qc->empty()) {
-        return Napi::String::New(env, "");
     }
 
     std::stringstream ss{};
     try {
-        dd::toDot(sim, ss, true, true, true);
+        dd::toDot(sim, ss, true, true, false);
         std::string str = ss.str();
         return Napi::String::New(env, str);
 
@@ -380,5 +378,4 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
         Napi::Error::New(env, err).ThrowAsJavaScriptException();
         return Napi::String::New(env, "-1");
     }
-
 }

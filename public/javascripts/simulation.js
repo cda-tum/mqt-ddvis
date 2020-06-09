@@ -2,7 +2,6 @@
 
 const step_duration = $('#stepDuration');
 const algo_div = $('#algo_div');
-const automatic = $('#automatic');
 const qdd_div = $('#qdd_div');
 const qdd_text = $('#qdd_text');
 //todo also initialize all other selectors once?
@@ -20,6 +19,7 @@ const STATE_LOADED_START = 2;       //can go to SIMULATING, DIASHOW, LOADED or L
 const STATE_LOADED_END = 3;         //can go to LOADED or LOADED_START
 const STATE_SIMULATING = 4;         //can go to LOADED
 const STATE_DIASHOW = 5;            //can go to LOADED
+const STATE_LOADED_EMPTY = 6;       //can't navigate
 
 let runDia = false;
 let pauseDia = false;
@@ -63,6 +63,11 @@ function changeState(state) {
             enable = [ "automatic" ];
             disable = [ "sim_drop_zone", "sim_q_algo", "toStart", "prev", "next", "toEnd", "toLine",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
+            break;
+
+        case STATE_LOADED_EMPTY:
+            enable = [ "sim_drop_zone", "sim_q_algo", "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
+            disable = [ "toStart", "prev", "automatic", "next", "toEnd", "toLine" ];    //no navigation allowed (we are at the beginning AND at the end)
             break;
     }
 
@@ -122,32 +127,33 @@ function validateStepDuration() {
 
 
 const algoArea = new AlgoArea(algo_div, "sim", changeState, print, showError);
-algoAreas.push(algoArea);   //register at main for resizing
+algoAreas.set("sim", algoArea);   //register at main for resizing
 
 //append the navigation div below algoArea
 algo_div.append(
   '<div id="nav_div">\n' +
-    '        <button type="button" id="toStart" onclick="sim_gotoStart()" ' +
-    'title="Go back to the initial State"' +
+    '        <button type="button" id="toStart" class="nav-button" onclick="sim_gotoStart()" ' +
+    'title="Go back to the initial state"' +
     '        >&#8606</button>\n' +
-    '        <button type="button" id="prev" onclick="sim_goBack()" ' +
-    'title="Go to the previous Operation"' +
+    '        <button type="button" id="prev" class="nav-button" onclick="sim_goBack()" ' +
+    'title="Go to the previous operation"' +
     '        >&#8592</button>\n' +
-    '        <button type="button" id="automatic"' +
-    'title="Start a Diashow"' +
+    '        <button type="button" id="automatic" class="nav-button" onclick="sim_diashow()" ' +
+    'title="Start a diashow"' +
     '        >&#9654</button>\n' +
-    '        <button type="button" id="next" onclick="sim_goForward()"' +
-    'title="Apply the current Operation"' +
+    '        <button type="button" id="next" class="nav-button" onclick="sim_goForward()"' +
+    'title="Apply the current operation"' +
     '        >&#8594</button>\n' +
-    '        <button type="button" id="toEnd" onclick="sim_gotoEnd()"' +
-    'title="Apply all remaining Operations"' +
+    '        <button type="button" id="toEnd" class="nav-button" onclick="sim_gotoEnd()"' +
+    'title="Apply all remaining operations"' +
     '        >&#8608</button>\n' +
     '        <p></p>\n' +
-    '        <button type="button" onclick="sim_gotoLine()" id="toLine">Go to Line</button>\n' +
-    '        <input type="number" min="0" id="line_to_go" value="0" onchange="validateLineNumber()"/>\n' +
+    '        <button type="button" id="toLine" onclick="sim_gotoLine()">Go to line</button>\n' +
+    '        <input type="number" id="line_to_go" min="0" value="0" onchange="validateLineNumber()"/>\n' +
     '</div>'
 );
 const line_to_go = $('#line_to_go');    //must be created here since it doesn't exist before
+const automatic = $('#automatic');
 
 changeState(STATE_NOTHING_LOADED);      //initial state
 
@@ -297,54 +303,6 @@ function loadAlu() {
 }
 
 //################### NAVIGATION ##################################################################################################################
-$(() =>  {
-    automatic.on('click', () => {
-        function endDia() {
-            pauseDia = true;
-            runDia = false;
-
-            _onErrorChangeState();  //in error-cases we also call endDia(), and in normal cases it doesn't matter that we call this function
-            automatic.text("\u25B6");   //play-symbol in unicode
-        }
-
-        if(runDia) {
-            endDia();
-
-        } else {
-            runDia = true;
-            changeState(STATE_DIASHOW);
-
-            const func = () => {
-                if(!pauseDia) {
-                    const startTime = performance.now();
-                    const call = $.ajax({
-                        url: '/next',
-                        contentType: 'application/json',
-                        success: (res) => {
-
-                            if(res.dot) {
-                                print(res.dot);
-
-                                algoArea.hlManager.increaseHighlighting();
-
-                                const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
-                                setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
-
-                            } else endDia();
-                        }
-                    });
-                    call.fail((res) => {
-                        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-
-                        showResponseError(res, "Going a step ahead failed! Aborting Diashow."); //todo notify user that the diashow was aborted if res-msg is shown?
-                        endDia();
-                    });
-                }
-            };
-            setTimeout(() => func(), stepDuration);
-        }
-    });
-});
 
 function sim_gotoStart() {
     changeState(STATE_SIMULATING);
@@ -398,6 +356,53 @@ function sim_goBack() {
         showResponseError(res, "Going a step back failed!");
         _onErrorChangeState();
     });
+}
+
+function sim_diashow() {
+    function endDia() {
+        pauseDia = true;
+        runDia = false;
+
+        _onErrorChangeState();  //in error-cases we also call endDia(), and in normal cases it doesn't matter that we call this function
+        automatic.text("\u25B6");   //play-symbol in unicode
+    }
+
+    if(runDia) {
+        endDia();
+
+    } else {
+        runDia = true;
+        changeState(STATE_DIASHOW);
+
+        const func = () => {
+            if(!pauseDia) {
+                const startTime = performance.now();
+                const call = $.ajax({
+                    url: '/next',
+                    contentType: 'application/json',
+                    success: (res) => {
+
+                        if(res.dot) {
+                            print(res.dot);
+
+                            algoArea.hlManager.increaseHighlighting();
+
+                            const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
+                            setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
+
+                        } else endDia();
+                    }
+                });
+                call.fail((res) => {
+                    if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
+                    showResponseError(res, "Going a step ahead failed! Aborting Diashow."); //todo notify user that the diashow was aborted if res-msg is shown?
+                    endDia();
+                });
+            }
+        };
+        setTimeout(() => func(), stepDuration);
+    }
 }
 
 function sim_goForward() {
@@ -526,6 +531,7 @@ function validateLineNumber() {
 let svgHeight = 0;  //can't be initialized beforehand
 function print(dot) {
     if(dot) {
+        //document.getElementById('color_map').style.display = 'block';
         if(svgHeight === 0) {
             //subtract the whole height of the qdd-text from the height of qdd-div to get the space that is available for the graph
             svgHeight = parseInt($('#qdd_div').css('height')) - (
@@ -539,8 +545,12 @@ function print(dot) {
             fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
         }).renderDot(dot);
 
+        //$('#color_map').html(
+        //    '<svg><rect width="20" height="20" fill="purple"></rect></svg>'
+        //);
+
     } else {
         qdd_div.html(qdd_text);
+        //document.getElementById('color_map').style.display = 'none';
     }
 }
-

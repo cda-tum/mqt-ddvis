@@ -33,6 +33,7 @@ class AlgoArea {
     _backdrop;
     _highlighting;
     _q_algo;
+    _inv_algo_warning;
 
     _hlManager;
     _changeState;   //function to change the state on the callers side  //todo how to handle the state codes?
@@ -40,8 +41,8 @@ class AlgoArea {
     _error;     //function on the callers side for handling errors
 
     _algoFormat = FORMAT_UNKNOWN;
-    _emptyAlgo = false;
-    _algoChanged = true;
+    _emptyAlgo = true;
+    _algoChanged = false;
     _lastValidAlgorithm = deutschAlgorithm;
     _numOfOperations = 0;
     _oldAlgo = "";           //the old input (maybe not valid, but needed if the user edit lines they are not allowed to change)
@@ -75,7 +76,7 @@ class AlgoArea {
 
         this._q_algo = $(
             '<textarea id="' + idPrefix + '_q_algo" type="text" class="q_algo"' +
-            'placeholder="Enter Algorithm or drop .qasm-/.real-File here."' +
+            'placeholder="Enter algorithm or drop .qasm-/.real-file here."' +
             'autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">' +
             '</textarea>'
         );
@@ -85,10 +86,15 @@ class AlgoArea {
             'scroll': () => this._handleScroll()
         });
 
+        this._inv_algo_warning = $(
+          '<div id="' + idPrefix + '_inv_algo_warning" class="inv_algo_warning"></div>'
+        );
+
         div.append(this._drop_zone);
         this._drop_zone.append(this._line_numbers);
         this._drop_zone.append(this._backdrop);
         this._drop_zone.append(this._q_algo);
+        this._drop_zone.append(this._inv_algo_warning);
 
         this._backdrop.append(this._highlighting);
 
@@ -113,6 +119,10 @@ class AlgoArea {
 
     get numOfOperations() {
         return this._numOfOperations;
+    }
+
+    get algoFormat() {
+        return this._algoFormat;
     }
 
     set algoFormat(f) {
@@ -142,9 +152,7 @@ class AlgoArea {
     loadAlgorithm(format = this._algoFormat, reset = false, algorithm) {
         if(this._emptyAlgo || !this._algoChanged) return;
 
-
         startLoadingAnimation();
-
 
         let algo = algorithm || this._q_algo.val();   //usually q_algo.val() is taken
         const opNum = reset ?
@@ -163,36 +171,29 @@ class AlgoArea {
             call.done((res) => {
                 this._loadingSuccess(res, algo, opNum, format, reset);
 
-                if(opNum === 0) this._changeState(STATE_LOADED_START);
-                else if(opNum === this._numOfOperations) this._changeState(STATE_LOADED_END);
-                else this._changeState(STATE_LOADED);
+                if(this._numOfOperations === 0) this._changeState(STATE_LOADED_EMPTY);
+                else {
+                    if(opNum === 0) this._changeState(STATE_LOADED_START);
+                    else if(opNum === this._numOfOperations) this._changeState(STATE_LOADED_END);
+                    else this._changeState(STATE_LOADED);
+                }
 
+
+                this._inv_algo_warning.css('display', 'none');
                 endLoadingAnimation();
             });
             call.fail((res) => {
-                if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-
-                //todo ask if this really is necessary or has any benefit, because disabling the buttons seems far more intuitive and cleaner
-                if(res.responseJSON && res.responseJSON.retry && !algorithm) {
-                    const call2 = $.post("/load", { basisStates: null, algo: this._lastValidAlgorithm, opNum: opNum, format: format, reset: reset });
-                    call2.done((res2) => {
-                        this._loadingSuccess(res2, this._lastValidAlgorithm, opNum, format, reset);
-
-                        this._q_algo.prop('selectionStart', this._lastCursorPos);
-                        this._q_algo.prop('selectionEnd', this._lastCursorPos+1);
-
-                        //set the focus and scroll to the cursor positoin - doesn't work on Opera
-                        this._q_algo.blur();
-                        this._q_algo.focus();
-                        $.trigger({ type: 'keypress' });
-                    });
-                    // call2.fail((res2) => {
-                    //    showResponseError(res, )
-                    // });
-                }
                 changeState(STATE_NOTHING_LOADED);
                 endLoadingAnimation();
-                showResponseError(res, "Couldn't connect to the server.");
+
+                if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+                else if(res.status === 500) showResponseError(res, "Couldn't connect to the server.");
+                else {  //this should be invalid-algorithm-error
+                    console.log("here");
+                    this._inv_algo_warning.css('display', 'block');
+                    showResponseError(res, "Your algorithm was invalid!");
+                    this._setLineNumbers();
+                }
             });
         }
     }
@@ -209,8 +210,8 @@ class AlgoArea {
             this._hlManager.setHighlights();
         } else this._hlManager.text = this._q_algo.val();
 
-        this._numOfOperations = Math.max(res.data, 1);  //number of operations the algorithm has; at least the initial padding of 1 digit
-        const digits = numOfDigits(this._numOfOperations);
+        this._numOfOperations = res.data;
+        const digits = numOfDigits(Math.max(this._numOfOperations, 1)); //at least the initial padding of 1 digit
         this._setQAlgoMarginLeft(digits);
 
         this._setLineNumbers();
@@ -220,6 +221,7 @@ class AlgoArea {
         //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
         //if(line_to_go && opNum > this._numOfOperations) line_to_go.val(this._numOfOperations);  //todo maybe change this, because it is only "needed" for Simulation
     }
+
 
     resetAlgorithm() {
         //todo maybe just call this when set algo("")
@@ -239,6 +241,7 @@ class AlgoArea {
     updateSizes() {
         const dzInnerWidth = this._drop_zone.innerWidth();
         const width = dzInnerWidth - parseFloat(this._q_algo.css('margin-left'));
+        console.log(dzInnerWidth + " | " + width);
         this._q_algo.css('width', width);
 
         if(dzInnerWidth > 0) {
@@ -312,7 +315,12 @@ class AlgoArea {
     }
 
     _handleInput() {
+        //todo maybe could be implemented more efficiently if only the lines with the cursor are considered?
         this._lastCursorPos = this._q_algo.prop('selectionStart');
+
+        //console.log("Lines with Cursor are: ");
+        //console.log(this._debugGetLinesWithCursor());
+        //console.log("__________________________________");
 
         const newAlgo = this._q_algo.val();
         //we need to find out the format if possible
@@ -325,9 +333,10 @@ class AlgoArea {
 
         this._emptyAlgo = false;
         this._algoChanged = true;
+        const curLines = newAlgo.split('\n');
+        const oldLines = this._oldAlgo.split('\n');
         if(this._hlManager.highlightedLines > 0) {  //if nothing is highlighted yet, the user may also edit the lines before the first operation
             //check if a highlighted line changed, if yes abort the changes
-            const curLines = newAlgo.split('\n');
             const lastLineWithHighlighting = this._hlManager.highlightedLines + this._hlManager.nopsInHighlighting;
             console.log("llwh: " + lastLineWithHighlighting + " (=" + this._hlManager.highlightedLines + " + " + this._hlManager.nopsInHighlighting);
 
@@ -339,7 +348,6 @@ class AlgoArea {
             }
             */
 
-            const oldLines = this._oldAlgo.split('\n');
             /*
             //header can be adapted, but lines can't be deleted (this would make a complete update of the highlighting necessary)
             for(let i = hlManager.offset; i <= lastLineWithHighlighting; i++) {
@@ -371,8 +379,21 @@ class AlgoArea {
                     }
                 }
             }
+        }
 
-            //if(curLines.length !== oldLines.length) this._setLineNumbers();
+
+        //TODO ADD PENDING LINE IF CURLINES HAS MORE ELEMENTS THAN OLDLINES
+        const lineDif = curLines.length - oldLines.length;
+        if(lineDif > 0) {
+            let text = "";
+            for(let i = 0; i < lineDif; i++) {
+                this._hlManager._addPendingLine();
+                text += "\n";
+            }
+            this._hlManager._updateDiv();
+
+            //const oldLNs = this._line_numbers.html();
+            //this._line_numbers.html(oldLNs + text);
         }
 
         this._oldAlgo = this._q_algo.val();  //changes are legal so they are "saved"
@@ -392,6 +413,20 @@ class AlgoArea {
 
         this._q_algo.prop('selectionStart', lineStart);
         this._q_algo.prop('selectionEnd', lineEnd);
+    }
+
+    _debugGetLinesWithCursor() {
+        const algo = this._q_algo.val();
+        let lineStart = algo.lastIndexOf("\n", this._lastCursorPos) + 1;  //+1 because we need the index of the first character in the line
+        let lineEnd;
+        //special case where lastCursorPos is directly at the end of a line
+        if(lineStart === this._lastCursorPos) {
+            lineStart = algo.lastIndexOf("\n", this._lastCursorPos-2) + 1;    //lastCursorPos-1 would be the current lineStart, but we need one character before that
+            lineEnd = this._lastCursorPos-1;  //the position right before \n
+
+        } else lineEnd = algo.indexOf("\n", lineStart);
+
+        return algo.substring(lineStart, lineEnd+1);
     }
 
     _handleScroll() {
@@ -439,6 +474,15 @@ class AlgoArea {
     static isComment(line, format) {
         if(format === QASM_FORMAT) return line.trimStart().startsWith("//");
         else if(format === REAL_FORMAT) return line.trimStart().startsWith("#");
+        else {
+            console.log("Format not recognized");
+            return true;
+        }
+    }
+
+    static containsComment(line, format) {
+        if(format === QASM_FORMAT) return line.includes("//");
+        else if(format === REAL_FORMAT) return line.includes("#");
         else {
             console.log("Format not recognized");
             return true;
