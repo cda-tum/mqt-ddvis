@@ -75,11 +75,11 @@
 .inv_algo_warning {
     display: none;
     position: relative;
-    top: 85%;
-    left: 80%;
-    height: 10%;
-    width: 10%;
-    background-image: url("../assets/Warning_medium.png");
+    top: 80%;
+    left: 75%;
+    height: 20%;
+    width: 20%;
+    background-image: url("../assets/warning.svg");
     background-repeat: no-repeat;
     background-position: center center;
     background-size: contain;

@@ -6,22 +6,21 @@ function updateLineHighlight(newLH) {
 }
 
 class HighlightManager {
-    _div;
-    _algoArea;       //todo fix: right now this is an AlgoArea (needed because the default format of algoArea.algoFormat isn't used if we just provide the function)
-    _hl;    //an array that tells us for each line if it is an operation or not
-    _operationOffset = 0;
-    _highlightedOps = 0;      //how many lines with Operations are highlighted
-    _nopsInHighlighting = 0;   //how many lines of Non-Operations (comments, header) are between the first line
-                              // and the last highlighted one
-    _processedText = "";
-    _pendingText = "";
 
     constructor(highlightDiv, algoArea) {
+        //todo fix: right now this is an AlgoArea (needed because the default format of algoArea.algoFormat isn't used if we just provide the function)
         if(highlightDiv) this._div = highlightDiv;
         else throw Error("HighlightManager needs a div to apply the highlighting to!");
 
         if(algoArea) this._algoArea = algoArea;
         else throw Error("HighlightManager needs a function to determine if a line is an operation!");
+
+        this._hl;    //an array that tells us for each line if it is an operation or not
+        this._operationOffset = 0;
+        this._highlightedOps = 0;      //how many lines with Operations are highlighted
+        this._nopsInHighlighting = 0;   //how many lines of Non-Operations (comments, header) are between the first line and the last highlighted one
+        this._processedText = "";
+        this._pendingText = "";
     }
 
     set text(text) {
