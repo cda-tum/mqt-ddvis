@@ -239,17 +239,28 @@ class HighlightManager {
                 if(this._algoArea.isOperation(line, format)) {
                     let l = line;
                     while(l.length !== 0) {
-                        const i = l.indexOf(';');
-                        if(i === -1) {  //no semicolon found -> we insert it (though this might lead to an error if the ;
+                        let index = l.indexOf(';');
+                        if(index === -1) {  //no semicolon found -> we insert it (though this might lead to an error if the ;
                             // is at the start of a following line. but checking this would be complicated,
                             // because there could be arbitrary many empty lines or comments or other operations
                             // in between)
-                            temp += l + ";\n";  //insert the missing semicolon and the newline, then stop continue with the next line
-                            break;
+                            //temp += l + ";\n";  //insert the missing semicolon and the newline, then stop continue with the next line
+                            //break;
+
+                            //search for the missing ; in the following lines
+                            temp += l;
+                            i++;
+                            while(i < lines.length) {
+                                l = lines[i];
+                                index = l.indexOf(';');
+                                if(index === -1) temp += l;
+                                else break;     //if we found a semicolon we can continue in the normal (outer) loop
+                                i++;
+                            }
                         }
 
-                        const op =  l.substring(0, i+1);    //we need to include the semicolon, so it is i+1
-                        l = l.substring(i+1);
+                        const op =  l.substring(0, index+1);    //we need to include the semicolon, so it is index+1
+                        l = l.substring(index+1);
 
                         //special case for comments in the same line as an operation
                         if(AlgoArea.isComment(l, format)) {
