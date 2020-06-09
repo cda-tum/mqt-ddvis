@@ -4,16 +4,11 @@
     box-sizing: border-box;
 }
 
-body * { /* the whitespace indicates that all children are affected - in this case all children of body */
-    font-family: 'Lucida Grande', 'Lucida Sans Unicode', 'Trebuchet MS', sans-serif;
-}
-
 /* everything except SVG-texts have a set font-size */
 :not(text) {
+    font-family: 'Lucida Grande', 'Lucida Sans Unicode', 'Trebuchet MS', sans-serif;
     font-size: 12px;
 }
-
-
 
 /* Style the header and the footer */
 header, footer {
