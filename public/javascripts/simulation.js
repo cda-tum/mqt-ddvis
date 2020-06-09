@@ -126,24 +126,24 @@ algoAreas.push(algoArea);   //register at main for resizing
 //append the navigation div below algoArea
 algo_div.append(
   '<div id="nav_div">\n' +
-    '        <button type="button" id="toStart" onclick="sim_gotoStart()" ' +
+    '        <button type="button" id="toStart" class="nav-button" onclick="sim_gotoStart()" ' +
     'title="Go back to the initial state"' +
     '        >&#8606</button>\n' +
-    '        <button type="button" id="prev" onclick="sim_goBack()" ' +
+    '        <button type="button" id="prev" class="nav-button" onclick="sim_goBack()" ' +
     'title="Go to the previous operation"' +
     '        >&#8592</button>\n' +
-    '        <button type="button" id="automatic" onclick="sim_diashow()" ' +
+    '        <button type="button" id="automatic" class="nav-button" onclick="sim_diashow()" ' +
     'title="Start a diashow"' +
     '        >&#9654</button>\n' +
-    '        <button type="button" id="next" onclick="sim_goForward()"' +
+    '        <button type="button" id="next" class="nav-button" onclick="sim_goForward()"' +
     'title="Apply the current operation"' +
     '        >&#8594</button>\n' +
-    '        <button type="button" id="toEnd" onclick="sim_gotoEnd()"' +
+    '        <button type="button" id="toEnd" class="nav-button" onclick="sim_gotoEnd()"' +
     'title="Apply all remaining operations"' +
     '        >&#8608</button>\n' +
     '        <p></p>\n' +
-    '        <button type="button" onclick="sim_gotoLine()" id="toLine">Go to line</button>\n' +
-    '        <input type="number" min="0" id="line_to_go" value="0" onchange="validateLineNumber()"/>\n' +
+    '        <button type="button" id="toLine" onclick="sim_gotoLine()">Go to line</button>\n' +
+    '        <input type="number" id="line_to_go" min="0" value="0" onchange="validateLineNumber()"/>\n' +
     '</div>'
 );
 const line_to_go = $('#line_to_go');    //must be created here since it doesn't exist before
@@ -298,53 +298,6 @@ function loadAlu() {
 
 //################### NAVIGATION ##################################################################################################################
 
-function sim_diashow() {
-    function endDia() {
-        pauseDia = true;
-        runDia = false;
-
-        _onErrorChangeState();  //in error-cases we also call endDia(), and in normal cases it doesn't matter that we call this function
-        automatic.text("\u25B6");   //play-symbol in unicode
-    }
-
-    if(runDia) {
-        endDia();
-
-    } else {
-        runDia = true;
-        changeState(STATE_DIASHOW);
-
-        const func = () => {
-            if(!pauseDia) {
-                const startTime = performance.now();
-                const call = $.ajax({
-                    url: '/next',
-                    contentType: 'application/json',
-                    success: (res) => {
-
-                        if(res.dot) {
-                            print(res.dot);
-
-                            algoArea.hlManager.increaseHighlighting();
-
-                            const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
-                            setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
-
-                        } else endDia();
-                    }
-                });
-                call.fail((res) => {
-                    if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-
-                    showResponseError(res, "Going a step ahead failed! Aborting Diashow."); //todo notify user that the diashow was aborted if res-msg is shown?
-                    endDia();
-                });
-            }
-        };
-        setTimeout(() => func(), stepDuration);
-    }
-}
-
 function sim_gotoStart() {
     changeState(STATE_SIMULATING);
     startLoadingAnimation();
@@ -397,6 +350,53 @@ function sim_goBack() {
         showResponseError(res, "Going a step back failed!");
         _onErrorChangeState();
     });
+}
+
+function sim_diashow() {
+    function endDia() {
+        pauseDia = true;
+        runDia = false;
+
+        _onErrorChangeState();  //in error-cases we also call endDia(), and in normal cases it doesn't matter that we call this function
+        automatic.text("\u25B6");   //play-symbol in unicode
+    }
+
+    if(runDia) {
+        endDia();
+
+    } else {
+        runDia = true;
+        changeState(STATE_DIASHOW);
+
+        const func = () => {
+            if(!pauseDia) {
+                const startTime = performance.now();
+                const call = $.ajax({
+                    url: '/next',
+                    contentType: 'application/json',
+                    success: (res) => {
+
+                        if(res.dot) {
+                            print(res.dot);
+
+                            algoArea.hlManager.increaseHighlighting();
+
+                            const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
+                            setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
+
+                        } else endDia();
+                    }
+                });
+                call.fail((res) => {
+                    if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
+                    showResponseError(res, "Going a step ahead failed! Aborting Diashow."); //todo notify user that the diashow was aborted if res-msg is shown?
+                    endDia();
+                });
+            }
+        };
+        setTimeout(() => func(), stepDuration);
+    }
 }
 
 function sim_goForward() {

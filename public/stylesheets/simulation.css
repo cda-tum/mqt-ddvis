@@ -65,6 +65,10 @@
     height: 15%;
 }
 
+.nav-button {
+    width: 40px;
+}
+
 #color_map {
     display: block;
     position: relative;
