@@ -187,11 +187,48 @@ class AlgoArea {
                 endLoadingAnimation();
 
                 if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-                else if(res.status === 500) showResponseError(res, "Couldn't connect to the server.");
+                else if(res.status === 500) {
+                    //showResponseError(res, "Couldn't connect to the server.");
+                    if(res.responseJSON && res.responseJSON.msg) this._error(res.responseJSON.msg);
+                    else this._error("Internal Server Error");
+                }
                 else {  //this should be invalid-algorithm-error
-                    console.log("here");
                     this._inv_algo_warning.css('display', 'block');
-                    showResponseError(res, "Your algorithm was invalid!");
+
+                    let errMsg = "Invalid Algorithm!\n";
+                    if(res.responseJSON && res.responseJSON.msg) {
+                        const parserError = res.responseJSON.msg;
+
+                        console.log(parserError);
+
+                        const msgStart = parserError.indexOf("msg:") + 4;
+                        if(msgStart > -1) {
+                            const lineStart = parserError.indexOf("line ", msgStart);
+                            if(lineStart > -1) {
+                                const numStart = lineStart + 5;
+                                console.log(parseInt(parserError.substring(numStart)));
+                            }
+                        }
+
+
+
+                        errMsg += parserError.substring(msgStart);
+                        /*
+                        const lineStart = parserError.indexOf("l:") + 2;
+                        if(lineStart > -1) {
+                            const lineEnd = parserError.indexOf(":", lineStart);
+                            const line = parseInt(parserError.substring(lineStart, lineEnd));
+                            console.log(line);
+
+                            const colStart = parserError.indexOf("c:", lineEnd) + 2;
+                            if(colStart > -1) {
+                                const colEnd = parserError.indexOf(":", colStart);
+                            }
+                        }
+                        */
+                    }
+
+                    this._error(errMsg);
                     this._setLineNumbers();
                 }
             });

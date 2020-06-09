@@ -264,6 +264,11 @@ class HighlightManager {
                                 else break;     //if we found a semicolon we can continue in the normal (outer) loop
                                 i++;
                             }
+
+                            if(index === -1) {  //we are in the last line and no ; was found
+                                temp += "\n";
+                                break;
+                            }
                         }
 
                         const op =  l.substring(0, index+1);    //we need to include the semicolon, so it is index+1
