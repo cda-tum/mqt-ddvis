@@ -195,40 +195,7 @@ class AlgoArea {
                 else {  //this should be invalid-algorithm-error
                     this._inv_algo_warning.css('display', 'block');
 
-                    let errMsg = "Invalid Algorithm!\n";
-                    if(res.responseJSON && res.responseJSON.msg) {
-                        const parserError = res.responseJSON.msg;
-
-                        console.log(parserError);
-
-                        const msgStart = parserError.indexOf("msg:") + 4;
-                        if(msgStart > -1) {
-                            const lineStart = parserError.indexOf("line ", msgStart);
-                            if(lineStart > -1) {
-                                const numStart = lineStart + 5;
-                                console.log(parseInt(parserError.substring(numStart)));
-                            }
-                        }
-
-
-
-                        errMsg += parserError.substring(msgStart);
-                        /*
-                        const lineStart = parserError.indexOf("l:") + 2;
-                        if(lineStart > -1) {
-                            const lineEnd = parserError.indexOf(":", lineStart);
-                            const line = parseInt(parserError.substring(lineStart, lineEnd));
-                            console.log(line);
-
-                            const colStart = parserError.indexOf("c:", lineEnd) + 2;
-                            if(colStart > -1) {
-                                const colEnd = parserError.indexOf(":", colStart);
-                            }
-                        }
-                        */
-                    }
-
-                    this._error(errMsg);
+                    this._error(this._parseErrorMessage(res));
                     this._setLineNumbers();
                 }
             });
@@ -257,6 +224,54 @@ class AlgoArea {
 
         //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
         //if(line_to_go && opNum > this._numOfOperations) line_to_go.val(this._numOfOperations);  //todo maybe change this, because it is only "needed" for Simulation
+    }
+
+    _parseErrorMessage(res) {
+        let errMsg = "Invalid Algorithm at ";
+        if(res.responseJSON && res.responseJSON.msg) {
+            const parserError = res.responseJSON.msg;
+
+            let lineStart = parserError.indexOf("l:");
+            if(lineStart > -1) {
+                lineStart += 2; //skip "l:"
+
+                const lineEnd = parserError.indexOf(":", lineStart);
+                if(lineEnd > -1) {
+
+                    const lineMsg = parseInt(parserError.substring(lineStart, lineEnd));    //the line that is stated in the parser message
+
+                    const temp = this._line_numbers.html().split('\n');
+                    let lineNumber;
+                    if(temp.length < lineMsg || lineMsg <= 0) lineNumber = lineMsg;
+                    else lineNumber = parseInt(temp[lineMsg-1]);   //use the number that the line numbering displays
+
+                    const line = lineNumber;
+
+                    let colStart = parserError.indexOf("c:", lineEnd-1);
+                    if(colStart > -1) {
+                        colStart += 2;
+
+                        const colEnd = parserError.indexOf("msg:", colStart);
+                        if(colEnd > -1) {
+                            const column = parseInt(parserError.substr(colStart, colEnd));
+
+                            errMsg += "line " + line + ", column " + column + "\n";
+
+                        } else errMsg += "line " + line + "\n";
+                    } else errMsg += "line " + line + "\n";
+                }
+            }
+
+            const msgStart = parserError.indexOf("msg:") + 4;
+            if(msgStart > -1) {
+                //don't show the position information of the error, if there is any additionally (because the line is wrong and we've already created the information)
+                const msgEnd = parserError.lastIndexOf(" in line");
+                if(msgEnd > -1) errMsg += parserError.substring(msgStart, msgEnd);
+                else errMsg += parserError.substring(msgStart);
+            }
+        }
+
+        return errMsg;
     }
 
 
