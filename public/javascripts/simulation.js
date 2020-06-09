@@ -534,7 +534,7 @@ function print(dot) {
         //document.getElementById('color_map').style.display = 'block';
         if(svgHeight === 0) {
             //subtract the whole height of the qdd-text from the height of qdd-div to get the space that is available for the graph
-            svgHeight = parseInt($('#qdd_div').css('height')) - (
+            svgHeight = parseInt(qdd_div.css('height')) - (
                 parseInt(parseInt(qdd_text.css('height'))) + parseInt(qdd_text.css('margin-top')) + parseInt(qdd_text.css('margin-bottom'))    //height of the qdd-text
             );
         }

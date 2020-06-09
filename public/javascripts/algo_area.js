@@ -240,9 +240,13 @@ class AlgoArea {
 
     updateSizes() {
         const dzInnerWidth = this._drop_zone.innerWidth();
-        const width = dzInnerWidth - parseFloat(this._q_algo.css('margin-left'));
-        console.log(dzInnerWidth + " | " + width);
-        this._q_algo.css('width', width);
+        const marginLeft = parseFloat(this._q_algo.css('margin-left'));
+        const width = dzInnerWidth - marginLeft;
+        console.log(width + " = " + dzInnerWidth + " - " + marginLeft);
+        if(isOpera) this._q_algo.css('width', width);
+        else {
+            this._q_algo.css('width', width);
+        }
 
         if(dzInnerWidth > 0) {
             let lh = "<mark>";
@@ -286,7 +290,7 @@ class AlgoArea {
         const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
         this._q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
 
-        const width = parseInt(this._drop_zone.css('width')) - margin - 2 * parseInt(this._drop_zone.css('border'));
+        const width = this._drop_zone.innerWidth() - margin;
         this._q_algo.css('width', width);
     }
 
