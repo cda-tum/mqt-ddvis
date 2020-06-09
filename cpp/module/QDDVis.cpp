@@ -364,8 +364,6 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
     if(!ready) {
         Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
         return Napi::String::New(env, "-1");
-    } else if (qc->empty()) {
-        return Napi::String::New(env, "");
     }
 
     std::stringstream ss{};
@@ -380,5 +378,4 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
         Napi::Error::New(env, err).ThrowAsJavaScriptException();
         return Napi::String::New(env, "-1");
     }
-
 }

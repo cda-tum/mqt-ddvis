@@ -19,6 +19,7 @@ const STATE_LOADED_START = 2;       //can go to SIMULATING, DIASHOW, LOADED or L
 const STATE_LOADED_END = 3;         //can go to LOADED or LOADED_START
 const STATE_SIMULATING = 4;         //can go to LOADED
 const STATE_DIASHOW = 5;            //can go to LOADED
+const STATE_LOADED_EMPTY = 6;       //can't navigate
 
 let runDia = false;
 let pauseDia = false;
@@ -62,6 +63,11 @@ function changeState(state) {
             enable = [ "automatic" ];
             disable = [ "sim_drop_zone", "sim_q_algo", "toStart", "prev", "next", "toEnd", "toLine",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
+            break;
+
+        case STATE_LOADED_EMPTY:
+            enable = [ "sim_drop_zone", "sim_q_algo", "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
+            disable = [ "toStart", "prev", "automatic", "next", "toEnd", "toLine" ];    //no navigation allowed (we are at the beginning AND at the end)
             break;
     }
 
@@ -120,8 +126,8 @@ function validateStepDuration() {
 }
 
 
-const sim_algoArea = new AlgoArea(algo_div, "sim", changeState, print, showError);
-algoAreas.set("sim", sim_algoArea);   //register at main for resizing
+const algoArea = new AlgoArea(algo_div, "sim", changeState, print, showError);
+algoAreas.set("sim", algoArea);   //register at main for resizing
 
 //append the navigation div below algoArea
 algo_div.append(

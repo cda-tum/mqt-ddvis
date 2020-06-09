@@ -121,6 +121,10 @@ class AlgoArea {
         return this._numOfOperations;
     }
 
+    get algoFormat() {
+        return this._algoFormat;
+    }
+
     set algoFormat(f) {
         this._algoFormat = f;   //todo check if value is valid?
     }
@@ -148,9 +152,7 @@ class AlgoArea {
     loadAlgorithm(format = this._algoFormat, reset = false, algorithm) {
         if(this._emptyAlgo || !this._algoChanged) return;
 
-        console.log("started from here");
         startLoadingAnimation();
-
 
         let algo = algorithm || this._q_algo.val();   //usually q_algo.val() is taken
         const opNum = reset ?
@@ -169,9 +171,13 @@ class AlgoArea {
             call.done((res) => {
                 this._loadingSuccess(res, algo, opNum, format, reset);
 
-                if(opNum === 0) this._changeState(STATE_LOADED_START);
-                else if(opNum === this._numOfOperations) this._changeState(STATE_LOADED_END);
-                else this._changeState(STATE_LOADED);
+                if(this._numOfOperations === 0) this._changeState(STATE_LOADED_EMPTY);
+                else {
+                    if(opNum === 0) this._changeState(STATE_LOADED_START);
+                    else if(opNum === this._numOfOperations) this._changeState(STATE_LOADED_END);
+                    else this._changeState(STATE_LOADED);
+                }
+
 
                 this._inv_algo_warning.css('display', 'none');
                 endLoadingAnimation();
@@ -186,6 +192,7 @@ class AlgoArea {
                     console.log("here");
                     this._inv_algo_warning.css('display', 'block');
                     showResponseError(res, "Your algorithm was invalid!");
+                    this._setLineNumbers();
                 }
             });
         }
@@ -203,8 +210,8 @@ class AlgoArea {
             this._hlManager.setHighlights();
         } else this._hlManager.text = this._q_algo.val();
 
-        this._numOfOperations = Math.max(res.data, 1);  //number of operations the algorithm has; at least the initial padding of 1 digit
-        const digits = numOfDigits(this._numOfOperations);
+        this._numOfOperations = res.data;
+        const digits = numOfDigits(Math.max(this._numOfOperations, 1)); //at least the initial padding of 1 digit
         this._setQAlgoMarginLeft(digits);
 
         this._setLineNumbers();
@@ -467,6 +474,15 @@ class AlgoArea {
     static isComment(line, format) {
         if(format === QASM_FORMAT) return line.trimStart().startsWith("//");
         else if(format === REAL_FORMAT) return line.trimStart().startsWith("#");
+        else {
+            console.log("Format not recognized");
+            return true;
+        }
+    }
+
+    static containsComment(line, format) {
+        if(format === QASM_FORMAT) return line.includes("//");
+        else if(format === REAL_FORMAT) return line.includes("#");
         else {
             console.log("Format not recognized");
             return true;
