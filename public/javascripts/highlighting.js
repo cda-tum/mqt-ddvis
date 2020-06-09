@@ -111,19 +111,20 @@ class HighlightManager {
     }
 
     decreaseHighlighting() {
+        this._removeProcessedLine();
+        this._addPendingLine();
+        this._highlightedOps--;
+
         //remove possible nops inside the highlighting
         for(let i = this._highlightedOps + this._nopsInHighlighting - 1; //-1 because we want the last highlighted line, not the potential next one
             i >= 0 && !this._hl[i];    //abort as soon as we have found the last operation
             i--) {
+
             this._removeProcessedLine();
             this._addPendingLine();
 
             this._nopsInHighlighting--;
         }
-
-        this._removeProcessedLine();
-        this._addPendingLine();
-        this._highlightedOps--;
 
         if(this._highlightedOps === 0) {
             this.initialHighlighting();

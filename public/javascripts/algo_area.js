@@ -315,9 +315,9 @@ class AlgoArea {
         //todo maybe could be implemented more efficiently if only the lines with the cursor are considered?
         this._lastCursorPos = this._q_algo.prop('selectionStart');
 
-        console.log("Lines with Cursor are: ");
-        console.log(this._debugGetLinesWithCursor());
-        console.log("__________________________________");
+        //console.log("Lines with Cursor are: ");
+        //console.log(this._debugGetLinesWithCursor());
+        //console.log("__________________________________");
 
         const newAlgo = this._q_algo.val();
         //we need to find out the format if possible

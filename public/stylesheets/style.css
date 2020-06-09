@@ -70,6 +70,13 @@ h4 {
     clear: both;
 }
 
+svg {
+    border: 2px solid #685972;
+    font-size: 3px !important;
+}
+
+
+
 /* ################################## specific element types ################################## */
 /* tab related code adapted from https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_tabs */
 /* Style the tab */
