@@ -28,6 +28,14 @@ function numOfDigits(num) {
 
 class AlgoArea {
 
+    /**
+     *
+     * @param div
+     * @param idPrefix must be unique among all algoAreas
+     * @param changeState
+     * @param print
+     * @param error
+     */
     constructor(div, idPrefix, changeState, print, error) {
         this._idPrefix = idPrefix;
         //todo what about resizing?
@@ -153,11 +161,11 @@ class AlgoArea {
         if(algo) {
             const temp = this._hlManager._preformatAlgorithm(algo, format);
             algo = temp.algo;
-            if(temp.set) this._q_algo.val(algo);
 
             const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
             call.done((res) => {
                 this._loadingSuccess(res, algo, opNum, format, reset);
+                if(temp.set) this._q_algo.val(algo);
 
                 if(this._numOfOperations === 0) this._changeState(STATE_LOADED_EMPTY);
                 else {
@@ -279,10 +287,11 @@ class AlgoArea {
     }
 
     updateSizes() {
+        //console.log("q_algo's height = " + this._q_algo.css('height'));
+
         const dzInnerWidth = this._drop_zone.innerWidth();
         const marginLeft = parseFloat(this._q_algo.css('margin-left'));
         const width = dzInnerWidth - marginLeft;
-        console.log(width + " = " + dzInnerWidth + " - " + marginLeft);
         if(isOpera) this._q_algo.css('width', width);
         else {
             this._q_algo.css('width', width);
@@ -359,6 +368,12 @@ class AlgoArea {
     }
 
     _handleInput() {
+        if(isFirefox && runDia) {
+            this._error("You are not allowed to edit the algorithm during the diashow or simulation-process!");
+            this._q_algo.val(this._oldAlgo);
+            return;
+        }
+
         //todo maybe could be implemented more efficiently if only the lines with the cursor are considered?
         this._lastCursorPos = this._q_algo.prop('selectionStart');
 
@@ -472,7 +487,7 @@ class AlgoArea {
         return algo.substring(lineStart, lineEnd+1);
     }
 
-    _handleScroll() {
+    _handleScroll() {   //event is ignored in firefox if source (this._q_algo) is disabled
         const scrollTop = this._q_algo.scrollTop();
 
         this._line_numbers.scrollTop(scrollTop);
