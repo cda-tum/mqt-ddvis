@@ -9,6 +9,15 @@
     text-align: center;
 }
 
+#nav_div {
+    padding: 10px;
+    /*height: 15%;*/
+}
+
+.nav-button {
+    width: 40px;
+}
+
 #qdd_div {
     float: right;
     padding: 0;
@@ -22,7 +31,7 @@
 @media (max-width: 600px) {
     #algo_div, #qdd_div {
         width: 100%;
-        height: auto;
+        /*height: auto;*/
     }
 }
 
@@ -60,18 +69,11 @@
     overflow: hidden;
 }
 
-#nav_div {
-    padding: 10px;
-    height: 15%;
-}
-
-.nav-button {
-    width: 40px;
-}
-
 .checkbox {
     margin-left: 20px;
 }
+
+
 
 #color_map {
     display: block;

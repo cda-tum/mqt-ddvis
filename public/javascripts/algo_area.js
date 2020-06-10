@@ -287,10 +287,11 @@ class AlgoArea {
     }
 
     updateSizes() {
+        //console.log("q_algo's height = " + this._q_algo.css('height'));
+
         const dzInnerWidth = this._drop_zone.innerWidth();
         const marginLeft = parseFloat(this._q_algo.css('margin-left'));
         const width = dzInnerWidth - marginLeft;
-        console.log(width + " = " + dzInnerWidth + " - " + marginLeft);
         if(isOpera) this._q_algo.css('width', width);
         else {
             this._q_algo.css('width', width);
