@@ -28,6 +28,14 @@ function numOfDigits(num) {
 
 class AlgoArea {
 
+    /**
+     *
+     * @param div
+     * @param idPrefix must be unique among all algoAreas
+     * @param changeState
+     * @param print
+     * @param error
+     */
     constructor(div, idPrefix, changeState, print, error) {
         this._idPrefix = idPrefix;
         //todo what about resizing?
@@ -477,6 +485,8 @@ class AlgoArea {
 
         this._line_numbers.scrollTop(scrollTop);
         this._highlighting.scrollTop(scrollTop);
+
+        console.log(document.getElementById("sim_q_algo").disabled);
     }
 
     findFormat(algo) {

@@ -89,7 +89,10 @@ function dropHandler(event) {
     for(const listener of dropListeners.entries()) {
         const idPrefix = listener[0];
         //call the listener if the event affected its target
-        if(target.startsWith(idPrefix)) listener[1].handleDrop(event);
+        if(target.startsWith(idPrefix)) {
+            //prevent the drop to work on disabled elements
+            if(!event.target.disabled) listener[1].handleDrop(event);
+        }
     }
 }
 
