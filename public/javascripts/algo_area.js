@@ -161,11 +161,11 @@ class AlgoArea {
         if(algo) {
             const temp = this._hlManager._preformatAlgorithm(algo, format);
             algo = temp.algo;
-            if(temp.set) this._q_algo.val(algo);
 
             const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
             call.done((res) => {
                 this._loadingSuccess(res, algo, opNum, format, reset);
+                if(temp.set) this._q_algo.val(algo);
 
                 if(this._numOfOperations === 0) this._changeState(STATE_LOADED_EMPTY);
                 else {
