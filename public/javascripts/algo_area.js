@@ -367,6 +367,12 @@ class AlgoArea {
     }
 
     _handleInput() {
+        if(isFirefox && runDia) {
+            this._error("You are not allowed to edit the algorithm during the diashow or simulation-process!");
+            this._q_algo.val(this._oldAlgo);
+            return;
+        }
+
         //todo maybe could be implemented more efficiently if only the lines with the cursor are considered?
         this._lastCursorPos = this._q_algo.prop('selectionStart');
 
@@ -480,13 +486,11 @@ class AlgoArea {
         return algo.substring(lineStart, lineEnd+1);
     }
 
-    _handleScroll() {
+    _handleScroll() {   //event is ignored in firefox if source (this._q_algo) is disabled
         const scrollTop = this._q_algo.scrollTop();
 
         this._line_numbers.scrollTop(scrollTop);
         this._highlighting.scrollTop(scrollTop);
-
-        console.log(document.getElementById("sim_q_algo").disabled);
     }
 
     findFormat(algo) {

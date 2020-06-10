@@ -32,33 +32,55 @@ function changeState(state) {
     let enable;
     let disable;
     switch (state) {
-        case STATE_NOTHING_LOADED:
-            enable = [ "sim_drop_zone", "sim_q_algo", "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic" ];
+        case STATE_NOTHING_LOADED:      //no navigation
+            enable = [  "sim_drop_zone", "sim_q_algo",
+                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
+                        "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
+            ];
             disable = [ "toStart", "prev", "automatic", "next", "toEnd", "toLine" ];
             break;
 
         case STATE_LOADED:
-            enable = [  "sim_drop_zone", "sim_q_algo", "toStart", "prev", "automatic", "next", "toEnd", "toLine",
-                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic" ];
+            enable = [  "sim_drop_zone", "sim_q_algo",
+                        "toStart", "prev", "automatic", "next", "toEnd", "toLine",
+                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
+                        "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
+            ];
             disable = [  ];
             break;
 
         case STATE_LOADED_START:
-            enable = [  "sim_drop_zone", "sim_q_algo", "automatic", "next", "toEnd", "toLine", "ex_real", "ex_qasm",
-                        "ex_deutsch", "ex_alu", "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic" ];
+            enable = [  "sim_drop_zone", "sim_q_algo",
+                        "automatic", "next", "toEnd", "toLine",
+                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
+                        "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
+            ];
             disable = [ "toStart", "prev" ];
             break;
 
         case STATE_LOADED_END:
-            enable = [ "sim_drop_zone", "sim_q_algo", "toStart", "prev", "toLine", "ex_real", "ex_qasm", "ex_deutsch",
-                        "ex_alu", "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic" ];
+            enable = [  "sim_drop_zone", "sim_q_algo",
+                        "toStart", "prev", "toLine",
+                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
+                        "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
+            ];
             disable = [ "toEnd", "next", "automatic" ];   //don't disable q_algo because the user might want to add lines to the end
             break;
 
         case STATE_SIMULATING:
-            enable = [];
-            disable = [ "sim_drop_zone", "sim_q_algo", "toStart", "prev", "automatic", "next", "toEnd", "toLine",
-                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic" ];
+            enable =  [];
+            disable = [ "toStart", "prev", "automatic", "next", "toEnd", "toLine",      //navigation buttons
+                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",                   //example algorithms
+                        "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"    //advanced settings
+            ];
+            //in firefox my onScroll-event is ignored if sim_q_algo is disabled, so for firefox things must be handled differently and enable it
+            if(isFirefox) {
+                enable.push("sim_drop_zone");
+                enable.push("sim_q_algo");
+            } else {
+                disable.push("sim_drop_zone");
+                disable.push("sim_q_algo");
+            }
             break;
 
         case STATE_DIASHOW:
@@ -66,13 +88,27 @@ function changeState(state) {
             pauseDia = false;
             automatic.text("||");   //\u23F8
             enable = [ "automatic" ];
-            disable = [ "sim_drop_zone", "sim_q_algo", "toStart", "prev", "next", "toEnd", "toLine",
-                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
+            disable = [ "toStart", "prev", "next", "toEnd", "toLine",
+                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
+                        "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
+            ];
+            //in firefox my onScroll-event is ignored if sim_q_algo is disabled, so for firefox things must be handled differently and enable it
+            if(isFirefox) {
+                enable.push("sim_drop_zone");
+                enable.push("sim_q_algo");
+            } else {
+                disable.push("sim_drop_zone");
+                disable.push("sim_q_algo");
+            }
+
             break;
 
-        case STATE_LOADED_EMPTY:
-            enable = [ "sim_drop_zone", "sim_q_algo", "ex_real", "ex_qasm", "ex_deutsch", "ex_alu", "stepDuration" ];
-            disable = [ "toStart", "prev", "automatic", "next", "toEnd", "toLine" ];    //no navigation allowed (we are at the beginning AND at the end)
+        case STATE_LOADED_EMPTY:    //no navigation allowed (we are at the beginning AND at the end)
+            enable = [  "sim_drop_zone", "sim_q_algo",
+                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
+                        "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
+            ];
+            disable = [ "toStart", "prev", "automatic", "next", "toEnd", "toLine" ];
             break;
     }
 
