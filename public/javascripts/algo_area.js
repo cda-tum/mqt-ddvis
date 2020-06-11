@@ -125,6 +125,10 @@ class AlgoArea {
         this._algoFormat = f;   //todo check if value is valid?
     }
 
+    get emptyAlgo() {
+        return this._emptyAlgo;
+    }
+
     set emptyAlgo(flag) {
         this._emptyAlgo = !!flag;   //!! forces parsing to bool
     }

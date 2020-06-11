@@ -174,10 +174,12 @@ function updateExportOptions() {
     changeState(STATE_SIMULATING);
     startLoadingAnimation();
 
+    const algoArea = algoAreas.get('sim');
+
     const call = jQuery.ajax({
         type: 'PUT',
         url: '/updateExportOptions',
-        data: { colored: colored, edgeLabels: edgeLabels, classic: classic },
+        data: { colored: colored, edgeLabels: edgeLabels, classic: classic, updateDD: !algoArea.emptyAlgo },
         success: (res) => {
             if (res.dot) print(res.dot);
             endLoadingAnimation();
