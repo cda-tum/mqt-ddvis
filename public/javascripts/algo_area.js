@@ -90,7 +90,8 @@ class AlgoArea {
 
     set algo(algo) {
         this._q_algo.val(algo);
-        this._hlManager.text = algo;
+        //this._hlManager.text = algo;  //unnecessary since in all cases we either load immediately afterwards (example algos)
+                                        // or don't want the algorithm to be loaded (empty algos)
     }
 
     get hlManager() {
@@ -160,7 +161,7 @@ class AlgoArea {
         }
 
         if(algo) {
-            const temp = this._hlManager._preformatAlgorithm(algo, format);
+            const temp = AlgoArea.preformatAlgorithm(algo, format, this.isOperation);
             algo = temp.algo;
 
             const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
@@ -179,6 +180,11 @@ class AlgoArea {
                 endLoadingAnimation();
             });
             call.fail((res) => {
+                if(reset) {
+                    this._hlManager.resetHighlighting("");
+                    this._hlManager.setHighlights();
+                }
+
                 changeState(STATE_NOTHING_LOADED);
                 endLoadingAnimation();
 
@@ -204,7 +210,6 @@ class AlgoArea {
 
         if(reset) {
             this._hlManager.resetHighlighting(this._q_algo.val());
-            this._hlManager.highlightedLines = opNum;
             this._hlManager.setHighlights();
         } else this._hlManager.text = this._q_algo.val();
 
@@ -541,5 +546,85 @@ class AlgoArea {
             console.log("Format not recognized");
             return true;
         }
+    }
+
+    static preformatAlgorithm(algo, format, isOperation) {
+        let setQAlgo = false;
+
+        //make sure every operation is in a separate line
+        if(format === QASM_FORMAT) {
+            let temp = "";
+            const lines = algo.split('\n');
+            for(let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                //"\n" needs to be added separately because it was removed while splitting
+                if(isOperation(line, format)) {
+                    let l = line;
+                    while(l.length !== 0) {
+                        let index = l.indexOf(';');
+                        if(index === -1) {  //no semicolon found
+                            if(AlgoArea.containsComment(l, format)) {
+                                //don't search for the missing ; because there is definitely a comment in between
+                                temp += line + "\n";
+                                l = ""; //make sure to leave the outer loop and continue with the outer-outer-loop
+                                break;
+                            }
+
+                            //search for the missing ; in the following lines
+                            temp += l;
+                            i++;
+                            while(i < lines.length) {
+                                l = lines[i];
+                                if(AlgoArea.isComment(l, format)) {
+                                    temp += "\n";   //don't collapse the operation-line with the comment-line
+                                    index = -1;     //a bit hacky, but needed so I don't have to copy code in a strange way
+                                                    //what happens: since we immediately jump to the outer loop op will be empty and l will stay the same
+                                                    // this makes sure that the whole comment (in the if afterwards we know that the first branch must be
+                                                    // entered since l was a comment and didn't change) will be like it initially was
+                                    break;
+                                }
+                                index = l.indexOf(';');
+                                if(index === -1) temp += l;
+                                else break;     //if we found a semicolon we can continue in the normal (outer) loop
+                                i++;
+                            }
+
+                            if(index === -1) {  //we are in the last line and no ; was found
+                                temp += "\n";
+                                break;
+                            }
+                        }
+
+                        const op =  l.substring(0, index+1);    //we need to include the semicolon, so it is index+1
+                        l = l.substring(index+1);
+
+                        //special case for comments in the same line as an operation
+                        if(AlgoArea.isComment(l, format)) {
+                            temp += op + l + "\n";  //the comment is allowed to stay in the same line
+                            break;
+                        } else temp += op + "\n";    //insert the operation with the added newLine
+                        l = l.trim();
+                    }
+                } else {
+                    temp += line;
+                    //don't create a new line for the last line, because the way splitting works there was no \n at the end of the last line
+                    if(i < lines.length-1) temp += "\n";
+                }
+            }
+            algo = temp;
+            setQAlgo = true;
+        }
+        //for REAL_FORMAT this is inherently the case, because \n is used to separate operations
+
+        //append an empty line at the end if there is none yet
+        if(!algo.endsWith("\n")) {
+            algo = algo + "\n";
+            setQAlgo = true;
+        }
+
+        return {
+            algo: algo,
+            set: setQAlgo
+        };
     }
 }
