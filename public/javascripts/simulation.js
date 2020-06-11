@@ -640,7 +640,7 @@ function print(dot) {
             width: "70%",     //make it smaller so we have space around where we can scroll through the page - also the graphs are more high than wide so is shouldn't be a problem
             height: svgHeight,
             fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
-        }).tweenPaths(true).tweenShapes(true).transition(function () { return d3.transition().ease(d3.easeLinear).duration(step_duration.val())}).renderDot(dot);
+        }).tweenPaths(true).tweenShapes(true).transition(function () { return d3.transition().ease(d3.easeLinear).duration(50)}).renderDot(dot);
 
         //$('#color_map').html(
         //    '<svg><rect width="20" height="20" fill="purple"></rect></svg>'

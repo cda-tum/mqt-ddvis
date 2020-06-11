@@ -157,6 +157,16 @@ class AlgoArea {
 
         //find out of in which format the input text is if we don't know it yet
         if(format === FORMAT_UNKNOWN) format = this.findFormat(algo);
+        this.algoFormat = format;
+
+        if(this._algoFormat === FORMAT_UNKNOWN) {
+            //if the format is still unknown, we can't load the algorithm -> abort
+            this._inv_algo_warning.css('display', 'block');
+            this._error("Format of your algorithm wasn't recognized. Please make sure it is either Real or QASM and" +
+                " try again.");
+            changeState(STATE_NOTHING_LOADED);
+            endLoadingAnimation();
+        }
 
         if(algo) {
             const temp = this._hlManager._preformatAlgorithm(algo, format);
@@ -173,7 +183,6 @@ class AlgoArea {
                     else if(opNum === this._numOfOperations) this._changeState(STATE_LOADED_END);
                     else this._changeState(STATE_LOADED);
                 }
-
 
                 this._inv_algo_warning.css('display', 'none');
                 endLoadingAnimation();
@@ -199,7 +208,6 @@ class AlgoArea {
     }
 
     _loadingSuccess(res, algo, opNum, format, reset) {
-        this.algoFormat = format;
         this._oldAlgo = algo;
         this._algoChanged = false;
         this._lastValidAlgorithm = algo;  //algorithm in q_algo was valid if no error occured
@@ -223,7 +231,7 @@ class AlgoArea {
     }
 
     _parseErrorMessage(res) {
-        let errMsg = "Invalid Algorithm at ";
+        let errMsg = "Invalid algorithm at ";
         if(res.responseJSON && res.responseJSON.msg) {
             const parserError = res.responseJSON.msg;
 
@@ -239,22 +247,27 @@ class AlgoArea {
                     const temp = this._line_numbers.html().split('\n');
                     let lineNumber;
                     if(temp.length < lineMsg || lineMsg <= 0) lineNumber = lineMsg;
-                    else lineNumber = parseInt(temp[lineMsg-1]);   //use the number that the line numbering displays
+                    else {
+                        lineNumber = parseInt(temp[lineMsg-1]);   //use the number that the line numbering displays
+                        //if no line numbers are there yet, we simply display the number from the parser error
+                        if(!lineNumber) lineNumber = lineMsg;
+                    }
 
                     const line = lineNumber;
+                    if(line) {
+                        let colStart = parserError.indexOf("c:", lineEnd-1);
+                        if(colStart > -1) {
+                            colStart += 2;
 
-                    let colStart = parserError.indexOf("c:", lineEnd-1);
-                    if(colStart > -1) {
-                        colStart += 2;
+                            const colEnd = parserError.indexOf("msg:", colStart);
+                            if(colEnd > -1) {
+                                const column = parseInt(parserError.substr(colStart, colEnd));
 
-                        const colEnd = parserError.indexOf("msg:", colStart);
-                        if(colEnd > -1) {
-                            const column = parseInt(parserError.substr(colStart, colEnd));
+                                errMsg += "line " + line + ", column " + column + "\n";
 
-                            errMsg += "line " + line + ", column " + column + "\n";
-
+                            } else errMsg += "line " + line + "\n";
                         } else errMsg += "line " + line + "\n";
-                    } else errMsg += "line " + line + "\n";
+                    }
                 }
             }
 
@@ -358,9 +371,16 @@ class AlgoArea {
                 const file = event.dataTransfer.files[i];
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    this._q_algo.val(e.target.result);
-                    this._algoChanged = true;
-                    this.loadAlgorithm(format, true);    //since a completely new algorithm has been uploaded we have to throw away the old simulation data
+                    if(e.target.result.trim().length > 0) {     //the file has content
+                        this._q_algo.val(e.target.result);
+                        this._algoChanged = true;
+                        this._emptyAlgo = false;
+                        this.loadAlgorithm(format, true);    //since a completely new algorithm has been uploaded we have to throw away the old simulation data
+
+                    } else {
+                        this.resetAlgorithm();//empty file does the same as deleting the content of q_algo
+                        this._error("You've uploaded an empty file!");
+                    }
                 };
                 reader.readAsBinaryString(file);
             }
@@ -513,12 +533,14 @@ class AlgoArea {
                     line.includes("reg") ||
                     AlgoArea.isComment(line, format));
 
-
             } else if(format === REAL_FORMAT) {
                 return !(line.startsWith(".") ||   //all non-operation lines start with "."
                     AlgoArea.isComment(line, format));
 
-
+            } else if(format === FORMAT_UNKNOWN) {
+                //showError("Format not recognized. Please try again.");  //todo change message?
+                console.log("Format unkown. Line: " + line);
+                return false;
             } else {
                 //showError("Format not recognized. Please try again.");  //todo change message?
                 console.log("Format (" + format + ") not recognized");
@@ -530,7 +552,10 @@ class AlgoArea {
     static isComment(line, format) {
         if(format === QASM_FORMAT) return line.trimStart().startsWith("//");
         else if(format === REAL_FORMAT) return line.trimStart().startsWith("#");
-        else {
+        else if(format === FORMAT_UNKNOWN) {
+            console.log("Format unknown. Line: " + line);
+            return true;
+        } else {
             console.log("Format not recognized");
             return true;
         }
