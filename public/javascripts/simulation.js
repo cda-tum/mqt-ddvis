@@ -26,7 +26,7 @@ const STATE_LOADED_EMPTY = 6;       //can't navigate
 
 let runDia = false;
 let pauseDia = false;
-
+let simState = STATE_NOTHING_LOADED;
 function changeState(state) {
     let enable;
     let disable;
@@ -120,6 +120,8 @@ function changeState(state) {
 
     _enableElementsWithID(enable);
     _disableElementsWithID(disable);
+
+    simState = state;
 }
 
 function _enableElementsWithID(ids) {
@@ -622,6 +624,7 @@ function updateExportOptions() {
     const edgeLabels = cb_edge_labels.prop('checked');
     const classic = cb_classic.prop('checked');
 
+    const lastState = simState;
     changeState(STATE_SIMULATING);
     startLoadingAnimation();
 
@@ -634,7 +637,7 @@ function updateExportOptions() {
         success: (res) => {
             if (res.dot) print(res.dot);
             endLoadingAnimation();
-            _generalStateChange();  //every LOAD state is possible
+            changeState(lastState); //go back to the previous state
         }
     });
     call.fail((res) => {
@@ -644,33 +647,4 @@ function updateExportOptions() {
         showResponseError(res, "");
         _generalStateChange();
     });
-
-    /*
-    const call = $.put("/updateExportOptions", { colored: colored, edgeLabels: edgeLabels, classic: classic });
-    call.success(res => {
-        const call2 = $.ajax({
-            url: '/getDD',
-            contentType: 'application/json',
-            success: (res) => {
-                if(res.dot) print(res.dot);
-                endLoadingAnimation();
-                _generalStateChange();  //every LOAD state is possible
-            }
-        });
-        call2.fail((res) => {
-            if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-
-            endLoadingAnimation();
-            showResponseError(res, "Couldn't retrieve DD from server!");
-            _generalStateChange();
-        });
-    });
-    call.fail((res) => {
-        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-
-        endLoadingAnimation();
-        showResponseError(res, "Going back to the start failed!");
-        _generalStateChange();
-    });
-    */
 }
