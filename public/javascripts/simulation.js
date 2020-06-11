@@ -32,7 +32,8 @@ function changeState(state) {
     let disable;
     switch (state) {
         case STATE_NOTHING_LOADED:      //no navigation
-            enable = [  "sim_drop_zone", "sim_q_algo",
+            enable = [  "sim_tab", "ver_tab",
+                        "sim_drop_zone", "sim_q_algo",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
                         "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
             ];
@@ -40,7 +41,8 @@ function changeState(state) {
             break;
 
         case STATE_LOADED:
-            enable = [  "sim_drop_zone", "sim_q_algo",
+            enable = [  "sim_tab", "ver_tab",
+                        "sim_drop_zone", "sim_q_algo",
                         "toStart", "prev", "automatic", "next", "toEnd", "toLine",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
                         "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
@@ -49,7 +51,8 @@ function changeState(state) {
             break;
 
         case STATE_LOADED_START:
-            enable = [  "sim_drop_zone", "sim_q_algo",
+            enable = [  "sim_tab", "ver_tab",
+                        "sim_drop_zone", "sim_q_algo",
                         "automatic", "next", "toEnd", "toLine",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
                         "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
@@ -58,7 +61,8 @@ function changeState(state) {
             break;
 
         case STATE_LOADED_END:
-            enable = [  "sim_drop_zone", "sim_q_algo",
+            enable = [  "sim_tab", "ver_tab",
+                        "sim_drop_zone", "sim_q_algo",
                         "toStart", "prev", "toLine",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
                         "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
@@ -68,7 +72,8 @@ function changeState(state) {
 
         case STATE_SIMULATING:
             enable =  [];
-            disable = [ "toStart", "prev", "automatic", "next", "toEnd", "toLine",      //navigation buttons
+            disable = [ "sim_tab", "ver_tab",
+                        "toStart", "prev", "automatic", "next", "toEnd", "toLine",      //navigation buttons
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",                   //example algorithms
                         "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"    //advanced settings
             ];
@@ -87,7 +92,8 @@ function changeState(state) {
             pauseDia = false;
             automatic.text("||");   //\u23F8
             enable = [ "automatic" ];
-            disable = [ "toStart", "prev", "next", "toEnd", "toLine",
+            disable = [ "sim_tab", "ver_tab",
+                        "toStart", "prev", "next", "toEnd", "toLine",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
                         "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
             ];
@@ -103,7 +109,8 @@ function changeState(state) {
             break;
 
         case STATE_LOADED_EMPTY:    //no navigation allowed (we are at the beginning AND at the end)
-            enable = [  "sim_drop_zone", "sim_q_algo",
+            enable = [  "sim_tab", "ver_tab",
+                        "sim_drop_zone", "sim_q_algo",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
                         "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
             ];
