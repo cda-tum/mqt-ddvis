@@ -1,5 +1,7 @@
 
-//todo make static?
+//Make the width of the highlights dependent on the screen-width so at least in full-screen mode and smaller window sizes the highlighting looks correct.
+// If users make the window bigger than their screen, the highlighting may get to small but aside from defining it way to large, there doesn't seem to be
+// a solution to this.
 let lineHighlight_temp = "<mark>";//                                                                                                                                  ";
 for(let i = 0; i < screen.width / 14; i++) {    //14 proved through testing to be a fitting number
     lineHighlight_temp += " ";
