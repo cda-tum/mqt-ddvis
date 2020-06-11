@@ -465,7 +465,6 @@ class AlgoArea {
             }
         }
 
-
         //TODO ADD PENDING LINE IF CURLINES HAS MORE ELEMENTS THAN OLDLINES
         const lineDif = curLines.length - oldLines.length;
         if(lineDif > 0) {
@@ -486,6 +485,7 @@ class AlgoArea {
 
     _selectLineWithCursor() {
         const algo = this._q_algo.val();
+        console.log("Last cursor at " + this._lastCursorPos + ", char = " + algo.charAt(this._lastCursorPos));
         let lineStart = algo.lastIndexOf("\n", this._lastCursorPos) + 1;  //+1 because we need the index of the first character in the line
         let lineEnd;
         //special case where lastCursorPos is directly at the end of a line
@@ -494,23 +494,11 @@ class AlgoArea {
             lineEnd = this._lastCursorPos-1;  //the position right before \n
 
         } else lineEnd = algo.indexOf("\n", lineStart);
+        console.log("Char: " + algo.charAt(lineEnd));
+        console.log("Start = " + lineStart + ", End = " + lineEnd);
 
         this._q_algo.prop('selectionStart', lineStart);
         this._q_algo.prop('selectionEnd', lineEnd);
-    }
-
-    _debugGetLinesWithCursor() {
-        const algo = this._q_algo.val();
-        let lineStart = algo.lastIndexOf("\n", this._lastCursorPos) + 1;  //+1 because we need the index of the first character in the line
-        let lineEnd;
-        //special case where lastCursorPos is directly at the end of a line
-        if(lineStart === this._lastCursorPos) {
-            lineStart = algo.lastIndexOf("\n", this._lastCursorPos-2) + 1;    //lastCursorPos-1 would be the current lineStart, but we need one character before that
-            lineEnd = this._lastCursorPos-1;  //the position right before \n
-
-        } else lineEnd = algo.indexOf("\n", lineStart);
-
-        return algo.substring(lineStart, lineEnd+1);
     }
 
     _handleScroll() {   //event is ignored in firefox if source (this._q_algo) is disabled

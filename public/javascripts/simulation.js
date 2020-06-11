@@ -154,7 +154,7 @@ function validateStepDuration() {
         step_duration.val(stepDuration);
     } else {
         const newVal = parseInt(input);
-        if(newVal && 0 <= newVal) {
+        if(0 <= newVal) {
             stepDuration = newVal;
             step_duration.val(newVal);  //needs to be done because of parseInt possible Floats are cut off
 
