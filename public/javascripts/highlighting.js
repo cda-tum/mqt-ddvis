@@ -1,9 +1,11 @@
 
 //todo make static?
-let lineHighlight = "<mark>                                                                                                                                  </mark>";
-function updateLineHighlight(newLH) {
-    lineHighlight = newLH;
+let lineHighlight_temp = "<mark>";//                                                                                                                                  ";
+for(let i = 0; i < screen.width / 14; i++) {    //14 proved through testing to be a fitting number
+    lineHighlight_temp += " ";
 }
+lineHighlight_temp += "</mark>";
+const lineHighlight = lineHighlight_temp;
 
 class HighlightManager {
 

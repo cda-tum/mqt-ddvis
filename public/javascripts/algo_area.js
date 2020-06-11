@@ -314,12 +314,14 @@ class AlgoArea {
             this._q_algo.css('width', width);
         }
 
+        /* //if we change lineHighlight dynamically, it may be two small if we start with a small window-width and later expand it
         if(dzInnerWidth > 0) {
             let lh = "<mark>";
             for(let i = 0; i < dzInnerWidth / 4; i++) lh += " ";
             lh += "</mark>";
             updateLineHighlight(lh);
         }
+        */
     }
 
     _setLineNumbers() {
