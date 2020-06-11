@@ -11,8 +11,6 @@
 
 #include "QDDVis.h"
 
-long QDDVis::NextID = 1;
-
 Napi::FunctionReference QDDVis::constructor;
 
 Napi::Object QDDVis::Init(Napi::Env env, Napi::Object exports) {
@@ -56,7 +54,6 @@ QDDVis::QDDVis(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVis>(info) 
         Napi::TypeError::New(env, "String expected!").ThrowAsJavaScriptException();
         return;
     }
-    this->ip = info[0].As<Napi::String>();
 
     this->dd = std::make_unique<dd::Package>();
     this->qc = std::make_unique<qc::QuantumComputation>();
@@ -142,6 +139,8 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     const std::string algo = arg.Utf8Value();
     std::stringstream ss{algo};
 
+    std::cout << algo << std::endl;
+
     try {
         //second parameter describes the format of the algorithm
         const unsigned int formatCode = (unsigned int)info[1].As<Napi::Number>();
@@ -154,7 +153,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
 
     } catch(std::exception& e) {
         std::cout << "Exception while loading the algorithm: " << e.what() << std::endl;
-        std::string err(e.what());    //todo e.what() gives unreadable characters?
+        std::string err(e.what());
         Napi::Error::New(env, "Invalid algorithm!\n" + err).ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
     }
@@ -166,9 +165,9 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     position = 0;
 
     //the third parameter (how many operations to apply immediately)
-    const unsigned int opNum = (unsigned int)info[2].As<Napi::Number>();    //at this point opNum may be bigger than the number of operations the algorithm has!
+    unsigned int opNum = (unsigned int)info[2].As<Napi::Number>();    //at this point opNum may be bigger than the number of operations the algorithm has!
+    if(opNum > qc->getNops()) opNum = qc->getNops();
     if(opNum > 0) {
-        //todo check if iterator has elements? because if not we will get a segmentation fault because iterator++ points to memory of something else
         atInitial = false;
         const bool process = (bool)info[3].As<Napi::Boolean>(); //the fourth parameter tells us to process iterated operations or not
         if(process) {

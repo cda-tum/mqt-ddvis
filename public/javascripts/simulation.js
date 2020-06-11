@@ -8,7 +8,6 @@ const qdd_text = $('#qdd_text');
 const cb_colored = $('#cb_colored');
 const cb_edge_labels = $('#cb_edge_labels');
 const cb_classic = $('#cb_classic');
-//todo also initialize all other selectors once?
 
 
 //################### CONFIGURATION ##################################################################################################################
@@ -27,13 +26,14 @@ const STATE_LOADED_EMPTY = 6;       //can't navigate
 
 let runDia = false;
 let pauseDia = false;
-
+let simState = STATE_NOTHING_LOADED;
 function changeState(state) {
     let enable;
     let disable;
     switch (state) {
         case STATE_NOTHING_LOADED:      //no navigation
-            enable = [  "sim_drop_zone", "sim_q_algo",
+            enable = [  "sim_tab", "ver_tab",
+                        "sim_drop_zone", "sim_q_algo",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
                         "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
             ];
@@ -41,7 +41,8 @@ function changeState(state) {
             break;
 
         case STATE_LOADED:
-            enable = [  "sim_drop_zone", "sim_q_algo",
+            enable = [  "sim_tab", "ver_tab",
+                        "sim_drop_zone", "sim_q_algo",
                         "toStart", "prev", "automatic", "next", "toEnd", "toLine",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
                         "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
@@ -50,7 +51,8 @@ function changeState(state) {
             break;
 
         case STATE_LOADED_START:
-            enable = [  "sim_drop_zone", "sim_q_algo",
+            enable = [  "sim_tab", "ver_tab",
+                        "sim_drop_zone", "sim_q_algo",
                         "automatic", "next", "toEnd", "toLine",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
                         "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
@@ -59,7 +61,8 @@ function changeState(state) {
             break;
 
         case STATE_LOADED_END:
-            enable = [  "sim_drop_zone", "sim_q_algo",
+            enable = [  "sim_tab", "ver_tab",
+                        "sim_drop_zone", "sim_q_algo",
                         "toStart", "prev", "toLine",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
                         "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
@@ -69,7 +72,8 @@ function changeState(state) {
 
         case STATE_SIMULATING:
             enable =  [];
-            disable = [ "toStart", "prev", "automatic", "next", "toEnd", "toLine",      //navigation buttons
+            disable = [ "sim_tab", "ver_tab",
+                        "toStart", "prev", "automatic", "next", "toEnd", "toLine",      //navigation buttons
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",                   //example algorithms
                         "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"    //advanced settings
             ];
@@ -88,7 +92,8 @@ function changeState(state) {
             pauseDia = false;
             automatic.text("||");   //\u23F8
             enable = [ "automatic" ];
-            disable = [ "toStart", "prev", "next", "toEnd", "toLine",
+            disable = [ "sim_tab", "ver_tab",
+                        "toStart", "prev", "next", "toEnd", "toLine",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
                         "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
             ];
@@ -104,7 +109,8 @@ function changeState(state) {
             break;
 
         case STATE_LOADED_EMPTY:    //no navigation allowed (we are at the beginning AND at the end)
-            enable = [  "sim_drop_zone", "sim_q_algo",
+            enable = [  "sim_tab", "ver_tab",
+                        "sim_drop_zone", "sim_q_algo",
                         "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
                         "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
             ];
@@ -114,6 +120,8 @@ function changeState(state) {
 
     _enableElementsWithID(enable);
     _disableElementsWithID(disable);
+
+    simState = state;
 }
 
 function _enableElementsWithID(ids) {
@@ -144,82 +152,6 @@ for (let i = 0; i < acc.length; i++) {
         if (panel.style.display === "block") panel.style.display = "none";
         else panel.style.display = "block";
     });
-}
-
-
-function validateStepDuration() {
-    const input = step_duration.val();
-    if(input.includes(".") || input.includes(",")) {
-        showError("Floats are not allowed!\nPlease enter an unsigned integer instead.");
-        step_duration.val(stepDuration);
-    } else {
-        const newVal = parseInt(input);
-        if(newVal && 0 <= newVal) {
-            stepDuration = newVal;
-            step_duration.val(newVal);  //needs to be done because of parseInt possible Floats are cut off
-
-        } else {
-            showError("Invalid number for step-duration: Only unsigned integers allowed!");
-            step_duration.val(stepDuration);
-            return false;
-        }
-    }
-}
-
-function updateExportOptions() {
-    const colored = cb_colored.prop('checked');
-    const edgeLabels = cb_edge_labels.prop('checked');
-    const classic = cb_classic.prop('checked');
-
-    changeState(STATE_SIMULATING);
-    startLoadingAnimation();
-
-    const call = jQuery.ajax({
-        type: 'PUT',
-        url: '/updateExportOptions',
-        data: { colored: colored, edgeLabels: edgeLabels, classic: classic },
-        success: (res) => {
-            if (res.dot) print(res.dot);
-            endLoadingAnimation();
-            _generalStateChange();  //every LOAD state is possible
-        }
-    });
-    call.fail((res) => {
-        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-
-        endLoadingAnimation();
-        showResponseError(res, "");
-        _generalStateChange();
-    });
-
-    /*
-    const call = $.put("/updateExportOptions", { colored: colored, edgeLabels: edgeLabels, classic: classic });
-    call.success(res => {
-        const call2 = $.ajax({
-            url: '/getDD',
-            contentType: 'application/json',
-            success: (res) => {
-                if(res.dot) print(res.dot);
-                endLoadingAnimation();
-                _generalStateChange();  //every LOAD state is possible
-            }
-        });
-        call2.fail((res) => {
-            if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-
-            endLoadingAnimation();
-            showResponseError(res, "Couldn't retrieve DD from server!");
-            _generalStateChange();
-        });
-    });
-    call.fail((res) => {
-        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-
-        endLoadingAnimation();
-        showResponseError(res, "Going back to the start failed!");
-        _generalStateChange();
-    });
-    */
 }
 
 
@@ -295,7 +227,17 @@ function loadDeutsch() {
     algoArea.algoChanged = true;
 
     algoArea.algoFormat = QASM_FORMAT;
-    algoArea.algo = deutschAlgorithm;
+    algoArea.algo = "OPENQASM 2.0;\n" +
+                    "include \"qelib1.inc\";\n" +
+                    "\n" +
+                    "qreg q[2];\n" +
+                    "creg c[2];\n" +
+                    "\n" +
+                    "x q[1];\n" +
+                    "h q[0];\n" +
+                    "h q[1];\n" +
+                    "cx q[0],q[1];\n" +
+                    "h q[0];\n";
 
     algoArea.loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
@@ -493,7 +435,8 @@ function sim_diashow() {
                 call.fail((res) => {
                     if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
 
-                    showResponseError(res, "Going a step ahead failed! Aborting Diashow."); //todo notify user that the diashow was aborted if res-msg is shown?
+                    if(res.responseJSON && res.responseJSON.msg) showError(res.responseJSON.msg + "\nAborting diashow.");
+                    else if(altMsg) showError("Going a step ahead failed! Aborting diashow.");
                     endDia();
                 });
             }
@@ -561,7 +504,12 @@ function sim_gotoLine() {
     changeState(STATE_SIMULATING);
     startLoadingAnimation();
 
-    const line = Math.min(parseInt(line_to_go.val()), algoArea.numOfOperations);
+
+    let line = parseInt(line_to_go.val());
+    if(line > algoArea.numOfOperations) {
+        line = algoArea.numOfOperations;
+        line_to_go.val(line);
+    }
     const call = $.ajax({
         url: '/toline?line=' + line,
         contentType: 'application/json',
@@ -636,11 +584,14 @@ function print(dot) {
             );
         }
 
+        let animationDuration = 500;
+        if(stepDuration < 1000) animationDuration = stepDuration / 2;
+
         const graph = d3.select("#qdd_div").graphviz({
             width: "70%",     //make it smaller so we have space around where we can scroll through the page - also the graphs are more high than wide so is shouldn't be a problem
             height: svgHeight,
             fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
-        }).tweenPaths(true).tweenShapes(true).transition(function () { return d3.transition().ease(d3.easeLinear).duration(step_duration.val())}).renderDot(dot);
+        }).tweenPaths(true).tweenShapes(true).transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration)).renderDot(dot);
 
         //$('#color_map').html(
         //    '<svg><rect width="20" height="20" fill="purple"></rect></svg>'
@@ -650,4 +601,53 @@ function print(dot) {
         qdd_div.html(qdd_text);
         //document.getElementById('color_map').style.display = 'none';
     }
+}
+
+function validateStepDuration() {
+    const input = step_duration.val();
+    if(input.includes(".") || input.includes(",")) {
+        showError("Floats are not allowed!\nPlease enter an unsigned integer instead.");
+        step_duration.val(stepDuration);
+    } else {
+        const newVal = parseInt(input);
+        if(0 <= newVal) {
+            stepDuration = newVal;
+            step_duration.val(newVal);  //needs to be done because of parseInt possible Floats are cut off
+
+        } else {
+            showError("Invalid number for step-duration: Only unsigned integers allowed!");
+            step_duration.val(stepDuration);
+            return false;
+        }
+    }
+}
+
+function updateExportOptions() {
+    const colored = cb_colored.prop('checked');
+    const edgeLabels = cb_edge_labels.prop('checked');
+    const classic = cb_classic.prop('checked');
+
+    const lastState = simState;
+    changeState(STATE_SIMULATING);
+    startLoadingAnimation();
+
+    const algoArea = algoAreas.get('sim');
+
+    const call = jQuery.ajax({
+        type: 'PUT',
+        url: '/updateExportOptions',
+        data: { colored: colored, edgeLabels: edgeLabels, classic: classic, updateDD: !algoArea.emptyAlgo },
+        success: (res) => {
+            if (res.dot) print(res.dot);
+            endLoadingAnimation();
+            changeState(lastState); //go back to the previous state
+        }
+    });
+    call.fail((res) => {
+        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
+        endLoadingAnimation();
+        showResponseError(res, "");
+        _generalStateChange();
+    });
 }

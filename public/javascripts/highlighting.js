@@ -1,14 +1,17 @@
 
-//todo make static?
-let lineHighlight = "<mark>                                                                                                                                  </mark>";
-function updateLineHighlight(newLH) {
-    lineHighlight = newLH;
+//Make the width of the highlights dependent on the screen-width so at least in full-screen mode and smaller window sizes the highlighting looks correct.
+// If users make the window bigger than their screen, the highlighting may get to small but aside from defining it way to large, there doesn't seem to be
+// a solution to this.
+let lineHighlight_temp = "<mark>";//                                                                                                                                  ";
+for(let i = 0; i < screen.width / 14; i++) {    //14 proved through testing to be a fitting number
+    lineHighlight_temp += " ";
 }
+lineHighlight_temp += "</mark>";
+const lineHighlight = lineHighlight_temp;
 
 class HighlightManager {
 
     constructor(highlightDiv, algoArea) {
-        //todo fix: right now this is an AlgoArea (needed because the default format of algoArea.algoFormat isn't used if we just provide the function)
         if(highlightDiv) this._div = highlightDiv;
         else throw Error("HighlightManager needs a div to apply the highlighting to!");
 
@@ -24,8 +27,6 @@ class HighlightManager {
     }
 
     set text(text) {
-        //debugger
-
         //calculate new operationOffset for the new text and decide for each line of the text whether
         // it is an operation (therefore will be highlighted) or not
         this._operationOffset = -1;
@@ -229,86 +230,5 @@ class HighlightManager {
 
     _removePendingLine() {
         this._pendingText = this._pendingText.substring(1); //remove one \n
-    }
-
-    _preformatAlgorithm(algo, format) {
-        let setQAlgo = false;
-
-        //make sure every operation is in a separate line
-        if(format === QASM_FORMAT) {
-            let temp = "";
-            const lines = algo.split('\n');
-            for(let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-                //"\n" needs to be added separately because it was removed while splitting
-                if(this._algoArea.isOperation(line, format)) {
-                    let l = line;
-                    while(l.length !== 0) {
-                        let index = l.indexOf(';');
-                        if(index === -1) {  //no semicolon found
-                            if(AlgoArea.containsComment(l, format)) {
-                                //don't search for the missing ; because there is definitely a comment in between
-                                temp += line + "\n";
-                                l = ""; //make sure to leave the outer loop and continue with the outer-outer-loop
-                                break;
-                            }
-
-                            //search for the missing ; in the following lines
-                            temp += l;
-                            i++;
-                            while(i < lines.length) {
-                                l = lines[i];
-                                if(AlgoArea.isComment(l, format)) {
-                                    temp += "\n";   //don't collapse the operation-line with the comment-line
-                                    index = -1;     //a bit hacky, but needed so I don't have to copy code in a strange way
-                                                    //what happens: since we immediately jump to the outer loop op will be empty and l will stay the same
-                                                    // this makes sure that the whole comment (in the if afterwards we know that the first branch must be
-                                                    // entered since l was a comment and didn't change) will be like it initially was
-                                    break;
-                                }
-                                index = l.indexOf(';');
-                                if(index === -1) temp += l;
-                                else break;     //if we found a semicolon we can continue in the normal (outer) loop
-                                i++;
-                            }
-
-                            if(index === -1) {  //we are in the last line and no ; was found
-                                temp += "\n";
-                                break;
-                            }
-                        }
-
-                        const op =  l.substring(0, index+1);    //we need to include the semicolon, so it is index+1
-                        l = l.substring(index+1);
-
-                        //special case for comments in the same line as an operation
-                        if(AlgoArea.isComment(l, format)) {
-                            temp += op + l + "\n";  //the comment is allowed to stay in the same line
-                            break;
-                        } else temp += op + "\n";    //insert the operation with the added newLine
-                        l = l.trim();
-                    }
-                } else {
-                    temp += line;
-                    //don't create a new line for the last line, because the way splitting works there was no \n at the end of the last line
-                    if(i < lines.length-1) temp += "\n";
-                }
-            }
-            algo = temp;
-            setQAlgo = true;
-        }
-        //for REAL_FORMAT this is inherently the case, because \n is used to separate operations
-
-        //append an empty line at the end if there is none yet
-        if(!algo.endsWith("\n")) {
-            algo = algo + "\n";
-            setQAlgo = true;
-        }
-
-        //if(setQAlgo) this._q_algo.val(algo);
-        return {
-            algo: algo,
-            set: setQAlgo
-        };
     }
 }

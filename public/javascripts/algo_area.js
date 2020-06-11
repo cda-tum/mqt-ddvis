@@ -3,19 +3,6 @@ const FORMAT_UNKNOWN = 0;
 const QASM_FORMAT = 1;
 const REAL_FORMAT = 2;
 
-//a default algorithm is needed for initialization
-const deutschAlgorithm =    "OPENQASM 2.0;\n" +
-                            "include \"qelib1.inc\";\n" +
-                            "\n" +
-                            "qreg q[2];\n" +
-                            "creg c[2];\n" +
-                            "\n" +
-                            "x q[1];\n" +
-                            "h q[0];\n" +
-                            "h q[1];\n" +
-                            "cx q[0],q[1];\n" +
-                            "h q[0];\n";
-
 const paddingLeftOffset = 15;   //10px is the padding of lineNumbers, so q_algo also needs at least this much padding
 const paddingLeftPerDigit = 10; //padding of q_algo based on the number of digits the line-numbering needs
 
@@ -38,8 +25,6 @@ class AlgoArea {
      */
     constructor(div, idPrefix, changeState, print, error) {
         this._idPrefix = idPrefix;
-        //todo what about resizing?
-
 
         this._drop_zone = $(
             '<div id="' + idPrefix + '_drop_zone" ' +
@@ -87,14 +72,13 @@ class AlgoArea {
         this._backdrop.append(this._highlighting);
 
         this._hlManager = new HighlightManager(this._highlighting, this);
-        this._changeState = changeState; //function to change the state on the callers side  //todo how to handle the state codes?
+        this._changeState = changeState; //function to change the state on the callers side
         this._print = print; //function to print the DD on the callers side
         this._error = error; //function on the callers side for handling errors
 
         this._algoFormat = FORMAT_UNKNOWN;
         this._emptyAlgo = true;
         this._algoChanged = false;
-        this._lastValidAlgorithm = deutschAlgorithm;
         this._numOfOperations = 0;
         this._oldAlgo = "";           //the old input (maybe not valid, but needed if the user edit lines they are not allowed to change)
         this._lastCursorPos = 0;
@@ -106,7 +90,8 @@ class AlgoArea {
 
     set algo(algo) {
         this._q_algo.val(algo);
-        this._hlManager.text = algo;
+        //this._hlManager.text = algo;  //unnecessary since in all cases we either load immediately afterwards (example algos)
+                                        // or don't want the algorithm to be loaded (empty algos)
     }
 
     get hlManager() {
@@ -122,7 +107,15 @@ class AlgoArea {
     }
 
     set algoFormat(f) {
-        this._algoFormat = f;   //todo check if value is valid?
+        if(f === QASM_FORMAT || f === REAL_FORMAT || f === FORMAT_UNKNOWN) this._algoFormat = f;
+        else {
+            this._algoFormat = FORMAT_UNKNOWN;
+            console.log("Tried to set algoFormat to " + f + ", which is an illegal value. Was set to FORMAT_UNKNOWN (0) instead.");
+        }
+    }
+
+    get emptyAlgo() {
+        return this._emptyAlgo;
     }
 
     set emptyAlgo(flag) {
@@ -143,24 +136,34 @@ class AlgoArea {
      *        is when leaving the textArea after editing, but in this case the format didn't change so the old algoFormat is used
      * @param reset whether a new simulation needs to be started after loading; default false because again the only occasion
      *        it is not set is after editing, but there we especially don't want to reset
-     * @param algorithm only needed if the lastValidAlgorithm should be sent again because the algorithm in q_algo is invalid
      */
-    loadAlgorithm(format = this._algoFormat, reset = false, algorithm) {
+    loadAlgorithm(format = this._algoFormat, reset = false) {
         if(this._emptyAlgo || !this._algoChanged) return;
 
         startLoadingAnimation();
 
-        let algo = algorithm || this._q_algo.val();   //usually q_algo.val() is taken
+        let algo = this._q_algo.val();   //usually q_algo.val() is taken
         const opNum = reset ?
             0 : //parseInt(line_to_go.val()) :
             this._hlManager.highlightedLines;   //we want to continue simulating after the last processed line, which is after the highlighted ones
 
         //find out of in which format the input text is if we don't know it yet
         if(format === FORMAT_UNKNOWN) format = this.findFormat(algo);
+        this.algoFormat = format;
+
+        if(this._algoFormat === FORMAT_UNKNOWN) {
+            //if the format is still unknown, we can't load the algorithm -> abort
+            this._inv_algo_warning.css('display', 'block');
+            this._error("Format of your algorithm wasn't recognized. Please make sure it is either Real or QASM and" +
+                " try again.");
+            changeState(STATE_NOTHING_LOADED);
+            endLoadingAnimation();
+        }
 
         if(algo) {
-            const temp = this._hlManager._preformatAlgorithm(algo, format);
+            const temp = AlgoArea.preformatAlgorithm(algo, format, this.isOperation);
             algo = temp.algo;
+            this._algoChanged = false;
 
             const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
             call.done((res) => {
@@ -174,11 +177,15 @@ class AlgoArea {
                     else this._changeState(STATE_LOADED);
                 }
 
-
                 this._inv_algo_warning.css('display', 'none');
                 endLoadingAnimation();
             });
             call.fail((res) => {
+                if(reset) {
+                    this._hlManager.resetHighlighting("");
+                    this._hlManager.setHighlights();
+                }
+
                 changeState(STATE_NOTHING_LOADED);
                 endLoadingAnimation();
 
@@ -187,8 +194,8 @@ class AlgoArea {
                     //showResponseError(res, "Couldn't connect to the server.");
                     if(res.responseJSON && res.responseJSON.msg) this._error(res.responseJSON.msg);
                     else this._error("Internal Server Error");
-                }
-                else {  //this should be invalid-algorithm-error
+
+                } else {  //this should be invalid-algorithm-error
                     this._inv_algo_warning.css('display', 'block');
 
                     this._error(this._parseErrorMessage(res));
@@ -199,14 +206,10 @@ class AlgoArea {
     }
 
     _loadingSuccess(res, algo, opNum, format, reset) {
-        this.algoFormat = format;
         this._oldAlgo = algo;
-        this._algoChanged = false;
-        this._lastValidAlgorithm = algo;  //algorithm in q_algo was valid if no error occured
 
         if(reset) {
             this._hlManager.resetHighlighting(this._q_algo.val());
-            this._hlManager.highlightedLines = opNum;
             this._hlManager.setHighlights();
         } else this._hlManager.text = this._q_algo.val();
 
@@ -217,13 +220,10 @@ class AlgoArea {
         this._setLineNumbers();
 
         this._print(res.dot);
-
-        //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
-        //if(line_to_go && opNum > this._numOfOperations) line_to_go.val(this._numOfOperations);  //todo maybe change this, because it is only "needed" for Simulation
     }
 
     _parseErrorMessage(res) {
-        let errMsg = "Invalid Algorithm at ";
+        let errMsg = "Invalid algorithm at ";
         if(res.responseJSON && res.responseJSON.msg) {
             const parserError = res.responseJSON.msg;
 
@@ -239,22 +239,27 @@ class AlgoArea {
                     const temp = this._line_numbers.html().split('\n');
                     let lineNumber;
                     if(temp.length < lineMsg || lineMsg <= 0) lineNumber = lineMsg;
-                    else lineNumber = parseInt(temp[lineMsg-1]);   //use the number that the line numbering displays
+                    else {
+                        lineNumber = parseInt(temp[lineMsg-1]);   //use the number that the line numbering displays
+                        //if no line numbers are there yet, we simply display the number from the parser error
+                        if(!lineNumber) lineNumber = lineMsg;
+                    }
 
                     const line = lineNumber;
+                    if(line) {
+                        let colStart = parserError.indexOf("c:", lineEnd-1);
+                        if(colStart > -1) {
+                            colStart += 2;
 
-                    let colStart = parserError.indexOf("c:", lineEnd-1);
-                    if(colStart > -1) {
-                        colStart += 2;
+                            const colEnd = parserError.indexOf("msg:", colStart);
+                            if(colEnd > -1) {
+                                const column = parseInt(parserError.substr(colStart, colEnd));
 
-                        const colEnd = parserError.indexOf("msg:", colStart);
-                        if(colEnd > -1) {
-                            const column = parseInt(parserError.substr(colStart, colEnd));
+                                errMsg += "line " + line + ", column " + column + "\n";
 
-                            errMsg += "line " + line + ", column " + column + "\n";
-
+                            } else errMsg += "line " + line + "\n";
                         } else errMsg += "line " + line + "\n";
-                    } else errMsg += "line " + line + "\n";
+                    }
                 }
             }
 
@@ -292,17 +297,16 @@ class AlgoArea {
         const dzInnerWidth = this._drop_zone.innerWidth();
         const marginLeft = parseFloat(this._q_algo.css('margin-left'));
         const width = dzInnerWidth - marginLeft;
-        if(isOpera) this._q_algo.css('width', width);
-        else {
-            this._q_algo.css('width', width);
-        }
+        this._q_algo.css('width', width);
 
+        /* //if we change lineHighlight dynamically, it may be two small if we start with a small window-width and later expand it
         if(dzInnerWidth > 0) {
             let lh = "<mark>";
             for(let i = 0; i < dzInnerWidth / 4; i++) lh += " ";
             lh += "</mark>";
             updateLineHighlight(lh);
         }
+        */
     }
 
     _setLineNumbers() {
@@ -358,9 +362,16 @@ class AlgoArea {
                 const file = event.dataTransfer.files[i];
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    this._q_algo.val(e.target.result);
-                    this._algoChanged = true;
-                    this.loadAlgorithm(format, true);    //since a completely new algorithm has been uploaded we have to throw away the old simulation data
+                    if(e.target.result.trim().length > 0) {     //the file has content
+                        this._q_algo.val(e.target.result);
+                        this._algoChanged = true;
+                        this._emptyAlgo = false;
+                        this.loadAlgorithm(format, true);    //since a completely new algorithm has been uploaded we have to throw away the old simulation data
+
+                    } else {
+                        this.resetAlgorithm();//empty file does the same as deleting the content of q_algo
+                        this._error("You've uploaded an empty file!");
+                    }
                 };
                 reader.readAsBinaryString(file);
             }
@@ -439,8 +450,6 @@ class AlgoArea {
             }
         }
 
-
-        //TODO ADD PENDING LINE IF CURLINES HAS MORE ELEMENTS THAN OLDLINES
         const lineDif = curLines.length - oldLines.length;
         if(lineDif > 0) {
             let text = "";
@@ -460,6 +469,7 @@ class AlgoArea {
 
     _selectLineWithCursor() {
         const algo = this._q_algo.val();
+        console.log("Last cursor at " + this._lastCursorPos + ", char = " + algo.charAt(this._lastCursorPos));
         let lineStart = algo.lastIndexOf("\n", this._lastCursorPos) + 1;  //+1 because we need the index of the first character in the line
         let lineEnd;
         //special case where lastCursorPos is directly at the end of a line
@@ -468,23 +478,11 @@ class AlgoArea {
             lineEnd = this._lastCursorPos-1;  //the position right before \n
 
         } else lineEnd = algo.indexOf("\n", lineStart);
+        console.log("Char: " + algo.charAt(lineEnd));
+        console.log("Start = " + lineStart + ", End = " + lineEnd);
 
         this._q_algo.prop('selectionStart', lineStart);
         this._q_algo.prop('selectionEnd', lineEnd);
-    }
-
-    _debugGetLinesWithCursor() {
-        const algo = this._q_algo.val();
-        let lineStart = algo.lastIndexOf("\n", this._lastCursorPos) + 1;  //+1 because we need the index of the first character in the line
-        let lineEnd;
-        //special case where lastCursorPos is directly at the end of a line
-        if(lineStart === this._lastCursorPos) {
-            lineStart = algo.lastIndexOf("\n", this._lastCursorPos-2) + 1;    //lastCursorPos-1 would be the current lineStart, but we need one character before that
-            lineEnd = this._lastCursorPos-1;  //the position right before \n
-
-        } else lineEnd = algo.indexOf("\n", lineStart);
-
-        return algo.substring(lineStart, lineEnd+1);
     }
 
     _handleScroll() {   //event is ignored in firefox if source (this._q_algo) is disabled
@@ -513,14 +511,16 @@ class AlgoArea {
                     line.includes("reg") ||
                     AlgoArea.isComment(line, format));
 
-
             } else if(format === REAL_FORMAT) {
                 return !(line.startsWith(".") ||   //all non-operation lines start with "."
                     AlgoArea.isComment(line, format));
 
-
+            } else if(format === FORMAT_UNKNOWN) {
+                //showError("Format not recognized. Please try again.");
+                console.log("Format unkown. Line: " + line);
+                return false;
             } else {
-                //showError("Format not recognized. Please try again.");  //todo change message?
+                //showError("Format not recognized. Please try again.");
                 console.log("Format (" + format + ") not recognized");
                 return false;
             }
@@ -530,7 +530,10 @@ class AlgoArea {
     static isComment(line, format) {
         if(format === QASM_FORMAT) return line.trimStart().startsWith("//");
         else if(format === REAL_FORMAT) return line.trimStart().startsWith("#");
-        else {
+        else if(format === FORMAT_UNKNOWN) {
+            console.log("Format unknown. Line: " + line);
+            return true;
+        } else {
             console.log("Format not recognized");
             return true;
         }
@@ -543,5 +546,85 @@ class AlgoArea {
             console.log("Format not recognized");
             return true;
         }
+    }
+
+    static preformatAlgorithm(algo, format, isOperation) {
+        let setQAlgo = false;
+
+        //make sure every operation is in a separate line
+        if(format === QASM_FORMAT) {
+            let temp = "";
+            const lines = algo.split('\n');
+            for(let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                //"\n" needs to be added separately because it was removed while splitting
+                if(isOperation(line, format)) {
+                    let l = line;
+                    while(l.length !== 0) {
+                        let index = l.indexOf(';');
+                        if(index === -1) {  //no semicolon found
+                            if(AlgoArea.containsComment(l, format)) {
+                                //don't search for the missing ; because there is definitely a comment in between
+                                temp += line + "\n";
+                                l = ""; //make sure to leave the outer loop and continue with the outer-outer-loop
+                                break;
+                            }
+
+                            //search for the missing ; in the following lines
+                            temp += l;
+                            i++;
+                            while(i < lines.length) {
+                                l = lines[i];
+                                if(AlgoArea.isComment(l, format)) {
+                                    temp += "\n";   //don't collapse the operation-line with the comment-line
+                                    index = -1;     //a bit hacky, but needed so I don't have to copy code in a strange way
+                                                    //what happens: since we immediately jump to the outer loop op will be empty and l will stay the same
+                                                    // this makes sure that the whole comment (in the if afterwards we know that the first branch must be
+                                                    // entered since l was a comment and didn't change) will be like it initially was
+                                    break;
+                                }
+                                index = l.indexOf(';');
+                                if(index === -1) temp += l;
+                                else break;     //if we found a semicolon we can continue in the normal (outer) loop
+                                i++;
+                            }
+
+                            if(index === -1) {  //we are in the last line and no ; was found
+                                temp += "\n";
+                                break;
+                            }
+                        }
+
+                        const op =  l.substring(0, index+1);    //we need to include the semicolon, so it is index+1
+                        l = l.substring(index+1);
+
+                        //special case for comments in the same line as an operation
+                        if(AlgoArea.isComment(l, format)) {
+                            temp += op + l + "\n";  //the comment is allowed to stay in the same line
+                            break;
+                        } else temp += op + "\n";    //insert the operation with the added newLine
+                        l = l.trim();
+                    }
+                } else {
+                    temp += line;
+                    //don't create a new line for the last line, because the way splitting works there was no \n at the end of the last line
+                    if(i < lines.length-1) temp += "\n";
+                }
+            }
+            algo = temp;
+            setQAlgo = true;
+        }
+        //for REAL_FORMAT this is inherently the case, because \n is used to separate operations
+
+        //append an empty line at the end if there is none yet
+        if(!algo.endsWith("\n")) {
+            algo = algo + "\n";
+            setQAlgo = true;
+        }
+
+        return {
+            algo: algo,
+            set: setQAlgo
+        };
     }
 }
