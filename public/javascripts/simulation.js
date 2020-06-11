@@ -584,11 +584,14 @@ function print(dot) {
             );
         }
 
+        let animationDuration = 500;
+        if(stepDuration < 1000) animationDuration = stepDuration / 2;
+
         const graph = d3.select("#qdd_div").graphviz({
             width: "70%",     //make it smaller so we have space around where we can scroll through the page - also the graphs are more high than wide so is shouldn't be a problem
             height: svgHeight,
             fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
-        }).tweenPaths(true).tweenShapes(true).transition(function () { return d3.transition().ease(d3.easeLinear).duration(500)}).renderDot(dot);
+        }).tweenPaths(true).tweenShapes(true).transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration)).renderDot(dot);
 
         //$('#color_map').html(
         //    '<svg><rect width="20" height="20" fill="purple"></rect></svg>'

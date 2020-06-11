@@ -139,6 +139,8 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     const std::string algo = arg.Utf8Value();
     std::stringstream ss{algo};
 
+    std::cout << algo << std::endl;
+
     try {
         //second parameter describes the format of the algorithm
         const unsigned int formatCode = (unsigned int)info[1].As<Napi::Number>();
