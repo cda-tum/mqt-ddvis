@@ -3,19 +3,6 @@ const FORMAT_UNKNOWN = 0;
 const QASM_FORMAT = 1;
 const REAL_FORMAT = 2;
 
-//a default algorithm is needed for initialization
-const deutschAlgorithm =    "OPENQASM 2.0;\n" +
-                            "include \"qelib1.inc\";\n" +
-                            "\n" +
-                            "qreg q[2];\n" +
-                            "creg c[2];\n" +
-                            "\n" +
-                            "x q[1];\n" +
-                            "h q[0];\n" +
-                            "h q[1];\n" +
-                            "cx q[0],q[1];\n" +
-                            "h q[0];\n";
-
 const paddingLeftOffset = 15;   //10px is the padding of lineNumbers, so q_algo also needs at least this much padding
 const paddingLeftPerDigit = 10; //padding of q_algo based on the number of digits the line-numbering needs
 
@@ -38,8 +25,6 @@ class AlgoArea {
      */
     constructor(div, idPrefix, changeState, print, error) {
         this._idPrefix = idPrefix;
-        //todo what about resizing?
-
 
         this._drop_zone = $(
             '<div id="' + idPrefix + '_drop_zone" ' +
@@ -87,14 +72,13 @@ class AlgoArea {
         this._backdrop.append(this._highlighting);
 
         this._hlManager = new HighlightManager(this._highlighting, this);
-        this._changeState = changeState; //function to change the state on the callers side  //todo how to handle the state codes?
+        this._changeState = changeState; //function to change the state on the callers side
         this._print = print; //function to print the DD on the callers side
         this._error = error; //function on the callers side for handling errors
 
         this._algoFormat = FORMAT_UNKNOWN;
         this._emptyAlgo = true;
         this._algoChanged = false;
-        this._lastValidAlgorithm = deutschAlgorithm;
         this._numOfOperations = 0;
         this._oldAlgo = "";           //the old input (maybe not valid, but needed if the user edit lines they are not allowed to change)
         this._lastCursorPos = 0;
@@ -122,7 +106,11 @@ class AlgoArea {
     }
 
     set algoFormat(f) {
-        this._algoFormat = f;   //todo check if value is valid?
+        if(f === QASM_FORMAT || f === REAL_FORMAT || f === FORMAT_UNKNOWN) this._algoFormat = f;
+        else {
+            this._algoFormat = FORMAT_UNKNOWN;
+            console.log("Tried to set algoFormat to " + f + ", which is an illegal value. Was set to FORMAT_UNKNOWN (0) instead.");
+        }
     }
 
     get emptyAlgo() {
@@ -147,14 +135,13 @@ class AlgoArea {
      *        is when leaving the textArea after editing, but in this case the format didn't change so the old algoFormat is used
      * @param reset whether a new simulation needs to be started after loading; default false because again the only occasion
      *        it is not set is after editing, but there we especially don't want to reset
-     * @param algorithm only needed if the lastValidAlgorithm should be sent again because the algorithm in q_algo is invalid
      */
-    loadAlgorithm(format = this._algoFormat, reset = false, algorithm) {
+    loadAlgorithm(format = this._algoFormat, reset = false) {
         if(this._emptyAlgo || !this._algoChanged) return;
 
         startLoadingAnimation();
 
-        let algo = algorithm || this._q_algo.val();   //usually q_algo.val() is taken
+        let algo = this._q_algo.val();   //usually q_algo.val() is taken
         const opNum = reset ?
             0 : //parseInt(line_to_go.val()) :
             this._hlManager.highlightedLines;   //we want to continue simulating after the last processed line, which is after the highlighted ones
@@ -214,7 +201,6 @@ class AlgoArea {
     _loadingSuccess(res, algo, opNum, format, reset) {
         this._oldAlgo = algo;
         this._algoChanged = false;
-        this._lastValidAlgorithm = algo;  //algorithm in q_algo was valid if no error occured
 
         if(reset) {
             this._hlManager.resetHighlighting(this._q_algo.val());
@@ -229,9 +215,6 @@ class AlgoArea {
         this._setLineNumbers();
 
         this._print(res.dot);
-
-        //if the user-chosen number is too big, we go as far as possible and enter the correct value in the textField
-        //if(line_to_go && opNum > this._numOfOperations) line_to_go.val(this._numOfOperations);  //todo maybe change this, because it is only "needed" for Simulation
     }
 
     _parseErrorMessage(res) {
@@ -309,10 +292,7 @@ class AlgoArea {
         const dzInnerWidth = this._drop_zone.innerWidth();
         const marginLeft = parseFloat(this._q_algo.css('margin-left'));
         const width = dzInnerWidth - marginLeft;
-        if(isOpera) this._q_algo.css('width', width);
-        else {
-            this._q_algo.css('width', width);
-        }
+        this._q_algo.css('width', width);
 
         /* //if we change lineHighlight dynamically, it may be two small if we start with a small window-width and later expand it
         if(dzInnerWidth > 0) {
@@ -465,7 +445,6 @@ class AlgoArea {
             }
         }
 
-        //TODO ADD PENDING LINE IF CURLINES HAS MORE ELEMENTS THAN OLDLINES
         const lineDif = curLines.length - oldLines.length;
         if(lineDif > 0) {
             let text = "";
@@ -532,11 +511,11 @@ class AlgoArea {
                     AlgoArea.isComment(line, format));
 
             } else if(format === FORMAT_UNKNOWN) {
-                //showError("Format not recognized. Please try again.");  //todo change message?
+                //showError("Format not recognized. Please try again.");
                 console.log("Format unkown. Line: " + line);
                 return false;
             } else {
-                //showError("Format not recognized. Please try again.");  //todo change message?
+                //showError("Format not recognized. Please try again.");
                 console.log("Format (" + format + ") not recognized");
                 return false;
             }

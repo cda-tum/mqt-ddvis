@@ -34,8 +34,6 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
         Napi::Value IsReady(const Napi::CallbackInfo& info);
 
         //fields
-        const long id = NextID++;
-        std::string ip{};
         std::unique_ptr<dd::Package> dd;
         std::unique_ptr<qc::QuantumComputation> qc;
         dd::Edge sim{};

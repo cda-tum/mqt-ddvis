@@ -12,7 +12,6 @@ const lineHighlight = lineHighlight_temp;
 class HighlightManager {
 
     constructor(highlightDiv, algoArea) {
-        //todo fix: right now this is an AlgoArea (needed because the default format of algoArea.algoFormat isn't used if we just provide the function)
         if(highlightDiv) this._div = highlightDiv;
         else throw Error("HighlightManager needs a div to apply the highlighting to!");
 

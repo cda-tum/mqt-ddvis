@@ -8,7 +8,6 @@ const qdd_text = $('#qdd_text');
 const cb_colored = $('#cb_colored');
 const cb_edge_labels = $('#cb_edge_labels');
 const cb_classic = $('#cb_classic');
-//todo also initialize all other selectors once?
 
 
 //################### CONFIGURATION ##################################################################################################################
@@ -147,84 +146,6 @@ for (let i = 0; i < acc.length; i++) {
 }
 
 
-function validateStepDuration() {
-    const input = step_duration.val();
-    if(input.includes(".") || input.includes(",")) {
-        showError("Floats are not allowed!\nPlease enter an unsigned integer instead.");
-        step_duration.val(stepDuration);
-    } else {
-        const newVal = parseInt(input);
-        if(0 <= newVal) {
-            stepDuration = newVal;
-            step_duration.val(newVal);  //needs to be done because of parseInt possible Floats are cut off
-
-        } else {
-            showError("Invalid number for step-duration: Only unsigned integers allowed!");
-            step_duration.val(stepDuration);
-            return false;
-        }
-    }
-}
-
-function updateExportOptions() {
-    const colored = cb_colored.prop('checked');
-    const edgeLabels = cb_edge_labels.prop('checked');
-    const classic = cb_classic.prop('checked');
-
-    changeState(STATE_SIMULATING);
-    startLoadingAnimation();
-
-    const algoArea = algoAreas.get('sim');
-
-    const call = jQuery.ajax({
-        type: 'PUT',
-        url: '/updateExportOptions',
-        data: { colored: colored, edgeLabels: edgeLabels, classic: classic, updateDD: !algoArea.emptyAlgo },
-        success: (res) => {
-            if (res.dot) print(res.dot);
-            endLoadingAnimation();
-            _generalStateChange();  //every LOAD state is possible
-        }
-    });
-    call.fail((res) => {
-        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-
-        endLoadingAnimation();
-        showResponseError(res, "");
-        _generalStateChange();
-    });
-
-    /*
-    const call = $.put("/updateExportOptions", { colored: colored, edgeLabels: edgeLabels, classic: classic });
-    call.success(res => {
-        const call2 = $.ajax({
-            url: '/getDD',
-            contentType: 'application/json',
-            success: (res) => {
-                if(res.dot) print(res.dot);
-                endLoadingAnimation();
-                _generalStateChange();  //every LOAD state is possible
-            }
-        });
-        call2.fail((res) => {
-            if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-
-            endLoadingAnimation();
-            showResponseError(res, "Couldn't retrieve DD from server!");
-            _generalStateChange();
-        });
-    });
-    call.fail((res) => {
-        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-
-        endLoadingAnimation();
-        showResponseError(res, "Going back to the start failed!");
-        _generalStateChange();
-    });
-    */
-}
-
-
 const algoArea = new AlgoArea(algo_div, "sim", changeState, print, showError);
 algoAreas.set("sim", algoArea);   //register at main for resizing
 
@@ -297,7 +218,17 @@ function loadDeutsch() {
     algoArea.algoChanged = true;
 
     algoArea.algoFormat = QASM_FORMAT;
-    algoArea.algo = deutschAlgorithm;
+    algoArea.algo = "OPENQASM 2.0;\n" +
+                    "include \"qelib1.inc\";\n" +
+                    "\n" +
+                    "qreg q[2];\n" +
+                    "creg c[2];\n" +
+                    "\n" +
+                    "x q[1];\n" +
+                    "h q[0];\n" +
+                    "h q[1];\n" +
+                    "cx q[0],q[1];\n" +
+                    "h q[0];\n";;
 
     algoArea.loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
@@ -495,7 +426,8 @@ function sim_diashow() {
                 call.fail((res) => {
                     if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
 
-                    showResponseError(res, "Going a step ahead failed! Aborting Diashow."); //todo notify user that the diashow was aborted if res-msg is shown?
+                    if(res.responseJSON && res.responseJSON.msg) showError(res.responseJSON.msg + "\nAborting diashow.");
+                    else if(altMsg) showError("Going a step ahead failed! Aborting diashow.");
                     endDia();
                 });
             }
@@ -563,7 +495,12 @@ function sim_gotoLine() {
     changeState(STATE_SIMULATING);
     startLoadingAnimation();
 
-    const line = Math.min(parseInt(line_to_go.val()), algoArea.numOfOperations);
+
+    let line = parseInt(line_to_go.val());
+    if(line > algoArea.numOfOperations) {
+        line = algoArea.numOfOperations;
+        line_to_go.val(line);
+    }
     const call = $.ajax({
         url: '/toline?line=' + line,
         contentType: 'application/json',
@@ -652,4 +589,81 @@ function print(dot) {
         qdd_div.html(qdd_text);
         //document.getElementById('color_map').style.display = 'none';
     }
+}
+
+function validateStepDuration() {
+    const input = step_duration.val();
+    if(input.includes(".") || input.includes(",")) {
+        showError("Floats are not allowed!\nPlease enter an unsigned integer instead.");
+        step_duration.val(stepDuration);
+    } else {
+        const newVal = parseInt(input);
+        if(0 <= newVal) {
+            stepDuration = newVal;
+            step_duration.val(newVal);  //needs to be done because of parseInt possible Floats are cut off
+
+        } else {
+            showError("Invalid number for step-duration: Only unsigned integers allowed!");
+            step_duration.val(stepDuration);
+            return false;
+        }
+    }
+}
+
+function updateExportOptions() {
+    const colored = cb_colored.prop('checked');
+    const edgeLabels = cb_edge_labels.prop('checked');
+    const classic = cb_classic.prop('checked');
+
+    changeState(STATE_SIMULATING);
+    startLoadingAnimation();
+
+    const algoArea = algoAreas.get('sim');
+
+    const call = jQuery.ajax({
+        type: 'PUT',
+        url: '/updateExportOptions',
+        data: { colored: colored, edgeLabels: edgeLabels, classic: classic, updateDD: !algoArea.emptyAlgo },
+        success: (res) => {
+            if (res.dot) print(res.dot);
+            endLoadingAnimation();
+            _generalStateChange();  //every LOAD state is possible
+        }
+    });
+    call.fail((res) => {
+        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
+        endLoadingAnimation();
+        showResponseError(res, "");
+        _generalStateChange();
+    });
+
+    /*
+    const call = $.put("/updateExportOptions", { colored: colored, edgeLabels: edgeLabels, classic: classic });
+    call.success(res => {
+        const call2 = $.ajax({
+            url: '/getDD',
+            contentType: 'application/json',
+            success: (res) => {
+                if(res.dot) print(res.dot);
+                endLoadingAnimation();
+                _generalStateChange();  //every LOAD state is possible
+            }
+        });
+        call2.fail((res) => {
+            if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
+            endLoadingAnimation();
+            showResponseError(res, "Couldn't retrieve DD from server!");
+            _generalStateChange();
+        });
+    });
+    call.fail((res) => {
+        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
+        endLoadingAnimation();
+        showResponseError(res, "Going back to the start failed!");
+        _generalStateChange();
+    });
+    */
 }
