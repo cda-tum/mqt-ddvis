@@ -163,6 +163,7 @@ class AlgoArea {
         if(algo) {
             const temp = AlgoArea.preformatAlgorithm(algo, format, this.isOperation);
             algo = temp.algo;
+            this._algoChanged = false;
 
             const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
             call.done((res) => {
@@ -193,8 +194,8 @@ class AlgoArea {
                     //showResponseError(res, "Couldn't connect to the server.");
                     if(res.responseJSON && res.responseJSON.msg) this._error(res.responseJSON.msg);
                     else this._error("Internal Server Error");
-                }
-                else {  //this should be invalid-algorithm-error
+
+                } else {  //this should be invalid-algorithm-error
                     this._inv_algo_warning.css('display', 'block');
 
                     this._error(this._parseErrorMessage(res));
@@ -206,7 +207,6 @@ class AlgoArea {
 
     _loadingSuccess(res, algo, opNum, format, reset) {
         this._oldAlgo = algo;
-        this._algoChanged = false;
 
         if(reset) {
             this._hlManager.resetHighlighting(this._q_algo.val());
