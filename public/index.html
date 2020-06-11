@@ -42,11 +42,13 @@
             $("#verification").load("./views/verification.html");
         });
     </script>
+    <!--
     <script>
         $(() => {
             $("#emulation").load("./views/emulation.html");
         });
     </script>
+    -->
 	
     <title>QDD Visualizer</title>
 </head>
@@ -59,7 +61,7 @@
     <div class="tab">
         <button id="sim_tab" class="tablinks" onclick="openTab(event, 'simulation')">Simulation</button>
         <button id="ver_tab" class="tablinks" onclick="openTab(event, 'verification')">Verification</button>
-        <button class="tablinks" onclick="openTab(event, 'emulation')">Emulation</button>
+        <!--<button class="tablinks" onclick="openTab(event, 'emulation')">Emulation</button>-->
     </div>
 
     <div id="loader"></div>
