@@ -139,8 +139,6 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     const std::string algo = arg.Utf8Value();
     std::stringstream ss{algo};
 
-    std::cout << algo << std::endl;
-
     try {
         //second parameter describes the format of the algorithm
         const unsigned int formatCode = (unsigned int)info[1].As<Napi::Number>();
@@ -363,7 +361,6 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
 
     std::stringstream ss{};
     try {
-        std::cout << "Export DD with options: colored=" << this->showColors << ", edgeLabels=" << this->showEdgeLabels << ", classic=" << this->showClassic << std::endl;
         dd::toDot(sim, ss, true, this->showColors, this->showEdgeLabels, this->showClassic);
         std::string str = ss.str();
         return Napi::String::New(env, str);
