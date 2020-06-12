@@ -4,6 +4,7 @@ const qddVis = require("./build/Release/QDD_Vis");
 let data = new Map();
 
 function parseIP(req) {
+    console.log(req.ip);
     return req.ip.toString().replace(/[^a-zA-Z0-9]/g, '');
 }
 
@@ -11,9 +12,9 @@ function getTimeStamp() {
     return Date.now();
 }
 
-function register(req, remove = false) {
+function register(req, reset = false) {
     const ip = parseIP(req);
-    if(remove) remove(ip);
+    if(reset) remove(ip);
     if(!data.has(ip)) {
         const vis = new qddVis.QDDVis(ip);
         data.set(ip, {
@@ -60,3 +61,4 @@ function cleanUpData() {
 }
 //setTimeout(() => cleanUpData(), CLEANUP_TIMER);
 cleanUpData();
+
