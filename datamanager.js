@@ -11,8 +11,9 @@ function getTimeStamp() {
     return Date.now();
 }
 
-function register(req) {
+function register(req, remove = false) {
     const ip = parseIP(req);
+    if(remove) remove(ip);
     if(!data.has(ip)) {
         const vis = new qddVis.QDDVis(ip);
         data.set(ip, {
