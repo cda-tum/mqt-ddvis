@@ -631,19 +631,22 @@ function updateExportOptions() {
     changeState(STATE_SIMULATING);
     startLoadingAnimation();
 
-    const algoArea = algoAreas.get('sim');
+    //const algoArea = algoAreas.get('sim');
+    console.log("updateExportOtions() called with colored=" + colored + ", edgeLabels=" + edgeLabels + ", classic=" + classic + " [updateDD=" + (!algoArea.emptyAlgo) + "]");
 
     const call = jQuery.ajax({
         type: 'PUT',
         url: '/updateExportOptions',
         data: { colored: colored, edgeLabels: edgeLabels, classic: classic, updateDD: !algoArea.emptyAlgo },
         success: (res) => {
+            console.log("/updateExportOptions(" + colored + ", " + edgeLabels + ", " + classic + ") success");
             if (res.dot) print(res.dot);
             endLoadingAnimation();
             changeState(lastState); //go back to the previous state
         }
     });
     call.fail((res) => {
+        console.log("/updateExportOptions(" + colored + ", " + edgeLabels + ", " + classic + ") failed");
         if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
 
         endLoadingAnimation();

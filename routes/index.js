@@ -54,6 +54,7 @@ router.put('/updateExportOptions', (req, res) => {
         const updateDD = req.body.updateDD === "true";
 
         vis.updateExportOptions(showColored, showEdgeLabels, showClassic);
+        console.log("/updateExportOptions(" + showColored + ", " + showEdgeLabels + ", " + showClassic + ") called - [sendDD = " + (vis.isReady() && updateDD) + "]");
 
         if(vis.isReady() && updateDD) sendDD(res, vis.getDD());
         else res.status(200).json();

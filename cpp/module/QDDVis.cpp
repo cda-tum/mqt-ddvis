@@ -169,7 +169,10 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         atInitial = false;
         const bool process = (bool)info[3].As<Napi::Boolean>(); //the fourth parameter tells us to process iterated operations or not
         if(process) {
-            //todo dereference old sim?
+            if(sim.p != nullptr) {
+                dd->decRef(sim);
+                std::cout << "dereffed old sim (process)" << std::endl;
+            }
             sim = dd->makeZeroState(qc->getNqubits());
             dd->incRef(sim);
             for(unsigned int i = 0; i < opNum; i++) {    //apply some operations
@@ -183,7 +186,10 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         }
 
     } else {    //sim needs to be initialized in some cases
-        //todo dereference old sim?
+        if(sim.p != nullptr) {
+            dd->decRef(sim);
+            std::cout << "dereffed old sim" << std::endl;
+        }
         sim = dd->makeZeroState(qc->getNqubits());
         dd->incRef(sim);
     }
@@ -361,12 +367,15 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
 
     std::stringstream ss{};
     try {
+        std::cout << "GetDD() called with colored=" << this->showColors << ", edgeLabels=" << this->showEdgeLabels << ", classic=" << this->showClassic << std::endl;
         dd::toDot(sim, ss, true, this->showColors, this->showEdgeLabels, this->showClassic);
+        std::cout << "Flags afer toDot: " << this->showColors << ", " << this->showEdgeLabels << ", " << this->showClassic << std::endl;
         std::string str = ss.str();
         return Napi::String::New(env, str);
 
     } catch(std::exception& e) {
         std::cout << "Exception while getting the DD: " << e.what() << std::endl;
+        std::cout << "The values of the Flags are: " << this->showColors << ", " << this->showEdgeLabels << ", " << this->showClassic << std::endl;
         std::string err = "Invalid getDD()-call! ";// + e.what();
         Napi::Error::New(env, err).ThrowAsJavaScriptException();
         return Napi::String::New(env, "-1");
@@ -396,6 +405,7 @@ void QDDVis::UpdateExportOptions(const Napi::CallbackInfo& info) {
     this->showColors = (bool)info[0].As<Napi::Boolean>();
     this->showEdgeLabels = (bool)info[1].As<Napi::Boolean>();
     this->showClassic = (bool)info[2].As<Napi::Boolean>();
+    std::cout << "Updated the values of the Flags to: " << this->showColors << ", " << this->showEdgeLabels << ", " << this->showClassic << std::endl;
 }
 
 Napi::Value QDDVis::IsReady(const Napi::CallbackInfo& info) {
