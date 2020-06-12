@@ -348,7 +348,7 @@ function sim_gotoStart() {
     startLoadingAnimation();
 
     const call = $.ajax({
-        url: '/tostart',
+        url: '/tostart?dataKey=' + dataKey,
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {
@@ -372,7 +372,7 @@ function sim_goBack() {
     startLoadingAnimation();
 
     const call = $.ajax({
-        url: '/prev',
+        url: '/prev?dataKey=' + dataKey,
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {
@@ -417,7 +417,7 @@ function sim_diashow() {
             if(!pauseDia) {
                 const startTime = performance.now();
                 const call = $.ajax({
-                    url: '/next',
+                    url: '/next?dataKey=' + dataKey,
                     contentType: 'application/json',
                     success: (res) => {
 
@@ -450,7 +450,7 @@ function sim_goForward() {
     startLoadingAnimation();
 
     const call = $.ajax({
-        url: '/next',
+        url: '/next?dataKey=' + dataKey,
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {   //we haven't reached the end yet
@@ -481,7 +481,7 @@ function sim_gotoEnd() {
     startLoadingAnimation();
 
     const call = $.ajax({
-        url: '/toend',
+        url: '/toend?dataKey=' + dataKey,
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {
@@ -511,7 +511,7 @@ function sim_gotoLine() {
         line_to_go.val(line);
     }
     const call = $.ajax({
-        url: '/toline?line=' + line,
+        url: '/toline?line=' + line + '&dataKey=' + dataKey,
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {
@@ -632,21 +632,21 @@ function updateExportOptions() {
     startLoadingAnimation();
 
     //const algoArea = algoAreas.get('sim');
-    console.log("updateExportOtions() called with colored=" + colored + ", edgeLabels=" + edgeLabels + ", classic=" + classic + " [updateDD=" + (!algoArea.emptyAlgo) + "]");
+    //console.log("updateExportOtions() called with colored=" + colored + ", edgeLabels=" + edgeLabels + ", classic=" + classic + " [updateDD=" + (!algoArea.emptyAlgo) + "]");
 
     const call = jQuery.ajax({
         type: 'PUT',
         url: '/updateExportOptions',
-        data: { colored: colored, edgeLabels: edgeLabels, classic: classic, updateDD: !algoArea.emptyAlgo },
+        data: { colored: colored, edgeLabels: edgeLabels, classic: classic, updateDD: !algoArea.emptyAlgo, dataKey: dataKey },
         success: (res) => {
-            console.log("/updateExportOptions(" + colored + ", " + edgeLabels + ", " + classic + ") success");
+            //console.log("/updateExportOptions(" + colored + ", " + edgeLabels + ", " + classic + ") success");
             if (res.dot) print(res.dot);
             endLoadingAnimation();
             changeState(lastState); //go back to the previous state
         }
     });
     call.fail((res) => {
-        console.log("/updateExportOptions(" + colored + ", " + edgeLabels + ", " + classic + ") failed");
+        //console.log("/updateExportOptions(" + colored + ", " + edgeLabels + ", " + classic + ") failed");
         if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
 
         endLoadingAnimation();

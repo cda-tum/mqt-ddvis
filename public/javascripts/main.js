@@ -24,6 +24,17 @@ const isFirefox = typeof InstallTrigger !== 'undefined';
 //const isBlink = (isChrome || isOpera) && !!window.CSS;
 
 
+const mainCall =  $.post("/register", {  });
+let dataKey = "";
+mainCall.done((res) => {
+    dataKey = res.key;
+    console.log("Your dataKey: " + dataKey);
+});
+mainCall.fail((res) => {
+    showError("Something bad has happened. Please reload the page!");
+});
+
+
 
 //todo on tab change certain things need to be done:
 /*
@@ -52,23 +63,7 @@ function openTab(event, tabId) {
     //}
 }
 
-function showResponseError(res, altMsg) {
-    if(res.responseJSON && res.responseJSON.msg) showError(res.responseJSON.msg);
-    else if(altMsg) showError(altMsg);
-}
 
-function showError(error) {
-    alert(error);
-}
-
-
-function startLoadingAnimation() {
-    document.getElementById('loader').style.display = 'block';
-}
-
-function endLoadingAnimation() {
-    document.getElementById('loader').style.display = 'none';
-}
 
 
 const dropListeners = new Map();
@@ -100,6 +95,24 @@ function dragOverHandler(event) {
     event.preventDefault(); //needed for all q_algos
 }
 
+
+
+function showResponseError(res, altMsg) {
+    if(res.responseJSON && res.responseJSON.msg) showError(res.responseJSON.msg);
+    else if(altMsg) showError(altMsg);
+}
+
+function showError(error) {
+    alert(error);
+}
+
+function startLoadingAnimation() {
+    document.getElementById('loader').style.display = 'block';
+}
+
+function endLoadingAnimation() {
+    document.getElementById('loader').style.display = 'none';
+}
 
 const algoAreas = new Map();
 function updateAllAlgoAreaSizes() {

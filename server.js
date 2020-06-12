@@ -25,8 +25,8 @@ app.use(cookieParser());
 app.use('/', (req, res, next) => {
     const url = req.url;
     //only register a user on the start of the page (also on loading should work since everything resets there)
-    if(url === '/') dm.register(req, true);
-    else if(url === '/load') dm.register(req, false);
+    //if(url === '/') dm.register(req, true);
+    //else if(url === '/load') dm.register(req, false);
     next();
 });
 

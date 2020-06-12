@@ -165,7 +165,7 @@ class AlgoArea {
             algo = temp.algo;
             this._algoChanged = false;
 
-            const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset });
+            const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset, dataKey: dataKey });
             call.done((res) => {
                 this._loadingSuccess(res, algo, opNum, format, reset);
                 if(temp.set) this._q_algo.val(algo);

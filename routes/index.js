@@ -12,6 +12,11 @@ router.get('/', function(req, res, next) {
     //res.render('index', { title: 'QDD Visualizer' });
 });
 
+router.post('/register', (req, res) => {
+   const key = dm.register(req);
+   res.status(200).json({ key: key });
+});
+
 router.post('/load', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
@@ -54,7 +59,7 @@ router.put('/updateExportOptions', (req, res) => {
         const updateDD = req.body.updateDD === "true";
 
         vis.updateExportOptions(showColored, showEdgeLabels, showClassic);
-        console.log("/updateExportOptions(" + showColored + ", " + showEdgeLabels + ", " + showClassic + ") called - [sendDD = " + (vis.isReady() && updateDD) + "]");
+        //console.log("/updateExportOptions(" + showColored + ", " + showEdgeLabels + ", " + showClassic + ") called - [sendDD = " + (vis.isReady() && updateDD) + "]");
 
         if(vis.isReady() && updateDD) sendDD(res, vis.getDD());
         else res.status(200).json();
