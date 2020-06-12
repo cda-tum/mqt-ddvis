@@ -161,14 +161,19 @@ class AlgoArea {
         }
 
         if(algo) {
-            const temp = AlgoArea.preformatAlgorithm(algo, format, this.isOperation);
+            const temp = this.preformatAlgorithm(algo, format, this.isOperation);
             algo = temp.algo;
             this._algoChanged = false;
 
             const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset, dataKey: dataKey });
             call.done((res) => {
+                if(temp.set) {
+                    this._q_algo.val(algo);
+                    //also set the highlights because the lines might have changed
+                    this._hlManager.text = algo;
+                    this._hlManager._updateDiv();
+                }
                 this._loadingSuccess(res, algo, opNum, format, reset);
-                if(temp.set) this._q_algo.val(algo);
 
                 if(this._numOfOperations === 0) this._changeState(STATE_LOADED_EMPTY);
                 else {
@@ -333,7 +338,6 @@ class AlgoArea {
         lines.forEach(l => text += l + "\n");
         this._line_numbers.html(text);
 
-        //const height = parseInt(this._q_algo.css('height'));
         const clientHeight = document.getElementById(this._idPrefix + "_q_algo").clientHeight;
         //set the height of line_numbers to the height of q_algo without scrollbar, so no offset can occur
         this._line_numbers.css('height', clientHeight);
@@ -548,7 +552,7 @@ class AlgoArea {
         }
     }
 
-    static preformatAlgorithm(algo, format, isOperation) {
+    preformatAlgorithm(algo, format, isOperation) {
         let setQAlgo = false;
 
         //make sure every operation is in a separate line
@@ -559,6 +563,14 @@ class AlgoArea {
                 const line = lines[i];
                 //"\n" needs to be added separately because it was removed while splitting
                 if(isOperation(line, format)) {
+                    if(i >= lines.length-1) {
+                        //if the last line is an operation, the needed \n is added here and not at the end of the preformatting
+                        // so we need to add the pending line here
+                        console.log("added pending line as the last line is an operation");
+                        this._hlManager._addPendingLine();
+                        this._hlManager._updateDiv();
+                    }
+
                     let l = line;
                     while(l.length !== 0) {
                         let index = l.indexOf(';');
@@ -620,6 +632,8 @@ class AlgoArea {
         if(!algo.endsWith("\n")) {
             algo = algo + "\n";
             setQAlgo = true;
+            this._hlManager._addPendingLine();
+            this._hlManager._updateDiv();
         }
 
         return {

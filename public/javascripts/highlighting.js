@@ -73,13 +73,13 @@ class HighlightManager {
         else return false;  //line is definitely not highlighted (yet)
     }
 
-    getNopsUpToLine(lineNum) {
+    /*getNopsUpToLine(lineNum) {
         let num = 0;
         for(let i = 0; i < lineNum && i < this._hl.length; i++) {
             if(!this._hl[i]) num++;
         }
         return num;
-    }
+    }*/
 
     resetHighlighting(newText) {
         this._highlightedOps = 0;
