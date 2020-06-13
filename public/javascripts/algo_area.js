@@ -153,9 +153,9 @@ class AlgoArea {
 
         if(this._algoFormat === FORMAT_UNKNOWN) {
             //if the format is still unknown, we can't load the algorithm -> abort
-            this._inv_algo_warning.css('display', 'block');
-            this._error("Format of your algorithm wasn't recognized. Please make sure it is either Real or QASM and" +
-                " try again.");
+            const errMsg = "Format of your algorithm wasn't recognized. Please make sure it is either Real or QASM and try again.";
+            this._error(errMsg);
+            this._showInvalidAlgoWarning(errMsg);
             changeState(STATE_NOTHING_LOADED);
             endLoadingAnimation();
         }
@@ -182,7 +182,7 @@ class AlgoArea {
                     else this._changeState(STATE_LOADED);
                 }
 
-                this._inv_algo_warning.css('display', 'none');
+                this._hideInvalidAlgoWarning();
                 endLoadingAnimation();
             });
             call.fail((res) => {
@@ -201,10 +201,10 @@ class AlgoArea {
                     else this._error("Internal Server Error");
 
                 } else {  //this should be invalid-algorithm-error
-                    this._inv_algo_warning.css('display', 'block');
-
                     this._setLineNumbers();
-                    this._error(this._parseErrorMessage(res));
+                    const errMsg = this._parseErrorMessage(res);
+                    this._showInvalidAlgoWarning(errMsg);
+                    this._error(errMsg);
                 }
             });
         }
@@ -225,6 +225,15 @@ class AlgoArea {
         this._setLineNumbers();
 
         this._print(res.dot);
+    }
+
+    _showInvalidAlgoWarning(msg) {
+        this._inv_algo_warning.css('display', 'block');
+        this._inv_algo_warning.prop("title", msg);
+    }
+
+    _hideInvalidAlgoWarning() {
+        this._inv_algo_warning.css('display', 'none');
     }
 
     _parseErrorMessage(res) {

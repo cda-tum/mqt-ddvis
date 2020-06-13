@@ -73,6 +73,7 @@
 }
 
 .inv_algo_warning {
+    z-index: 4;
     display: none;
     position: relative;
     top: 80%;
