@@ -532,8 +532,8 @@ class AlgoArea {
     }
 
     static isComment(line, format) {
-        if(format === QASM_FORMAT) return line.trimStart().startsWith("//");
-        else if(format === REAL_FORMAT) return line.trimStart().startsWith("#");
+        if(format === QASM_FORMAT) return line.trim().startsWith("//");
+        else if(format === REAL_FORMAT) return line.trim().startsWith("#");
         else if(format === FORMAT_UNKNOWN) {
             console.log("Format unknown. Line: " + line);
             return true;
