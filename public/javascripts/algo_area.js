@@ -353,7 +353,6 @@ class AlgoArea {
     }
 
     _setQAlgoMarginLeft(digits = 1) {
-        console.log(digits);
         if(digits < 1) digits = 1;  //set at least the default margin
         const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
         this._q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
@@ -485,7 +484,7 @@ class AlgoArea {
 
     _selectLineWithCursor() {
         const algo = this._q_algo.val();
-        console.log("Last cursor at " + this._lastCursorPos + ", char = " + algo.charAt(this._lastCursorPos));
+        //console.log("Last cursor at " + this._lastCursorPos + ", char = " + algo.charAt(this._lastCursorPos));
         let lineStart = algo.lastIndexOf("\n", this._lastCursorPos) + 1;  //+1 because we need the index of the first character in the line
         let lineEnd;
         //special case where lastCursorPos is directly at the end of a line
@@ -494,8 +493,8 @@ class AlgoArea {
             lineEnd = this._lastCursorPos-1;  //the position right before \n
 
         } else lineEnd = algo.indexOf("\n", lineStart);
-        console.log("Char: " + algo.charAt(lineEnd));
-        console.log("Start = " + lineStart + ", End = " + lineEnd);
+        //console.log("Char: " + algo.charAt(lineEnd));
+        //console.log("Start = " + lineStart + ", End = " + lineEnd);
 
         this._q_algo.prop('selectionStart', lineStart);
         this._q_algo.prop('selectionEnd', lineEnd);
