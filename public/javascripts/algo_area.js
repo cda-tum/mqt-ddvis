@@ -304,6 +304,8 @@ class AlgoArea {
         const width = dzInnerWidth - marginLeft;
         this._q_algo.css('width', width);
 
+        this._updateHeights();
+
         /* //if we change lineHighlight dynamically, it may be two small if we start with a small window-width and later expand it
         if(dzInnerWidth > 0) {
             let lh = "<mark>";
@@ -312,6 +314,13 @@ class AlgoArea {
             updateLineHighlight(lh);
         }
         */
+    }
+
+    _updateHeights() {
+        const clientHeight = document.getElementById(this._idPrefix + "_q_algo").clientHeight;
+        //set the height of line_numbers to the height of q_algo without scrollbar, so no offset can occur
+        this._line_numbers.css('height', clientHeight);
+        this._highlighting.css('height', clientHeight);
     }
 
     _setLineNumbers() {
@@ -337,12 +346,7 @@ class AlgoArea {
         let text = "";
         lines.forEach(l => text += l + "\n");
         this._line_numbers.html(text);
-
-        const clientHeight = document.getElementById(this._idPrefix + "_q_algo").clientHeight;
-        //set the height of line_numbers to the height of q_algo without scrollbar, so no offset can occur
-        this._line_numbers.css('height', clientHeight);
-        this._highlighting.css('height', clientHeight);     //todo not sure if this is the right position, but since it
-                                                            // works for line_numbers, it should be okay for highlighting
+        //this._updateHeights();
     }
 
     _setQAlgoMarginLeft(digits = 1) {
@@ -471,6 +475,7 @@ class AlgoArea {
 
         this._oldAlgo = this._q_algo.val();  //changes are legal so they are "saved"
         this._setLineNumbers();
+        this._updateHeights();  //call here because the vertical scrollbar might have changed
     }
 
     _selectLineWithCursor() {
