@@ -341,6 +341,8 @@ class AlgoArea {
         const clientHeight = document.getElementById(this._idPrefix + "_q_algo").clientHeight;
         //set the height of line_numbers to the height of q_algo without scrollbar, so no offset can occur
         this._line_numbers.css('height', clientHeight);
+        this._highlighting.css('height', clientHeight);     //todo not sure if this is the right position, but since it
+                                                            // works for line_numbers, it should be okay for highlighting
     }
 
     _setQAlgoMarginLeft(digits = 1) {
