@@ -88,7 +88,7 @@
 mark {
     color: transparent;
     margin: 0;
-    padding: 2px 0;   /* somehow without this the mark doesn't fill the height of the line */
+    padding: 3px 0 1px;   /* somehow without this the mark doesn't fill the height of the line */
     background-color: #b1adad;
 
     white-space: pre-wrap;
