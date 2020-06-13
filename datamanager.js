@@ -33,7 +33,7 @@ function getKey(req) {
 function createKey(req) {
     let ipPart = "0";
     //retrieves the ip-address of the client (doesn't work on localhost somehow)
-    if(req.headers['x-forward-for']) ipPart = req.headers['x-forwarded-for'].split(',')[0];
+    if(req.headers['x-forwarded-for']) ipPart = req.headers['x-forwarded-for'].split(',')[0];
     const randPart = String(Math.random()).substr(2);   //remove the 0. at the beginning
     return ipPart + randPart;
 }
