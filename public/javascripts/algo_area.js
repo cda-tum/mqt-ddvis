@@ -162,11 +162,15 @@ class AlgoArea {
 
         if(algo) {
             const temp = this.preformatAlgorithm(algo, format, this.isOperation);
-            algo = temp.algo;
             this._algoChanged = false;
 
-            const call = $.post("/load", { basisStates: null, algo: algo, opNum: opNum, format: format, reset: reset, dataKey: dataKey });
+            const call = $.post("/load", { basisStates: null, algo: algo + "\n",    //append \n because it doesn't matter
+                                    // semantically, but the parser needs an empty line at the end and for better error
+                                    // message we can't send the pre-formatted algorithm (which would have added \n if it
+                                    // was missing)
+                opNum: opNum, format: format, reset: reset, dataKey: dataKey });
             call.done((res) => {
+                algo = temp.algo;
                 if(temp.set) {
                     this._q_algo.val(algo);
                     //also set the highlights because the lines might have changed
@@ -249,7 +253,7 @@ class AlgoArea {
                 if(lineEnd > -1) {
 
                     const lineMsg = parseInt(parserError.substring(lineStart, lineEnd));    //the line that is stated in the parser message
-
+                    console.log("LineMsg = " + lineMsg);
                     const temp = this._line_numbers.html().split('\n');
                     let lineNumber;
                     if(temp.length < lineMsg || lineMsg <= 0) lineNumber = lineMsg;
