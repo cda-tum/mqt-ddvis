@@ -203,8 +203,8 @@ class AlgoArea {
                 } else {  //this should be invalid-algorithm-error
                     this._inv_algo_warning.css('display', 'block');
 
-                    this._error(this._parseErrorMessage(res));
                     this._setLineNumbers();
+                    this._error(this._parseErrorMessage(res));
                 }
             });
         }
@@ -219,8 +219,8 @@ class AlgoArea {
         } else this._hlManager.text = this._q_algo.val();
 
         this._numOfOperations = res.data;
-        const digits = numOfDigits(Math.max(this._numOfOperations, 1)); //at least the initial padding of 1 digit
-        this._setQAlgoMarginLeft(digits);
+        //const digits = numOfDigits(Math.max(this._numOfOperations, 1)); //at least the initial padding of 1 digit
+        //this._setQAlgoMarginLeft(digits);
 
         this._setLineNumbers();
 
@@ -324,9 +324,12 @@ class AlgoArea {
     }
 
     _setLineNumbers() {
-        const digits = numOfDigits(this._numOfOperations);
-
         const lines = this._q_algo.val().split('\n');
+        const digits = numOfDigits(this._numOfOperations > 0 ?
+            this._numOfOperations :
+            lines.length
+        );
+
         let num = 0;
         for(let i = 0; i < lines.length; i++) {
             if(i <= this._hlManager.offset) lines[i] = "";
@@ -346,10 +349,12 @@ class AlgoArea {
         let text = "";
         lines.forEach(l => text += l + "\n");
         this._line_numbers.html(text);
-        //this._updateHeights();
+        this._setQAlgoMarginLeft(digits);
     }
 
     _setQAlgoMarginLeft(digits = 1) {
+        console.log(digits);
+        if(digits < 1) digits = 1;  //set at least the default margin
         const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
         this._q_algo.css('margin-left', margin); //need to set margin because padding is ignored when scrolling
 
