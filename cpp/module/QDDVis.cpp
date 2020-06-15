@@ -41,19 +41,13 @@ Napi::Object QDDVis::Init(Napi::Env env, Napi::Object exports) {
 
 
 //constructor
+/**Parameterless default constructor, just initializes variables
+ *
+ * @param info takes no parameters
+ */
 QDDVis::QDDVis(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVis>(info) {
     Napi::Env env = info.Env();
     Napi::HandleScope scope(env);
-
-    //check if a String has been passed
-    if(info.Length() < 1) {
-        Napi::RangeError::New(env, "Need 1 (String) argument!").ThrowAsJavaScriptException();
-        return;
-    }
-    if (!info[0].IsString()) {
-        Napi::TypeError::New(env, "String expected!").ThrowAsJavaScriptException();
-        return;
-    }
 
     this->dd = std::make_unique<dd::Package>();
     this->qc = std::make_unique<qc::QuantumComputation>();
@@ -63,6 +57,10 @@ QDDVis::QDDVis(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVis>(info) 
     this->position = 0;
 }
 
+/**Applies the current operation/DD (determined by iterator) and increments both iterator and positoin.
+ * If iterator reaches its end, atEnd will be set to true.
+ *
+ */
 void QDDVis::stepForward() {
     if(atEnd) return;   //no further steps possible
 
@@ -81,6 +79,11 @@ void QDDVis::stepForward() {
     }
 }
 
+/**If either atInitial is true or the iterator is at the beginning, this method does nothing. In other cases it will
+ * first decrement both position and iterator before applying the inverse of the operation/DD the iterator is then
+ * pointing at.
+ *
+ */
 void QDDVis::stepBack() {
     if(atInitial) return;   //no step back possible
 
@@ -106,7 +109,8 @@ void QDDVis::stepBack() {
  * operations should be processed or just the iterator needs to be advanced
  * Returns: true or false 
  * 
- * Tries to import the passed algorithm and returns whether it was successful or not.
+ * Tries to import the passed algorithm and returns whether it was successful or not. Additionally some operations/DDs can
+ * be applied or just the iterator advance forward without applying operations/DDs.
  */
 Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
@@ -156,6 +160,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         return Napi::Number::New(env, -1);
     }
 
+    //re-initialize some variables (though depending on opNum they might change in the next lines)
     ready = true;
     atInitial = true;
     atEnd = false;
@@ -197,6 +202,13 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**Sets the iterator and position back to the very beginning.
+ * atInitial will be true and in most cases atEnd will be false (special case for empty algorithms: atEnd is also true)
+ * after this call.
+ *
+ * @param info has no parameters
+ * @return true if the DD changed, false otherwise (nothing was done or an error occured)
+ */
 Napi::Value QDDVis::ToStart(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     if(!ready) {
@@ -213,7 +225,8 @@ Napi::Value QDDVis::ToStart(const Napi::CallbackInfo& info) {
             sim = dd->makeZeroState(qc->getNqubits());
             dd->incRef(sim);
             atInitial = true;
-            atEnd = false;
+            atEnd = false; //now we are definitely not at the end (if there were no operation, so atInitial and atEnd could be true at the same time, if(qc-empty)
+            // would already have returned
             iterator = qc->begin();
             position = 0;
 
@@ -228,6 +241,13 @@ Napi::Value QDDVis::ToStart(const Napi::CallbackInfo& info) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**Goes back to the previous step of the simulation process by apllying the inverse of the last processed operation/DD.
+ * If atInitial is true, nothing happens instead.
+ * atEnd will be false and atInitial could end up being true, depending on the position.
+ *
+ * @param info has no parameters
+ * @return true if the DD changed, false otherwise (nothing was done or an error occured)
+ */
 Napi::Value QDDVis::Prev(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     if(!ready) {
@@ -256,6 +276,13 @@ Napi::Value QDDVis::Prev(const Napi::CallbackInfo& info) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**Goes forward to the next step of the simulation process by applying the current operation/DD.
+ * If atEnd is true, nothing happens instead.
+ * atInitial will be false and atEnd could end up being true, depending on the position.
+ *
+ * @param info has no parameters
+ * @return true if the DD changed, false otherwise (nothing was done or an error occured)
+ */
 Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     if(!ready) {
@@ -284,6 +311,13 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**Processes all operations until the iterator points to the very end.
+ * atEnd will be true and in most cases atInitial will be false (special case for empty algorithms: atInitial is also true)
+ * after this call.
+ *
+ * @param info has no parameters
+ * @return true if the DD changed, false otherwise (nothing was done or an error occured)
+ */
 Napi::Value QDDVis::ToEnd(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     if(!ready) {
@@ -311,6 +345,13 @@ Napi::Value QDDVis::ToEnd(const Napi::CallbackInfo& info) {
     }
 }
 
+/**Depending on the current position of the iterator and the given parameter this function either applies inverse
+ * operations/DDs like Prev or operations/DDs normally like Next.
+ * atInitial and atEnd could be anything after this call.
+ *
+ * @param info takes one parameter that determines to which position the iterator should point at after this call
+ * @return true if the DD changed, false otherwise (nothing was done or an error occured)
+ */
 Napi::Value QDDVis::ToLine(const Napi::CallbackInfo &info) {
     Napi::Env env = info.Env();
     Napi::HandleScope scope(env);
@@ -320,7 +361,7 @@ Napi::Value QDDVis::ToLine(const Napi::CallbackInfo &info) {
         Napi::RangeError::New(env, "Need 1 (unsigned int) argument!").ThrowAsJavaScriptException();
         return Napi::Boolean::New(env, false);
     }
-    if (!info[0].IsNumber()) {  //algorithm
+    if (!info[0].IsNumber()) {  //line number/position
         Napi::TypeError::New(env, "arg1: unsigned int expected!").ThrowAsJavaScriptException();
         return Napi::Boolean::New(env, false);
     }
@@ -354,10 +395,14 @@ Napi::Value QDDVis::ToLine(const Napi::CallbackInfo &info) {
         Napi::Error::New(env, msg).ThrowAsJavaScriptException();
         return Napi::Boolean::New(env, false);
     }
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**Creates a DD in the .dot-format for the current state of the simulation.
+ *
+ * @param info has no parameters
+ * @return a string describing the current state of the simulation as DD in the .dot-format
+ */
 Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     if(!ready) {
@@ -382,6 +427,11 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
     }
 }
 
+/**Updates the three fields of this object that determine with which options the DD should be exported (on the next
+ * GetDD-call).
+ *
+ * @param info has three boolean arguments (colored, edgeLabels, classic)
+ */
 void QDDVis::UpdateExportOptions(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     //check if the correct parameters have been passed
@@ -389,15 +439,15 @@ void QDDVis::UpdateExportOptions(const Napi::CallbackInfo& info) {
         Napi::RangeError::New(env, "Need 3 (bool, bool, bool) arguments!").ThrowAsJavaScriptException();
         return;
     }
-    if (!info[0].IsBoolean()) {  //algorithm
+    if (!info[0].IsBoolean()) {  //colored
         Napi::TypeError::New(env, "arg1: Boolean expected!").ThrowAsJavaScriptException();
         return;
     }
-    if (!info[1].IsBoolean()) {  //algorithm
+    if (!info[1].IsBoolean()) {  //edgeLabels
         Napi::TypeError::New(env, "arg2: Boolean expected!").ThrowAsJavaScriptException();
         return;
     }
-    if (!info[2].IsBoolean()) {  //algorithm
+    if (!info[2].IsBoolean()) {  //classic
         Napi::TypeError::New(env, "arg3: Boolean expected!").ThrowAsJavaScriptException();
         return;
     }
@@ -407,7 +457,11 @@ void QDDVis::UpdateExportOptions(const Napi::CallbackInfo& info) {
     this->showClassic = (bool)info[2].As<Napi::Boolean>();
     //std::cout << "Updated the values of the Flags to: " << this->showColors << ", " << this->showEdgeLabels << ", " << this->showClassic << std::endl;
 }
-
+/**
+ *
+ * @param info has no parameters
+ * @return value of the field isReady (true meaning an algorithm has been successfully loaded)
+ */
 Napi::Value QDDVis::IsReady(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     return Napi::Boolean::New(env, this->ready);

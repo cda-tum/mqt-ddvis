@@ -16,7 +16,6 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
 
     private:
         static Napi::FunctionReference constructor;
-        static long NextID;
 
         //"private" methods
         void stepForward();
@@ -39,7 +38,7 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
         dd::Edge sim{};
 
         std::vector<std::unique_ptr<qc::Operation>>::iterator iterator{};
-        unsigned int position = 0;
+        unsigned int position = 0;  //current position of the iterator
 
         std::array<short, qc::MAX_QUBITS> line {};
         bool ready = false;     //true if a valid algorithm is imported, false otherwise
