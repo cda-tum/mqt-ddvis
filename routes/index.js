@@ -1,22 +1,36 @@
 
-const qddVis = require("../build/Release/QDD_Vis");
 const express = require('express');
 const router = express.Router();
 const dm = require('../datamanager');
-const fs = require('fs');
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-    //console.log(req.ip + " has entered (index.js)");
-    //dm.register(req);
-    //res.render('index', { title: 'QDD Visualizer' });
-});
-
+/**Creates a new QDDVis-object at the server for the requester.
+ *
+ * Params: none, just the request is needed
+ * Sends: {
+ *      key - the key that allows the requester to access their object on later calls
+ * }
+ *
+ */
 router.post('/register', (req, res) => {
    const key = dm.register(req);
    res.status(200).json({ key: key });
 });
 
+/**Loads the given quantum algorithm and sends back its respective DD.
+ *
+ * Params: {
+ *     dataKey: the key that provides access to the QDDVis-object
+ *              received from the initial /register-call
+ *     algo:    the quantum algorithm to load as string
+ *     opNum:   the number of operations that should be iterated immediately
+ *     format:  code for the format of the algorithm as integer (valid values at public/javascripts/algo_area.js)
+ *     reset:   "true" for true, others for false; determines whether the algorithm should be reset (simulation starts
+ *              from the beginning, opNum would then directly apply the corresponding operations) or the current simulation
+ *              should stay as it is (opNum just advances the iterator and doesn't apply any operations)
+ * }
+ * Sends:   take a look at _sendDD documentation
+ *
+ */
 router.post('/load', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
@@ -28,28 +42,48 @@ router.post('/load', (req, res) => {
 
             const numOfOperations = vis.load(algo, format, opNum, reset);
             if(numOfOperations > -1) {
-                sendDD(res, vis.getDD(), numOfOperations);
-            }
-            else res.status(500).json({ msg: "Error while loading the algorithm!" });
+                _sendDD(res, vis.getDD(), numOfOperations);
+
+            } else res.status(500).json({ msg: "Error while loading the algorithm!" });
 
         } catch(err) {
             const retry = err.message.startsWith("Invalid algorithm!"); //if the algorithm is invalid, we need to send the last valid algorithm
-            res.status(400).json({ msg: err.message, retry: retry});
+            res.status(400).json({ msg: err.message, retry: retry});    //I think retry is no longer needed!
         }
     } else {
         res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
     }
 });
 
+/**Tries to retrieve the QDDVis-object associated with the requester and sends back its respective DD.
+ *
+ * Params:  the key that provides access to the QDDVis-object as query string ("?dataKey=...")
+ *          received from the initial /register-call
+ * Sends:   take a look at _sendDD documentation
+ *
+ */
 router.get('/getDD', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
-        sendDD(res, vis.getDD());
+        _sendDD(res, vis.getDD());
     } else {
         res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
     }
 });
 
+/**Updates the export options for creating the DD from the current simulation-state.
+ *
+ * Params:  {
+ *     dataKey:     the key that provides access to the QDDVis-object
+ *                  received from the initial /register-call
+ *     colored:     whether the colored-option should be used for exporting the simulation-state to DD ("true") or not (others)
+ *     edgeLabels:  whether the edgeLabels-option should be used for exporting the simulation-state to DD ("true") or not (others)
+ *     classic:     whether the classic-option should be used for exporting the simulation-state to DD ("true") or not (others)
+ *     updateDD:    whether the DD should be sent back ("true") or not (others)
+ * }
+ * Sends:   take a look at _sendDD documentation
+ *
+ */
 router.put('/updateExportOptions', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
@@ -59,9 +93,8 @@ router.put('/updateExportOptions', (req, res) => {
         const updateDD = req.body.updateDD === "true";
 
         vis.updateExportOptions(showColored, showEdgeLabels, showClassic);
-        //console.log("/updateExportOptions(" + showColored + ", " + showEdgeLabels + ", " + showClassic + ") called - [sendDD = " + (vis.isReady() && updateDD) + "]");
 
-        if(vis.isReady() && updateDD) sendDD(res, vis.getDD());
+        if(vis.isReady() && updateDD) _sendDD(res, vis.getDD());
         else res.status(200).json();
 
     } else {
@@ -69,11 +102,19 @@ router.put('/updateExportOptions', (req, res) => {
     }
 });
 
+/**Sets the simulation back to its start.
+ *
+ * Params:  the key that provides access to the QDDVis-object as query string ("?dataKey=...")
+ *          received from the initial /register-call
+ * Sends:   take a look at _sendDD documentation
+ *          may also send back a simple message if the simulation was already at the start and therefore nothing changed
+ *
+ */
 router.get('/tostart', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
         const ret = vis.toStart();
-        if(ret) sendDD(res, vis.getDD());  //sendFile(res, data.ip);
+        if(ret) _sendDD(res, vis.getDD());  //sendFile(res, data.ip);
         else res.status(403).json({ msg: "you were already at the start" });    //the client will search for res.svg, but it will be null so they won't redraw
 
     } else {
@@ -81,11 +122,20 @@ router.get('/tostart', (req, res) => {
     }
 });
 
+/**Goes back to the previous step of the simulation by undoing the last processed operation.
+ *
+ * Params:  the key that provides access to the QDDVis-object as query string ("?dataKey=...")
+ *          received from the initial /register-call
+ * Sends:   take a look at _sendDD documentation
+ *          may also send back a simple message if the simulation was already at the start and therefore no operation
+ *          was undone and nothing changed
+ *
+ */
 router.get('/prev', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
         const ret = vis.prev();
-        if(ret) sendDD(res, vis.getDD());  //sendFile(res, data.ip);
+        if(ret) _sendDD(res, vis.getDD());
         else res.status(403).json({ msg: "can't go back because we are at the beginning" });    //the client will search for res.svg, but it will be null so they won't redraw
 
     } else {
@@ -93,36 +143,63 @@ router.get('/prev', (req, res) => {
     }
 });
 
+/**Goes to the next step of the simulation by applying the current operation.
+ *
+ * Params:  the key that provides access to the QDDVis-object as query string ("?dataKey=...")
+ *          received from the initial /register-call
+ * Sends:   take a look at _sendDD documentation
+ *          may also send back a simple message if the simulation was already at the end and therefore no operation
+ *          was applied and nothing changed
+ *
+ */
 router.get('/next', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
         const ret = vis.next();
-        if(ret) sendDD(res, vis.getDD());  //sendFile(res, data.ip);     //something changes so we update the shown dd
-        else res.send({ msg: "can't go ahead because we are at the end", reload: "false" });
+        if(ret) _sendDD(res, vis.getDD());  //something changes so we update the shown dd
+        else res.send({ msg: "can't go ahead because we are at the end" });
 
     } else {
         res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
     }
 });
 
+/**Goes to the end of the simulation by applying all remaining operations.
+ *
+ * Params:  the key that provides access to the QDDVis-object as query string ("?dataKey=...")
+ *          received from the initial /register-call
+ * Sends:   take a look at _sendDD documentation
+ *          may also send back a simple message if the simulation was already at the end and therefore nothing changed
+ *
+ */
 router.get('/toend', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
         const ret = vis.toEnd();
-        if(ret) sendDD(res, vis.getDD());  //sendFile(res, data.ip); //something changes so we update the shown dd
-        else res.send({ msg: "you were already at the end", reload: "false" });
+        if(ret) _sendDD(res, vis.getDD());  //something changes so we update the shown dd
+        else res.send({ msg: "you were already at the end" });
 
     } else {
         res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
     }
 });
 
+/**Transfers the simulation to a specific position in the algorithm either by applying or undoing operations until said
+ * position has been reached.
+ *
+ * Params:  the line at which the simulation should be after this call as query string("?line=...")
+ *          the key that provides access to the QDDVis-object as query string ("&dataKey=...") - received from the initial /register-call
+ * Sends:   take a look at _sendDD documentation
+ *          may also send back a simple message if the simulation was already at the given line and therefore no operation
+ *          was applied or undone, so nothing changed
+ *
+ */
 router.get('/toline', (req, res) => {
     const vis = dm.get(req);
     const line = parseInt(req.query.line);
     if(vis) {
         const ret = vis.toLine(line);
-        if(ret) sendDD(res, vis.getDD());  //sendFile(res, data.ip); //something changes so we update the shown dd
+        if(ret) _sendDD(res, vis.getDD());  //something changes so we update the shown dd
         else res.send({ msg: "you were already at line " + line, reload: "false" });
 
     } else {
@@ -134,15 +211,14 @@ router.get('/toline', (req, res) => {
 
 module.exports = router;
 
-function sendDD(res, dd, data) {
+/**Convenience function for sending the DD to the requester.
+ *
+ * @param res response-object needed to send something to the requester
+ * @param dd string representation of the dd in .dot-format
+ * @param data some optional data some of the callers of this function need to send along with the DD
+ * @private
+ */
+function _sendDD(res, dd, data) {
     if(data || data === 0) res.status(200).json({ dot: dd, data: data });
     else res.status(200).json({ dot: dd });
-
-}
-
-function sendFile(res, ip, msg = "") {
-    fs.readFile("data/" + ip + ".dot", "utf8", (error, file) => {
-        if(error) res.send({ msg: msg + " failed with " + error.message, svg: null });
-        else res.send({ msg: msg, svg: file });
-    });
 }

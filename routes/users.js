@@ -1,3 +1,5 @@
+
+//this isn't needed, it's just here because it is express-convention (may delete later)
 var express = require('express');
 var router = express.Router();
 
