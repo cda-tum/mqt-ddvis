@@ -25,8 +25,8 @@ et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata san
 <button class="accordion" >Advanced settings</button>
 <div class="panel">
     <label for="stepDuration">Step duration in ms: </label>
-    <input type="number" min="0" id="stepDuration" onchange="validateStepDuration()" value="1000"
-    style="margin-right: 150px"/>
+    <input type="number" id="stepDuration" min="0" value="1000" step="100" onchange="validateStepDuration()"
+           style="margin-right: 150px"/>
 
     <label for="cb_colored" class="checkbox">Colored</label>
     <input type="checkbox" id="cb_colored" onchange="updateExportOptions()" checked/>
