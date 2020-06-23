@@ -172,7 +172,7 @@ for (let i = 0; i < acc.length; i++) {
 
 
 const algoArea = new AlgoArea(algo_div, "sim", changeState, print, showError);
-algoAreas.set("sim", algoArea);   //register at main for resizing
+registerAlgoArea("sim", algoArea);  //register at main for resizing
 
 //append the navigation div below algoArea
 algo_div.append(
