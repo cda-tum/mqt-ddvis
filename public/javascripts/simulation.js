@@ -184,6 +184,13 @@ algo_div.append(
 const line_to_go = $('#line_to_go');    //must be created here since it doesn't exist before
 const automatic = $('#automatic');
 
+//if enter is pressed inside line_to_go, we go to the stated line
+line_to_go.keyup((event) => {
+    if(line_to_go.is(":focus") && event.key === "Enter") {
+        sim_gotoLine();
+    }
+});
+
 changeState(STATE_NOTHING_LOADED);      //initial state
 
 
