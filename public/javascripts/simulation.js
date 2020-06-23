@@ -1,3 +1,4 @@
+
 //################### J-QUERY ELEMENTS ###############################################################################################################
 
 const step_duration = $('#stepDuration');
@@ -14,6 +15,7 @@ const cb_classic = $('#cb_classic');
 
 let stepDuration = 1000;   //in ms
 
+
 //################### STATE MANAGEMENT ##################################################################################################################
 //states of the simulation tab
 const STATE_NOTHING_LOADED = 0;     //initial state, goes to LOADED
@@ -25,8 +27,12 @@ const STATE_DIASHOW = 5;            //can go to LOADED
 const STATE_LOADED_EMPTY = 6;       //can't navigate
 
 let runDia = false;
-let pauseDia = false;
 let simState = STATE_NOTHING_LOADED;
+
+/**Changes the state of the simulation-UI by properly enabling disabling certain UI elements.
+ *
+ * @param state the state we want to switch to
+ */
 function changeState(state) {
     let enable;
     let disable;
@@ -89,7 +95,6 @@ function changeState(state) {
 
         case STATE_DIASHOW:
             runDia = true;
-            pauseDia = false;
             automatic.text("||");   //\u23F8
             enable = [ "automatic" ];
             disable = [ "sim_tab", "ver_tab",
@@ -124,6 +129,11 @@ function changeState(state) {
     simState = state;
 }
 
+/**Enables all elements whose id is mentioned in the parameter.
+ *
+ * @param ids string-array with the ids of all elements that should be enabled
+ * @private
+ */
 function _enableElementsWithID(ids) {
     ids.forEach((id) => {
         const elem = document.getElementById(id);
@@ -131,6 +141,11 @@ function _enableElementsWithID(ids) {
     });
 }
 
+/**Disables all elements whose id is mentioned in the parameter.
+ *
+ * @param ids string-array with the ids of all elements that should be disabled
+ * @private
+ */
 function _disableElementsWithID(ids) {
     ids.forEach((id) => {
         const elem = document.getElementById(id);
@@ -139,6 +154,7 @@ function _disableElementsWithID(ids) {
 }
 
 //################### UI INITIALIZATION ##################################################################################################################
+//accordion
 //from https://www.w3schools.com/howto/howto_js_accordion.asp
 const acc = document.getElementsByClassName("accordion");
 for (let i = 0; i < acc.length; i++) {
@@ -191,9 +207,7 @@ line_to_go.keyup((event) => {
     }
 });
 
-changeState(STATE_NOTHING_LOADED);      //initial state
-
-
+changeState(STATE_NOTHING_LOADED);      //prepare initial state
 
 
 //################### ALGORITHM LOADING ##################################################################################################################
@@ -229,6 +243,9 @@ function loadReal() {
     algoArea.algo = emptyReal;
 }
 
+/**Load Deutsch-algorithm
+ *
+ */
 function loadDeutsch() {
     algoArea.emptyAlgo = false;
     algoArea.algoChanged = true;
@@ -249,6 +266,9 @@ function loadDeutsch() {
     algoArea.loadAlgorithm(QASM_FORMAT, true);   //new algorithm -> new simulation
 }
 
+/**Load Alu-algorithm
+ *
+ */
 function loadAlu() {
     algoArea.emptyAlgo = false;
     algoArea.algoChanged = true;
@@ -349,7 +369,9 @@ function loadAlu() {
 }
 
 //################### NAVIGATION ##################################################################################################################
-
+/**Sets the simulation back to its initial state by calling /tostart and updates the DD if necessary.
+ *
+ */
 function sim_gotoStart() {
     changeState(STATE_SIMULATING);
     startLoadingAnimation();
@@ -374,6 +396,9 @@ function sim_gotoStart() {
     });
 }
 
+/**Goes one step back in the simulation by calling /prev and updates the DD if necessary.
+ *
+ */
 function sim_goBack() {
     changeState(STATE_SIMULATING);
     startLoadingAnimation();
@@ -404,24 +429,30 @@ function sim_goBack() {
     });
 }
 
+/**Either starts or stops the diashow. While a diashow is running the client periodically (defined by stepDuration) calls
+ * /next and updates the DD until the end of the algorithm is reached or the diashow is stopped manually.
+ *
+ */
 function sim_diashow() {
+    /**Convenience function to avoid code duplication. Simply sets everything that is needed to properly stop the diashow.
+     *
+     */
     function endDia() {
-        pauseDia = true;
         runDia = false;
-
         _generalStateChange();  //in error-cases we also call endDia(), and in normal cases it doesn't matter that we call this function
         automatic.text("\u25B6");   //play-symbol in unicode
     }
 
-    if(runDia) {
-        endDia();
-
-    } else {
+    if(runDia) endDia();
+    else {
         runDia = true;
         changeState(STATE_DIASHOW);
 
+        /**Periodically calls /next and updates DD if necessary
+         *
+         */
         const func = () => {
-            if(!pauseDia) {
+            if(runDia) {
                 const startTime = performance.now();
                 const call = $.ajax({
                     url: '/next?dataKey=' + dataKey,
@@ -452,6 +483,9 @@ function sim_diashow() {
     }
 }
 
+/**Goes one step forward in the simulation by calling /next and updates the DD if necessary.
+ *
+ */
 function sim_goForward() {
     changeState(STATE_SIMULATING);
     startLoadingAnimation();
@@ -483,6 +517,9 @@ function sim_goForward() {
     });
 }
 
+/**Simulates to the end of the algorithm by calling /toend and updates the DD if necessary.
+ *
+ */
 function sim_gotoEnd() {
     changeState(STATE_SIMULATING);
     startLoadingAnimation();
@@ -507,11 +544,14 @@ function sim_gotoEnd() {
     });
 }
 
+/**Simulates to the given line by calling /toline and updates the DD if necessary.
+ *
+ */
 function sim_gotoLine() {
     changeState(STATE_SIMULATING);
     startLoadingAnimation();
 
-
+    //the user is not allowed to go to a line that is not in the algorithm
     let line = parseInt(line_to_go.val());
     if(line > algoArea.numOfOperations) {
         line = algoArea.numOfOperations;
@@ -536,6 +576,11 @@ function sim_gotoLine() {
     });
 }
 
+/**If we don't know which states are possible (for example on error), we call this function since it covers all possible
+ * states after a simulation step.
+ *
+ * @private
+ */
 function _generalStateChange() {
     endLoadingAnimation();
 
@@ -545,6 +590,10 @@ function _generalStateChange() {
     else changeState(STATE_LOADED);
 }
 
+/**Checks if the number the user entered in line_to_go is an integer between 0 and numOfOperations. If this is not the
+ * case an error is shown and the value is reset.
+ *
+ */
 function validateLineNumber() {
     const lineNum = line_to_go.val();
     if(lineNum.includes(".")) {
@@ -581,6 +630,11 @@ function validateLineNumber() {
 //################### MISC ##################################################################################################################
 
 let svgHeight = 0;  //can't be initialized beforehand
+/**Visualizes the given DD as d3 graph with a transition animation.
+ *
+ * @param dot a string representing a DD in the .dot-format
+ *          if not given, the graph will be reset (no DD visualized)
+ */
 function print(dot) {
     if(dot) {
         //document.getElementById('color_map').style.display = 'block';
@@ -610,6 +664,10 @@ function print(dot) {
     }
 }
 
+/**Checks if the number the user entered in step_duration is an integer > 0. If this is not the
+ * case an error is shown and the value is reset to the previous value.
+ *
+ */
 function validateStepDuration() {
     const input = step_duration.val();
     if(input.includes(".") || input.includes(",")) {
@@ -624,11 +682,14 @@ function validateStepDuration() {
         } else {
             showError("Invalid number for step-duration: Only unsigned integers allowed!");
             step_duration.val(stepDuration);
-            return false;
         }
     }
 }
 
+/**Updates the export options that define some visual properties of the DD by calling /updateExportOptions and udpating
+ * the DD if necessary.
+ *
+ */
 function updateExportOptions() {
     const colored = cb_colored.prop('checked');
     const edgeLabels = cb_edge_labels.prop('checked');
@@ -638,22 +699,17 @@ function updateExportOptions() {
     changeState(STATE_SIMULATING);
     startLoadingAnimation();
 
-    //const algoArea = algoAreas.get('sim');
-    //console.log("updateExportOtions() called with colored=" + colored + ", edgeLabels=" + edgeLabels + ", classic=" + classic + " [updateDD=" + (!algoArea.emptyAlgo) + "]");
-
     const call = jQuery.ajax({
         type: 'PUT',
         url: '/updateExportOptions',
         data: { colored: colored, edgeLabels: edgeLabels, classic: classic, updateDD: !algoArea.emptyAlgo, dataKey: dataKey },
         success: (res) => {
-            //console.log("/updateExportOptions(" + colored + ", " + edgeLabels + ", " + classic + ") success");
             if (res.dot) print(res.dot);
             endLoadingAnimation();
             changeState(lastState); //go back to the previous state
         }
     });
     call.fail((res) => {
-        //console.log("/updateExportOptions(" + colored + ", " + edgeLabels + ", " + classic + ") failed");
         if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
 
         endLoadingAnimation();

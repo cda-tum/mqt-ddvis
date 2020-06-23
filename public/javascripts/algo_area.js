@@ -406,7 +406,7 @@ class AlgoArea {
     }
 
     _handleInput() {
-        if(isFirefox && runDia) {
+        if(isFirefox && runDia) {   //TODO what needs to be done for verification? can runDia be true but verification is active?
             this._error("You are not allowed to edit the algorithm during the diashow or simulation-process!");
             this._q_algo.val(this._oldAlgo);
             return;
