@@ -132,13 +132,13 @@ class HighlightManager {
             i < this._hl.length && !this._hl[i];    //abort as soon as we have found the next operation
             i++) {
             this._addProcessedLine();
-            this._removePendingLine();
+            this.removePendingLine();
 
             this._nopsInHighlighting++;
         }
 
         this._addProcessedLine(true);   //add lineHighlight
-        this._removePendingLine();
+        this.removePendingLine();
         this._highlightedOps++;
 
         this._updateDiv();
@@ -150,7 +150,7 @@ class HighlightManager {
      */
     decreaseHighlighting() {
         this._removeProcessedLine();
-        this._addPendingLine();
+        this.addPendingLine();
         this._highlightedOps--;
 
         //remove possible nops inside the highlighting
@@ -159,7 +159,7 @@ class HighlightManager {
             i--) {
 
             this._removeProcessedLine();
-            this._addPendingLine();
+            this.addPendingLine();
 
             this._nopsInHighlighting--;
         }
@@ -276,17 +276,17 @@ class HighlightManager {
 
     /**Adds an empty line to pendingText.
      *
-     * @private
+     *
      */
-    _addPendingLine() {
+    addPendingLine() {
         this._pendingText += "\n";
     }
 
     /**Removes one line (simply \n) from pendingText.
      *
-     * @private
+     *
      */
-    _removePendingLine() {
+    removePendingLine() {
         this._pendingText = this._pendingText.substring(1); //remove one \n
     }
 }
