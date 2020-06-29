@@ -635,12 +635,14 @@ function sim_gotoLine() {
             if(res.dot) {
                 print(res.dot, () => {
                     if (res.data.noGoingBack) {
-                        algoArea.hlManager.highlightToXOps(algoArea.hlManager.highlightedLines - res.data.nops);
+                        if (res.data.reset) algoArea.hlManager.highlightToXOps(res.data.nops);
+                        else algoArea.hlManager.highlightToXOps(algoArea.hlManager.highlightedLines - res.data.nops);
                     } else if (res.data.nextIsIrreversible) {
                         if (res.data.reset) algoArea.hlManager.highlightToXOps(res.data.nops);
                         else algoArea.hlManager.highlightToXOps(algoArea.hlManager.highlightedLines + res.data.nops);
                     } else {
-                        algoArea.hlManager.highlightToXOps(line);
+                        if (res.data.reset) algoArea.hlManager.highlightToXOps(res.data.nops);
+                        else algoArea.hlManager.highlightToXOps(line);
                     }
                     stateChange(res);
                 });
