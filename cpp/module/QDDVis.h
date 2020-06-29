@@ -20,6 +20,8 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
         //"private" methods
         void stepForward();
         void stepBack();
+        std::pair<fp, fp> getProbabilities(unsigned short qubitIdx);
+        void measureQubit(unsigned short qubitIdx, bool measureOne, fp pzero, fp pone);
 
         //exported ("public") methods       - return type must be Napi::Value or void!
         Napi::Value Load(const Napi::CallbackInfo& info);
@@ -31,6 +33,7 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
         Napi::Value GetDD(const Napi::CallbackInfo& info);
         void UpdateExportOptions(const Napi::CallbackInfo& info);
         Napi::Value IsReady(const Napi::CallbackInfo& info);
+		Napi::Value ConductIrreversibleOperation(const Napi::CallbackInfo& info);
 
         //fields
         std::unique_ptr<dd::Package> dd;
@@ -41,6 +44,7 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
         unsigned int position = 0;  //current position of the iterator
 
         std::array<short, qc::MAX_QUBITS> line {};
+        std::bitset<qc::MAX_QUBITS> measurements{};
         bool ready = false;     //true if a valid algorithm is imported, false otherwise
         bool atInitial = true; //whether we currently visualize the initial state or not
         bool atEnd = false; // whether we currently visualize the end of the given circuit

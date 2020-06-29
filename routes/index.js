@@ -40,10 +40,9 @@ router.post('/load', (req, res) => {
             const format = parseInt(req.body.format);
             const reset = req.body.reset === "true";   //whether the algorithm should be reset to the start or if iterator and current DD should stay as they are
 
-            const numOfOperations = vis.load(algo, format, opNum, reset);
-            if(numOfOperations > -1) {
-                _sendDD(res, vis.getDD(), numOfOperations);
-
+            const ret = vis.load(algo, format, opNum, reset);
+            if(ret.numOfOperations) {
+                _sendDD(res, vis.getDD(), ret);
             } else res.status(500).json({ msg: "Error while loading the algorithm!" });
 
         } catch(err) {
@@ -114,7 +113,7 @@ router.get('/tostart', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
         const ret = vis.toStart();
-        if(ret) _sendDD(res, vis.getDD());  //sendFile(res, data.ip);
+        if(ret) _sendDD(res, vis.getDD());
         else res.status(403).json({ msg: "you were already at the start" });    //the client will search for res.svg, but it will be null so they won't redraw
 
     } else {
@@ -135,7 +134,7 @@ router.get('/prev', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
         const ret = vis.prev();
-        if(ret) _sendDD(res, vis.getDD());
+        if(ret.changed) _sendDD(res, vis.getDD(), {noGoingBack: ret.noGoingBack}); //something changes so we update the shown dd
         else res.status(403).json({ msg: "can't go back because we are at the beginning" });    //the client will search for res.svg, but it will be null so they won't redraw
 
     } else {
@@ -156,9 +155,25 @@ router.get('/next', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
         const ret = vis.next();
-        if(ret) _sendDD(res, vis.getDD());  //something changes so we update the shown dd
-        else res.send({ msg: "can't go ahead because we are at the end" });
 
+        if(ret.changed) _sendDD(res, vis.getDD(), ret); //something changes so we update the shown dd
+        else res.send({ msg: "can't go ahead because we are at the end", reload: "false" });
+    } else {
+        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
+    }
+});
+
+router.get('/conductIrreversibleOperation', (req, res) => {
+    const vis = dm.get(req);
+    if(vis) {
+        let data = JSON.parse(req.query.parameter);
+        const ret = vis.conductIrreversibleOperation(data);
+
+        if (!ret.finished) {
+            res.status(200).json({dot: vis.getDD(), finished: ret.finished, parameter: ret.parameter});
+        } else {
+            res.status(200).json({dot: vis.getDD(), finished: ret.finished});
+        }
     } else {
         res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
     }
@@ -176,8 +191,8 @@ router.get('/toend', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
         const ret = vis.toEnd();
-        if(ret) _sendDD(res, vis.getDD());  //something changes so we update the shown dd
-        else res.send({ msg: "you were already at the end" });
+        if(ret.changed) _sendDD(res, vis.getDD(), {nops: ret.nops, nextIsIrreversible: ret.nextIsIrreversible, barrier: ret.barrier});  //sendFile(res, data.ip); //something changes so we update the shown dd
+        else res.send({ msg: "you were already at the end", reload: "false" });
 
     } else {
         res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
@@ -199,8 +214,8 @@ router.get('/toline', (req, res) => {
     const line = parseInt(req.query.line);
     if(vis) {
         const ret = vis.toLine(line);
-        if(ret) _sendDD(res, vis.getDD());  //something changes so we update the shown dd
-        else res.send({ msg: "you were already at line " + line, reload: "false" });
+        if(ret.changed) _sendDD(res, vis.getDD(), {nops: ret.nops, nextIsIrreversible: ret.nextIsIrreversible, noGoingBack: ret.noGoingBack, reset: ret.reset});  //something changes so we update the shown dd
+        else res.send({ msg: "you were already at line " + line, reload: "false" , data: {nextIsIrreversible: ret.nextIsIrreversible, noGoingBack: ret.noGoingBack}});
 
     } else {
         res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });

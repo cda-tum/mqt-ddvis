@@ -205,7 +205,7 @@ class AlgoArea {
                     this._hlManager.setHighlights();
                 } else this._hlManager.text = this._q_algo.val();
 
-                this._numOfOperations = res.data;   //save how many operations the new algorithm has
+                this._numOfOperations = res.data.numOfOperations;   //save how many operations the new algorithm has
                 this._setLineNumbers();             //set the line numbers because we have a new algorithm
                 this._print(res.dot);               //print the DD of the new algorithm
 
@@ -214,6 +214,12 @@ class AlgoArea {
                     if(opNum <= 0) this._changeState(STATE_LOADED_START);
                     else if(opNum >= this._numOfOperations) this._changeState(STATE_LOADED_END);
                     else this._changeState(STATE_LOADED);
+
+                    if (res.data.noGoingBack)
+                        document.getElementById("prev").disabled = true;
+                    if (res.data.nextIsIrreversible) {
+                        document.getElementById("toEnd").disabled = true;
+                    }
                 }
 
                 this._hideInvalidAlgoWarning(); //a valid algorithm was loaded -> hide the warning

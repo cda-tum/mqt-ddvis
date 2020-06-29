@@ -10,6 +10,12 @@ const cb_colored = $('#cb_colored');
 const cb_edge_labels = $('#cb_edge_labels');
 const cb_classic = $('#cb_classic');
 
+const irreversibleDialog = $("#irreversibleDialog");
+
+const graphviz = d3.select("#qdd_div").graphviz({
+    width: "70%",     //make it smaller so we have space around where we can scroll through the page
+    fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
+}).tweenPaths(true).tweenShapes(true);
 
 //################### CONFIGURATION ##################################################################################################################
 
@@ -27,6 +33,7 @@ const STATE_DIASHOW = 5;            //can go to LOADED
 const STATE_LOADED_EMPTY = 6;       //can't navigate
 
 let runDia = false;
+let conductedIrreversibleOperation = false;
 let simState = STATE_NOTHING_LOADED;
 
 /**Changes the state of the simulation-UI by properly enabling disabling certain UI elements.
@@ -186,10 +193,10 @@ algo_div.append(
     '        <button type="button" id="automatic" class="nav-button" onclick="sim_diashow()" ' +
     'title="Start a diashow"' +
     '        >&#9654</button>\n' +
-    '        <button type="button" id="next" class="nav-button" onclick="sim_goForward()"' +
+    '        <button type="button" id="next" class="nav-button" onclick="sim_goForward()" ' +
     'title="Apply the current operation"' +
     '        >&#8594</button>\n' +
-    '        <button type="button" id="toEnd" class="nav-button" onclick="sim_gotoEnd()"' +
+    '        <button type="button" id="toEnd" class="nav-button" onclick="sim_gotoEnd()" ' +
     'title="Apply all remaining operations"' +
     '        >&#8608</button>\n' +
     '        <p></p>\n' +
@@ -381,16 +388,19 @@ function sim_gotoStart() {
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {
-                print(res.dot);
-                algoArea.hlManager.initialHighlighting();
+                print(res.dot, () => {
+                    algoArea.hlManager.initialHighlighting();
+                    endLoadingAnimation();
+                    changeState(STATE_LOADED_START);
+                });
+            } else {
+                endLoadingAnimation();
+                changeState(STATE_LOADED_START);
             }
-            endLoadingAnimation();
-            changeState(STATE_LOADED_START);
         }
     });
     call.fail((res) => {
         if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-
         showResponseError(res, "Going back to the start failed!");
         _generalStateChange();
     });
@@ -408,13 +418,18 @@ function sim_goBack() {
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {
-                print(res.dot);
-                algoArea.hlManager.decreaseHighlighting();
+                print(res.dot, () => {
+                    algoArea.hlManager.decreaseHighlighting();
 
-                endLoadingAnimation();
-                if(algoArea.hlManager.highlightedLines <= 0) changeState(STATE_LOADED_START);
-                else changeState(STATE_LOADED);
-
+                    endLoadingAnimation();
+                    if(algoArea.hlManager.highlightedLines <= 0) changeState(STATE_LOADED_START);
+                    else changeState(STATE_LOADED);
+                    // disable the back button in case the previous operation now is a non-reversible operation
+                    if (res.data.noGoingBack) {
+                        const elem = document.getElementById("prev");
+                        elem.disabled = true;
+                    }
+                });
             } else {
                 endLoadingAnimation();
                 changeState(STATE_LOADED_START);
@@ -422,7 +437,8 @@ function sim_goBack() {
         }
     });
     call.fail((res) => {
-        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+        //404 means that we are no longer registered and therefore need to reload
+        if(res.status === 404) window.location.reload(false);
 
         showResponseError(res, "Going a step back failed!");
         _generalStateChange();
@@ -437,17 +453,18 @@ function sim_diashow() {
     /**Convenience function to avoid code duplication. Simply sets everything that is needed to properly stop the diashow.
      *
      */
-    function endDia() {
+    function endDia(disableBackButton) {
         runDia = false;
         _generalStateChange();  //in error-cases we also call endDia(), and in normal cases it doesn't matter that we call this function
         automatic.text("\u25B6");   //play-symbol in unicode
+        if (disableBackButton) {
+            document.getElementById("prev").disabled = true;
+        }
     }
-
-    if(runDia) endDia();
+    if(runDia) endDia(conductedIrreversibleOperation);
     else {
         runDia = true;
         changeState(STATE_DIASHOW);
-
         /**Periodically calls /next and updates DD if necessary
          *
          */
@@ -459,15 +476,27 @@ function sim_diashow() {
                     contentType: 'application/json',
                     success: (res) => {
 
-                        if(res.dot) {
-                            print(res.dot);
-
+                        function diaCallback() {
                             algoArea.hlManager.increaseHighlighting();
+                            //calculate the duration of the API-call so the time between two steps is constant
+                            const duration = performance.now() - startTime;
+                            //wait a bit so the current qdd can be shown to the user
+                            setTimeout(() => func(), Math.min(Math.abs(stepDuration - duration), stepDuration));
+                        }
 
-                            const duration = performance.now() - startTime;     //calculate the duration of the API-call so the time between two steps is constant
-                            setTimeout(() => func(), stepDuration - duration); //wait a bit so the current qdd can be shown to the user
-
-                        } else endDia();
+                        if (typeof res.data !== 'undefined'  && res.data.conductIrreversibleOperation) {
+                            conductedIrreversibleOperation = true;
+                            _handleIrreversibleOperation(res.data, function (result) {
+                                // only conduct callback, when last operation finished
+                                if (!result.finished && result.dot) print(result.dot, null);
+                                else if (result.dot) print(result.dot, diaCallback());
+                            });
+                        } else if(res.dot) {   //we haven't reached the end yet
+                            conductedIrreversibleOperation = false;
+                            print(res.dot, diaCallback());
+                        } else {
+                            endDia(conductedIrreversibleOperation);
+                        }
                     }
                 });
                 call.fail((res) => {
@@ -475,7 +504,7 @@ function sim_diashow() {
 
                     if(res.responseJSON && res.responseJSON.msg) showError(res.responseJSON.msg + "\nAborting diashow.");
                     else if(altMsg) showError("Going a step ahead failed! Aborting diashow.");
-                    endDia();
+                    endDia(conductedIrreversibleOperation);
                 });
             }
         };
@@ -494,18 +523,30 @@ function sim_goForward() {
         url: '/next?dataKey=' + dataKey,
         contentType: 'application/json',
         success: (res) => {
-            if(res.dot) {   //we haven't reached the end yet
-                print(res.dot);
+            let disableBackButton = res.data.conductIrreversibleOperation;
+            let disablePlayAndToEndButton = res.data.nextIsIrreversible;
 
-                algoArea.hlManager.increaseHighlighting();
+            algoArea.hlManager.increaseHighlighting();
 
-                endLoadingAnimation();
-                if(algoArea.hlManager.highlightedLines >= algoArea.numOfOperations) changeState(STATE_LOADED_END);
-                else changeState(STATE_LOADED);
+            function callback() {
+                _generalStateChange();
+                // disable the back button in case a measurement was conducted
+                if (disableBackButton) {
+                    document.getElementById("prev").disabled = true;
+                }
+                if (disablePlayAndToEndButton) {
+                    document.getElementById("toEnd").disabled = true;
+                }
+            }
 
-            } else {
-                endLoadingAnimation();
-                changeState(STATE_LOADED_END); //should never reach this code because the button should be disabled when we reach the end
+            if (res.data.conductIrreversibleOperation) {
+                _handleIrreversibleOperation(res.data, function (result) {
+                    // only conduct callback, when last operation finished
+                    if (!result.finished && result.dot) print(result.dot, null);
+                    else if (result.dot) print(result.dot, callback);
+                });
+            } else if(res.dot) {   //we haven't reached the end yet
+                print(res.dot, callback);
             }
         }
     });
@@ -528,12 +569,31 @@ function sim_gotoEnd() {
         url: '/toend?dataKey=' + dataKey,
         contentType: 'application/json',
         success: (res) => {
-            if(res.dot) {
-                print(res.dot);
-                algoArea.hlManager.highlightEverything();
+            function stateChange(res) {
+                endLoadingAnimation();
+                if (res.data.nextIsIrreversible) {
+                    changeState(STATE_LOADED);
+                    document.getElementById("toEnd").disabled = true;
+                } else if (res.data.barrier) changeState(STATE_LOADED);
+                else changeState(STATE_LOADED_END);
             }
-            endLoadingAnimation();
-            changeState(STATE_LOADED_END);
+
+            if(res.dot) {
+                print(res.dot, () => {
+                    // increase highlighting by the number of applied operations
+                    if (res.data.barrier) {
+                        algoArea.hlManager.highlightToXOps(algoArea.hlManager.highlightedLines + res.data.nops);
+                    } else if (res.data.nextIsIrreversible) {
+                        algoArea.hlManager.highlightToXOps(algoArea.hlManager.highlightedLines + res.data.nops);
+                    } else {
+                        algoArea.hlManager.highlightEverything();
+                    }
+                    stateChange(res);
+                });
+            } else {
+                stateChange(res);
+            }
+
         }
     });
     call.fail((res) => {
@@ -561,11 +621,32 @@ function sim_gotoLine() {
         url: '/toline?line=' + line + '&dataKey=' + dataKey,
         contentType: 'application/json',
         success: (res) => {
-            if(res.dot) {
-                print(res.dot);
-                algoArea.hlManager.highlightToXOps(line);
+            function stateChange(res) {
+                _generalStateChange();
+                endLoadingAnimation();
+                if (res.data.nextIsIrreversible) {
+                    document.getElementById("toEnd").disabled = true;
+                }
+                if (res.data.noGoingBack) {
+                    document.getElementById("prev").disabled = true;
+                }
             }
-            _generalStateChange();  //even though no error occurred, it is still possible for every LOADED-state to be the correct one
+
+            if(res.dot) {
+                print(res.dot, () => {
+                    if (res.data.noGoingBack) {
+                        algoArea.hlManager.highlightToXOps(algoArea.hlManager.highlightedLines - res.data.nops);
+                    } else if (res.data.nextIsIrreversible) {
+                        if (res.data.reset) algoArea.hlManager.highlightToXOps(res.data.nops);
+                        else algoArea.hlManager.highlightToXOps(algoArea.hlManager.highlightedLines + res.data.nops);
+                    } else {
+                        algoArea.hlManager.highlightToXOps(line);
+                    }
+                    stateChange(res);
+                });
+            } else {
+                stateChange(res);
+            }
         }
     });
     call.fail((res) => {
@@ -588,6 +669,109 @@ function _generalStateChange() {
     if(algoArea.hlManager.highlightedLines <= 0) changeState(STATE_LOADED_START);
     else if(algoArea.hlManager.highlightedLines >= algoArea.numOfOperations) changeState(STATE_LOADED_END);
     else changeState(STATE_LOADED);
+}
+
+function _resizeDialog(dialog, pzero, pone) {
+    $(window).resize(function() {
+        if (dialog.hasClass("ui-dialog-content") &&
+            dialog.dialog("isOpen")) {
+            dialog.dialog("option", "position", {my: "center", at: "center", of: "#algo_div"});
+            dialog.dialog("option", "width", $(window).width() * 0.15);
+            let dialogWidth = dialog.innerWidth();
+            let buttonpane = dialog.next();
+            buttonpane.find('button:first').width(pzero * dialogWidth * 0.75);
+            buttonpane.find('button:last').width(pone * dialogWidth * 0.75);
+        }
+    });
+}
+
+function _startDialog(dialog, title, text, pzero, pone) {
+    dialog.html(text);
+    const def = $.Deferred();
+
+    _resizeDialog(dialog, pzero, pone);
+    dialog.dialog({
+        title: title,
+        resizable: false,
+        autoOpen: true,
+        modal: true,
+        position: {my: "center", at: "center", of: "#algo_div"},
+        width: $(window).width() * 0.15,
+        buttons: {
+            'Option 0': {id: 'm0', text: '0', click: function() {
+                    def.resolve("0");
+                    $( this ).dialog( "close" );
+                }},
+            'Option 1': {id: 'm1', text: '1', click: function() {
+                    def.resolve("1");
+                    $( this ).dialog( "close" );
+                }},
+        },
+        close: function() {
+            def.resolve("none")
+            $(this).dialog('destroy');
+        }
+    });
+    let buttonpane = dialog.next();
+    buttonpane.find('button:first').width(pzero * dialog.innerWidth() * 0.75);
+    buttonpane.find('button:last').width(pone * dialog.innerWidth() * 0.75);
+    return def.promise();
+}
+
+function _handleIrreversibleOperation(data, callback) {
+    let parameter = data.parameter;
+
+    const qubit = parameter.qubit;
+    const pzero = parameter.pzero;
+    const pone = parameter.pone;
+
+    if (pzero < 1e-13 || pone < 1e-13) {
+        if (pzero < 1e-13) parameter['classicalValueToMeasure'] = "1";
+        else parameter['classicalValueToMeasure'] = "0";
+        _makeIrreversibleOperationCall(parameter, callback);
+        return;
+    }
+    // user decision on what to do based on information above
+    let title;
+    let text;
+    if (typeof parameter.cbit !== 'undefined') {
+        title = 'Measuring qubit q' + qubit;
+        text = "Decide the measurement outcome<br><div>p(0)=" + pzero.toFixed(2) +
+            "</div><div>p(1)=" + pone.toFixed(2) + "</div>";
+    } else {
+        title = 'Resetting qubit q' + qubit;
+        text = "Decide the reset outcome<br><div>p(0)=" + pzero.toFixed(2) +
+            "</div><div>p(1)=" + pone.toFixed(2) + "</div>";
+    }
+
+    _startDialog(irreversibleDialog, title, text, pzero, pone).done(function(status) {
+        parameter['classicalValueToMeasure'] = status;
+        _makeIrreversibleOperationCall(parameter, callback);
+    }).fail(function () {
+        // possibly handle error here
+    });
+}
+
+function _makeIrreversibleOperationCall(parameter, callback) {
+    const call = $.ajax({
+        url: '/conductIrreversibleOperation?dataKey=' + dataKey,
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: {parameter: JSON.stringify(parameter)},
+        success: (response) => {
+            if (!response.finished) {
+                callback(response);
+                _handleIrreversibleOperation(response, callback);
+            } else {
+                callback(response);
+            }
+        }
+    });
+    call.fail((res) => {
+        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+        showResponseError(res, "Conducting irreversible operation failed.");
+        _generalStateChange();
+    });
 }
 
 /**Checks if the number the user entered in line_to_go is an integer between 0 and numOfOperations. If this is not the
@@ -634,8 +818,9 @@ let svgHeight = 0;  //can't be initialized beforehand
  *
  * @param dot a string representing a DD in the .dot-format
  *          if not given, the graph will be reset (no DD visualized)
+ * @param callback function that is executed when rendering finishes
  */
-function print(dot) {
+function print(dot, callback) {
     if(dot) {
         //document.getElementById('color_map').style.display = 'block';
         if(svgHeight === 0) {
@@ -648,11 +833,10 @@ function print(dot) {
         let animationDuration = 500;
         if(stepDuration < 1000) animationDuration = stepDuration / 2;
 
-        const graph = d3.select("#qdd_div").graphviz({
-            width: "70%",     //make it smaller so we have space around where we can scroll through the page - also the graphs are more high than wide so is shouldn't be a problem
-            height: svgHeight,
-            fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
-        }).tweenPaths(true).tweenShapes(true).transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration)).renderDot(dot);
+        graphviz
+            .height(svgHeight)
+            .transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration))
+            .renderDot(dot).on("transitionStart", callback);
 
         //$('#color_map').html(
         //    '<svg><rect width="20" height="20" fill="purple"></rect></svg>'
@@ -704,9 +888,10 @@ function updateExportOptions() {
         url: '/updateExportOptions',
         data: { colored: colored, edgeLabels: edgeLabels, classic: classic, updateDD: !algoArea.emptyAlgo, dataKey: dataKey },
         success: (res) => {
-            if (res.dot) print(res.dot);
-            endLoadingAnimation();
-            changeState(lastState); //go back to the previous state
+            if (res.dot) print(res.dot, () => {
+                endLoadingAnimation();
+                changeState(lastState); //go back to the previous state
+            });
         }
     });
     call.fail((res) => {

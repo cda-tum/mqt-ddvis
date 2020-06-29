@@ -73,7 +73,20 @@
     margin-left: 20px;
 }
 
+#irreversibleDialog {
+    text-align: center;
+    display: none;
+}
 
+.ui-dialog .ui-dialog-buttonpane {
+    display: flex;
+    text-align: center;
+    justify-content: space-between;
+    position: relative;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
 
 #color_map {
     display: block;
