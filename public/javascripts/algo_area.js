@@ -153,7 +153,6 @@ class AlgoArea {
     loadAlgorithm(format = this._algoFormat, reset = false) {
         if(this._emptyAlgo || !this._algoChanged) return;
 
-        debugger
         startLoadingAnimation();
 
         let algo = this._q_algo.val();   //usually q_algo.val() is taken
@@ -225,7 +224,8 @@ class AlgoArea {
 
                     this._hideInvalidAlgoWarning(); //a valid algorithm was loaded -> hide the warning
                     endLoadingAnimation();    //I think this is no longer needed because Lukas added it to the callback?
-                });               //print the DD of the new algorithm
+
+                }, true);               //print the DD of the new algorithm
             });
             call.fail((res) => {
                 if(reset) {

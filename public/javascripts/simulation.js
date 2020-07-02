@@ -815,14 +815,17 @@ function validateLineNumber() {
 
 //################### MISC ##################################################################################################################
 
+const minZoomScaleExtent = 0.1;     //defines the farthest a user can zoom out of a DD
+const maxZoomScaleExtent = 100;     //defines the farthest a user can zoom into a DD
 let svgHeight = 0;  //can't be initialized beforehand
 /**Visualizes the given DD as d3 graph with a transition animation.
  *
  * @param dot a string representing a DD in the .dot-format
  *          if not given, the graph will be reset (no DD visualized)
  * @param callback function that is executed when rendering finishes
+ * @param resetZoom whether the DD should be recentered with fitting zoom or not
  */
-function print(dot, callback) {
+function print(dot, callback, resetZoom=false) {
     if(dot) {
         //document.getElementById('color_map').style.display = 'block';
         if(svgHeight === 0) {
@@ -835,12 +838,20 @@ function print(dot, callback) {
         let animationDuration = 500;
         if(stepDuration < 1000) animationDuration = stepDuration / 2;
 
-        const graph = graphviz
-            .height(svgHeight)
-            .transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration))
-            .fit(true)
-            .renderDot(dot).on("transitionStart", callback);
-        //graph.resetZoom();
+        if(resetZoom) {
+            graphviz.options({ zoomScaleExtent: [minZoomScaleExtent, maxZoomScaleExtent] })
+                .height(svgHeight)
+                .transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration))
+                .renderDot(dot).on("transitionStart", callback)
+                .resetZoom();
+        } else {
+            graphviz.options({ zoomScaleExtent: [minZoomScaleExtent, maxZoomScaleExtent] })
+                .height(svgHeight)
+                .transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration))
+                .fit(true)
+                .renderDot(dot).on("transitionStart", callback);
+        }
+
 
         //$('#color_map').html(
         //    '<svg><rect width="20" height="20" fill="purple"></rect></svg>'
