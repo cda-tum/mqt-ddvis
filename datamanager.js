@@ -1,7 +1,22 @@
 
 const qddVis = require("./build/Release/QDD_Vis");
 
-const data = new Map(); //saves the QDDVis-objects needed for simulation
+//const data = new Map(); //saves the QDDVis-objects needed for simulation
+
+class DataManager {
+    constructor() {
+        this._data = new Map();
+    }
+
+    get data() {
+        return this._data;
+    }
+}
+
+const manager = new Map();
+manager.set("sim", new DataManager());
+manager.set("ver1", new DataManager());
+manager.set("ver2", new DataManager());
 
 /**Retrieves the key for data based on the request.
  *
@@ -17,6 +32,28 @@ function _getKey(req) {
     else if(req.body.dataKey)   dataKey = req.body.dataKey;
 
     return dataKey;
+}
+
+/**Retrieves the dataManager that stores the data needed by the requester.
+ *
+ * @param req request of a client-call to the server
+ * @returns {DataManager} the dataManager associated with the request
+ * @private
+ */
+function _getTargetManager(req) {
+    let managerId = "sim";   //take sim per default for back-compatability;
+
+    //different API-calls can have a different request-structure
+    if(req.targetManager)             managerId = req.targetManager;
+    else if(req.query.targetManager)  managerId = req.query.targetManager;
+    else if(req.body.targetManager)   managerId = req.body.targetManager;
+
+    //todo retrieve dataManager
+    const m = manager.get(managerId);
+    //console.log(managerId);
+    //console.log(m);
+
+    return m;
 }
 
 /**Creates a key based on the requester's ip address and a random value
@@ -50,10 +87,21 @@ function _getTimeStamp() {
 function register(req) {
     const key = _createKey(req);
     const vis = new qddVis.QDDVis(key);
+
+    //create an object in every dataManager the requester might need
+    for(const item of manager) { //item: [key, value]
+        const m = item[1];
+        m.data.set(key, {                 //save:
+            vis: vis,                       //the actual object needed for the simulation
+            last_access: _getTimeStamp()    //a time stamp to determine "old" entries that can be deleted safely
+        });
+    }
+    /*
     data.set(key, {                 //save:
         vis: vis,                       //the actual object needed for the simulation
         last_access: _getTimeStamp()    //a time stamp to determine "old" entries that can be deleted safely
     });
+    */
     return key;
 }
 
@@ -65,19 +113,12 @@ function register(req) {
  */
 function get(req) {
     const key = _getKey(req);
-    const item = data.get(key);
+    const dataManager = _getTargetManager(req);
+    const item = dataManager.data.get(key);
     if(item) {
         item.last_access = _getTimeStamp();  //update the last time the item was accessed
         return item.vis;
     }
-}
-
-/**Convenience function to remove an entry of data.
- *
- * @param key of the object to remove
- */
-function remove(key) {
-    data.delete(key);
 }
 
 //external scripts may only register/create and request/get objects
@@ -96,19 +137,26 @@ const MAX_LAST_ACCESS_DIFF = CLEANUP_TIMER;  //how much time must have passed si
 function _cleanUpData() {
     console.log("Starting cleanup...");
 
-    const minLA = _getTimeStamp() - MAX_LAST_ACCESS_DIFF;    //the min value of last_access for the item to not be removed; everything lower is removed
-    const keysToRemove = [];        //save the keys of the objects we want to remove because we can't alter the map while iterating it
-    for(const item of data.entries()) { //item: [key, value]
-        if(item[1].last_access < minLA) {
-            keysToRemove.push(item[0]);
+    const minLA = _getTimeStamp() - MAX_LAST_ACCESS_DIFF;       //the min value of last_access for the item to not be
+                                                                // removed; everything lower is removed
+    for(const entry of manager.entries()) {     //entry: [key, value]
+        const dm = entry[1];
+        //cleanup all dataManagers
+       const keysToRemove = [];                             //save the keys of the objects we want to remove because we
+                                                            // can't alter the map while iterating it
+        for(const item of dm.data.entries()) { //item: [key, value]
+            if(item[1].last_access < minLA) {
+                keysToRemove.push(item[0]);
+            }
         }
+
+        //remove all "old" entries
+        for(const key of keysToRemove) dm.data.delete(key);
     }
 
-    //remove all "old" entries
-    for(const key of keysToRemove) remove(key);
 
     setTimeout(() => _cleanUpData(), CLEANUP_TIMER);    //call the function again at a later time
-    console.log("Cleanup finished. Removed " + keysToRemove.length + " items, " + data.size + " items remain.");
+    console.log("Cleanup finished.");// Removed " + keysToRemove.length + " items, " + data.size + " items remain.");
 }
 //initiate the future cleanup
 setTimeout(() => _cleanUpData(), CLEANUP_TIMER);

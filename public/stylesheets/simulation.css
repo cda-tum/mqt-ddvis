@@ -3,28 +3,11 @@
 #algo_div {
     float: left;
     width: 30%;
-    height: 750px;
-    padding: 0;
-    margin-top: 5px;
-    text-align: center;
-}
-
-#nav_div {
-    padding: 10px;
-    /*height: 15%;*/
-}
-
-.nav-button {
-    width: 40px;
 }
 
 #qdd_div {
-    float: right;
-    padding: 0;
-    margin-top: 5px;
+    float: right;   /* not sure if this is even needed*/
     width: 70%;
-    height: 750px;
-    text-align: center;
 }
 
 /* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
@@ -33,11 +16,6 @@
         width: 100%;
         /*height: auto;*/
     }
-}
-
-.example-algo {
-    margin: 0 5px;
-    width: 100px;
 }
 
 /* accordion from https://www.w3schools.com/howto/howto_js_accordion.asp */

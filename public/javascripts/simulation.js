@@ -183,7 +183,7 @@ registerAlgoArea("sim", algoArea);  //register at main for resizing
 
 //append the navigation div below algoArea
 algo_div.append(
-  '<div id="nav_div">\n' +
+  '<div id="nav_div" class="nav-div">\n' +
     '        <button type="button" id="toStart" class="nav-button" onclick="sim_gotoStart()" ' +
     'title="Go back to the initial state"' +
     '        >&#8606</button>\n' +
@@ -520,7 +520,7 @@ function sim_goForward() {
     startLoadingAnimation();
 
     const call = $.ajax({
-        url: '/next?dataKey=' + dataKey,
+        url: '/next?dataKey=' + dataKey,// + '&targetManager=sim',
         contentType: 'application/json',
         success: (res) => {
             let disableBackButton = res.data.conductIrreversibleOperation;

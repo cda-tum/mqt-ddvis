@@ -67,6 +67,34 @@ svg {
 }
 
 
+.example-algo {
+    margin: 0 5px;
+    width: 100px;
+}
+
+.nav-button {
+    width: 40px;
+}
+
+.algo-div {
+    height: 750px;
+    padding: 0;
+    margin-top: 5px;
+    text-align: center;
+}
+
+.nav-div {
+    padding: 10px;
+}
+
+.svg-div {
+    height: 750px;
+    padding: 0;
+    margin-top: 5px;
+    text-align: center;
+}
+
+
 
 /* ################################## specific element types ################################## */
 /* tab related code adapted from https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_tabs */
