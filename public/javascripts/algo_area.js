@@ -153,6 +153,7 @@ class AlgoArea {
     loadAlgorithm(format = this._algoFormat, reset = false) {
         if(this._emptyAlgo || !this._algoChanged) return;
 
+        debugger
         startLoadingAnimation();
 
         let algo = this._q_algo.val();   //usually q_algo.val() is taken
@@ -619,7 +620,8 @@ class AlgoArea {
                 return !(line.trim() === "" ||
                     line.includes("OPENQASM") ||
                     line.includes("include") ||
-                    line.includes("reg") ||
+                    line.includes("qreg") ||
+                    line.includes("creg") ||
                     AlgoArea.isComment(line, format));
 
             } else if(format === REAL_FORMAT) {
