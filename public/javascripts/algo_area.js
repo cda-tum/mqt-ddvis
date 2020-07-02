@@ -208,23 +208,23 @@ class AlgoArea {
 
                 this._numOfOperations = res.data.numOfOperations;   //save how many operations the new algorithm has
                 this._setLineNumbers();             //set the line numbers because we have a new algorithm
-                this._print(res.dot);               //print the DD of the new algorithm
+                this._print(res.dot, () => {
+                    if(this._numOfOperations === 0) this._changeState(STATE_LOADED_EMPTY);
+                    else {
+                        if(opNum <= 0) this._changeState(STATE_LOADED_START);
+                        else if(opNum >= this._numOfOperations) this._changeState(STATE_LOADED_END);
+                        else this._changeState(STATE_LOADED);
 
-                if(this._numOfOperations === 0) this._changeState(STATE_LOADED_EMPTY);
-                else {
-                    if(opNum <= 0) this._changeState(STATE_LOADED_START);
-                    else if(opNum >= this._numOfOperations) this._changeState(STATE_LOADED_END);
-                    else this._changeState(STATE_LOADED);
-
-                    if (res.data.noGoingBack)
-                        document.getElementById("prev").disabled = true;
-                    if (res.data.nextIsIrreversible) {
-                        document.getElementById("toEnd").disabled = true;
+                        if (res.data.noGoingBack)
+                            document.getElementById("prev").disabled = true;
+                        if (res.data.nextIsIrreversible) {
+                            document.getElementById("toEnd").disabled = true;
+                        }
                     }
-                }
 
-                this._hideInvalidAlgoWarning(); //a valid algorithm was loaded -> hide the warning
-                //endLoadingAnimation();    //I think this is no longer needed because Lukas added it to the callback?
+                    this._hideInvalidAlgoWarning(); //a valid algorithm was loaded -> hide the warning
+                    endLoadingAnimation();    //I think this is no longer needed because Lukas added it to the callback?
+                });               //print the DD of the new algorithm
             });
             call.fail((res) => {
                 if(reset) {
@@ -342,9 +342,10 @@ class AlgoArea {
         this._q_algo.val("");
         this._setQAlgoMarginLeft();   //reset margin-left to the initial/default value
 
-        this._print();    //reset dd
+        this._print(null, () => {
+            this._changeState(STATE_NOTHING_LOADED);
+        });    //reset dd
 
-        this._changeState(STATE_NOTHING_LOADED);
     }
 
     /**Dynamically changes sizes of the html-elements depending on the line numbers and scrollbars.
