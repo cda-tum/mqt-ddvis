@@ -43,16 +43,27 @@ class HighlightManager {
         this._operationOffset = -1;
         const lines = text.split('\n');
         this._hl = [];
+        let insideGateDef = false;      //whether we are currently between "{" and "}" of a gate definition or not
         for(let i = 0; i < lines.length; i++) {
-            //todo support gate definitions
-            if(this._operationOffset < 0) {             //operation offset hasn't been found yet
-                if(this._algoArea.isOperation(lines[i])) {
-                    //we found the first operation so the offset is one line before the current one
-                    this._operationOffset = i-1;
-                    this._hl.push(true);
+            if(lines[i].includes("{")) {    //we found a gate definition
+                insideGateDef = true;
+            }
 
-                } else this._hl.push(false);
-            } else this._hl.push(this._algoArea.isOperation(lines[i]));
+            if(insideGateDef) {
+                this._hl.push(false);   //we are currently not at an operation because we are inside a gate definition
+                //check if the gate definition ends in this line
+                if(lines[i].includes("}")) insideGateDef = false;
+
+            } else {
+                if(this._operationOffset < 0) {             //operation offset hasn't been found yet
+                    if(this._algoArea.isOperation(lines[i])) {
+                        //we found the first operation so the offset is one line before the current one
+                        this._operationOffset = i-1;
+                        this._hl.push(true);
+
+                    } else this._hl.push(false);
+                } else this._hl.push(this._algoArea.isOperation(lines[i]));
+            }
         }
 
         //the pending text is every line that hasn't been processed yet

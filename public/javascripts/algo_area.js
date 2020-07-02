@@ -172,6 +172,7 @@ class AlgoArea {
             this._showInvalidAlgoWarning(errMsg);
             changeState(STATE_NOTHING_LOADED);
             endLoadingAnimation();
+            return;
         }
 
         if(algo) {
@@ -223,7 +224,7 @@ class AlgoArea {
                 }
 
                 this._hideInvalidAlgoWarning(); //a valid algorithm was loaded -> hide the warning
-                endLoadingAnimation();
+                //endLoadingAnimation();    //I think this is no longer needed because Lukas added it to the callback?
             });
             call.fail((res) => {
                 if(reset) {
@@ -382,19 +383,27 @@ class AlgoArea {
         );
 
         let num = 0;
+        let insideGateDef = false;
         for(let i = 0; i < lines.length; i++) {
             if(i <= this._hlManager.offset) lines[i] = "";
             else {
-                if(this.isOperation(lines[i], this._algoFormat)) {
-                    num++;
-                    const numDigits = _numOfDigits(num);
+                if(lines[i].includes("{")) insideGateDef = true;
+                if(insideGateDef) {
+                    if(lines[i].includes("}")) insideGateDef = false;
+                    lines[i] = "";  //no line numbering in gate definitions
 
-                    //append some space if needed so the digits align
-                    let space = "";
-                    for(let j = 0; j < digits - numDigits; j++) space += "  ";
-                    lines[i] = space + num.toString();
+                } else {
+                    if(this.isOperation(lines[i], this._algoFormat)) {
+                        num++;
+                        const numDigits = _numOfDigits(num);
 
-                } else lines[i] = "";
+                        //append some space if needed so the digits align
+                        let space = "";
+                        for(let j = 0; j < digits - numDigits; j++) space += "  ";
+                        lines[i] = space + num.toString();
+
+                    } else lines[i] = "";
+                }
             }
         }
 
@@ -644,67 +653,77 @@ class AlgoArea {
         if(format === QASM_FORMAT) {
             let temp = "";
             const lines = algo.split('\n');
+            let insideGateDef = false;
             for(let i = 0; i < lines.length; i++) {
                 const line = lines[i];
-                //"\n" needs to be added separately because it was removed while splitting
-                if(this.isOperation(line, format)) {
-                    if(i >= lines.length-1) {
-                        //if the last line is an operation, the needed \n is added here and not at the end of the preformatting
-                        // so we need to add the pending line here
-                        this._hlManager.addPendingLine();
-                        this._hlManager._updateDiv();
-                    }
-
-                    let l = line;
-                    while(l.length !== 0) {
-                        let index = l.indexOf(';');
-                        if(index === -1) {  //no semicolon found
-                            if(AlgoArea.containsComment(l, format)) {
-                                //don't search for the missing ; because there is definitely a comment in between
-                                temp += line + "\n";
-                                l = ""; //make sure to leave the outer loop and continue with the outer-outer-loop
-                                break;
-                            }
-
-                            //search for the missing ; in the following lines
-                            temp += l;
-                            i++;
-                            while(i < lines.length) {
-                                l = lines[i];
-                                if(AlgoArea.isComment(l, format)) {
-                                    temp += "\n";   //don't collapse the operation-line with the comment-line
-                                    index = -1;     //a bit hacky, but needed so I don't have to copy code in a strange way
-                                                    //what happens: since we immediately jump to the outer loop op will be empty and l will stay the same
-                                                    // this makes sure that the whole comment (in the if afterwards we know that the first branch must be
-                                                    // entered since l was a comment and didn't change) will be like it initially was
-                                    break;
-                                }
-                                index = l.indexOf(';');
-                                if(index === -1) temp += l;
-                                else break;     //if we found a semicolon we can continue in the normal (outer) loop
-                                i++;
-                            }
-
-                            if(index === -1) {  //we are in the last line and no ; was found
-                                temp += "\n";
-                                break;
-                            }
-                        }
-
-                        const op =  l.substring(0, index+1);    //we need to include the semicolon, so it is index+1
-                        l = l.substring(index+1);
-
-                        //special case for comments in the same line as an operation
-                        if(AlgoArea.isComment(l, format)) {
-                            temp += op + l + "\n";  //the comment is allowed to stay in the same line
-                            break;
-                        } else temp += op + "\n";    //insert the operation with the added newLine
-                        l = l.trim();
-                    }
-                } else {
+                if(line.includes("{")) insideGateDef = true;
+                if(insideGateDef) {
                     temp += line;
                     //don't create a new line for the last line, because the way splitting works there was no \n at the end of the last line
                     if(i < lines.length-1) temp += "\n";
+                    if(line.includes("}")) insideGateDef = false;
+
+                } else {
+                    //"\n" needs to be added separately because it was removed while splitting
+                    if(this.isOperation(line, format)) {
+                        if(i >= lines.length-1) {
+                            //if the last line is an operation, the needed \n is added here and not at the end of the preformatting
+                            // so we need to add the pending line here
+                            this._hlManager.addPendingLine();
+                            this._hlManager._updateDiv();
+                        }
+
+                        let l = line;
+                        while(l.length !== 0) {
+                            let index = l.indexOf(';');
+                            if(index === -1) {  //no semicolon found
+                                if(AlgoArea.containsComment(l, format)) {
+                                    //don't search for the missing ; because there is definitely a comment in between
+                                    temp += line + "\n";
+                                    l = ""; //make sure to leave the outer loop and continue with the outer-outer-loop
+                                    break;
+                                }
+
+                                //search for the missing ; in the following lines
+                                temp += l;
+                                i++;
+                                while(i < lines.length) {
+                                    l = lines[i];
+                                    if(AlgoArea.isComment(l, format)) {
+                                        temp += "\n";   //don't collapse the operation-line with the comment-line
+                                        index = -1;     //a bit hacky, but needed so I don't have to copy code in a strange way
+                                                        //what happens: since we immediately jump to the outer loop op will be empty and l will stay the same
+                                                        // this makes sure that the whole comment (in the if afterwards we know that the first branch must be
+                                                        // entered since l was a comment and didn't change) will be like it initially was
+                                        break;
+                                    }
+                                    index = l.indexOf(';');
+                                    if(index === -1) temp += l;
+                                    else break;     //if we found a semicolon we can continue in the normal (outer) loop
+                                    i++;
+                                }
+
+                                if(index === -1) {  //we are in the last line and no ; was found
+                                    temp += "\n";
+                                    break;
+                                }
+                            }
+
+                            const op =  l.substring(0, index+1);    //we need to include the semicolon, so it is index+1
+                            l = l.substring(index+1);
+
+                            //special case for comments in the same line as an operation
+                            if(AlgoArea.isComment(l, format)) {
+                                temp += op + l + "\n";  //the comment is allowed to stay in the same line
+                                break;
+                            } else temp += op + "\n";    //insert the operation with the added newLine
+                            l = l.trim();
+                        }
+                    } else {
+                        temp += line;
+                        //don't create a new line for the last line, because the way splitting works there was no \n at the end of the last line
+                        if(i < lines.length-1) temp += "\n";
+                    }
                 }
             }
             algo = temp;

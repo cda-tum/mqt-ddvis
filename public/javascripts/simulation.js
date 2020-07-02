@@ -835,10 +835,12 @@ function print(dot, callback) {
         let animationDuration = 500;
         if(stepDuration < 1000) animationDuration = stepDuration / 2;
 
-        graphviz
+        const graph = graphviz
             .height(svgHeight)
             .transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration))
+            .fit(true)
             .renderDot(dot).on("transitionStart", callback);
+        //graph.resetZoom();
 
         //$('#color_map').html(
         //    '<svg><rect width="20" height="20" fill="purple"></rect></svg>'
