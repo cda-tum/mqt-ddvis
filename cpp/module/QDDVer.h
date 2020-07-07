@@ -52,7 +52,6 @@ private:
     std::unique_ptr<qc::QuantumComputation> qc1;
     qc::permutationMap map1;
     std::vector<std::unique_ptr<qc::Operation>>::iterator iterator1{};  //operations of algo1
-    //permutationMap1, set on qc->import
     unsigned int position1 = 0;  //current position of iterator1
 
     bool ready1 = false;     //true if algo1 is valid

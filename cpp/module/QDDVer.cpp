@@ -55,7 +55,8 @@ QDDVer::QDDVer(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVer>(info) 
     Napi::HandleScope scope(env);
 
     this->dd = std::make_unique<dd::Package>();
-    line.fill(qc::LINE_DEFAULT);
+    this->dd->useMatrixNormalization(true);
+    this->line.fill(qc::LINE_DEFAULT);
 
     this->qc1 = std::make_unique<qc::QuantumComputation>();
     this->iterator1 = this->qc1->begin();
@@ -125,7 +126,7 @@ void QDDVer::stepBack(bool algo1) {
         iterator1--; //set iterator back to the desired operation
         position1--;
 
-        const dd::Edge currDD = (*iterator1)->getInverseDD(dd, line); // get the inverse of the current operation
+        const dd::Edge currDD = (*iterator1)->getInverseDD(dd, line, map1); // get the inverse of the current operation
 
         auto temp = dd->multiply(currDD, sim);   //"remove" the current operation by multiplying with its inverse
         dd->incRef(temp);
@@ -144,7 +145,7 @@ void QDDVer::stepBack(bool algo1) {
         iterator2--; //set iterator back to the desired operation
         position2--;
 
-        const dd::Edge currDD = (*iterator2)->getDD(dd, line); // get the current operation
+        const dd::Edge currDD = (*iterator2)->getDD(dd, line, map2); // get the current operation
 
         auto temp = dd->multiply(sim, currDD);   //"remove" the current operation by multiplying with its inverse
         dd->incRef(temp);
@@ -286,63 +287,86 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
     const std::string algo = arg.Utf8Value();
     std::stringstream ss{algo};
 
+    //the fifth parameter (algo1)
+    bool algo1 = (bool)info[4].As<Napi::Boolean>();
+
     try {
         //second parameter describes the format of the algorithm
         const unsigned int formatCode = (unsigned int)info[1].As<Napi::Number>();
-        if(formatCode == 1)         qc1->import(ss, qc::OpenQASM);
-        else if(formatCode == 2)    qc1->import(ss, qc::Real);
+        qc::Format format;
+        if(formatCode == 1)         format = qc::OpenQASM;
+        else if(formatCode == 2)    format = qc::Real;
         else {
             Napi::Error::New(env, "Invalid format-code!").ThrowAsJavaScriptException();
+            return Napi::Number::New(env, -1);
+        }
+
+        if(algo1)   {
+            qc1->import(ss, format);
+            map1 = qc1->initialLayout;
+        } else {
+            qc2->import(ss, format);
+            map2 = qc2->initialLayout;
         }
 
     } catch(std::exception& e) {
         std::cout << "Exception while loading the algorithm: " << e.what() << std::endl;
         std::string err(e.what());
         Napi::Error::New(env, "Invalid algorithm!\n" + err).ThrowAsJavaScriptException();
+        return Napi::Number::New(env, -1);
     }
 
     //re-initialize some variables (though depending on opNum they might change in the next lines)
-    ready = true;
-    atInitial = true;
-    atEnd = false;
-    iterator = qc1->begin();
-    position = 0;
-
-    Napi::Object state = Napi::Object::New(env);
-    state.Set("numOfOperations", Napi::Number::New(env, qc1->getNops()));
-    state.Set("nextIsIrreversible", Napi::Boolean::New(env, false));
-    state.Set("noGoingBack", Napi::Boolean::New(env, false));
+    if(algo1) {
+        ready1 = true;
+        atInitial1 = true;
+        atEnd1 = false;
+        iterator1 = qc1->begin();
+        position1 = 0;
+    } else {
+        ready2 = true;
+        atInitial2 = true;
+        atEnd2 = false;
+        iterator2 = qc2->begin();
+        position2 = 0;
+    }
 
     //the third parameter (how many operations to apply immediately)
-    unsigned int opNum = (unsigned int)info[2].As<Napi::Number>();    //at this point opNum may be bigger than the number of operations the algorithm has!
-    if(opNum > qc1->getNops()) opNum = qc1->getNops();
+    unsigned int opNum = (unsigned int)info[2].As<Napi::Number>();    //at this point opNum might be bigger than the number of operations the algorithm has!
+    if(algo1 && opNum > qc1->getNops())         opNum = qc1->getNops();
+    else if(!algo1 && opNum > qc2->getNops())    opNum = qc2->getNops();
+
     if(opNum > 0) {
-        atInitial = false;
+        if(algo1)   atInitial1 = false;
+        else        atInitial2 = false;
         const bool process = (bool)info[3].As<Napi::Boolean>(); //the fourth parameter tells us to process iterated operations or not
         if(process) {
             if(sim.p != nullptr) {
                 dd->decRef(sim);
                 std::cout << "dereffed old sim (process)" << std::endl;
             }
-            sim = dd->makeZeroState(qc1->getNqubits());
+
+            //sim = dd->makeZeroState(qc->getNqubits());
+            if(algo1)   sim = qc1->createInitialMatrix(dd);
+            else        sim = qc2->createInitialMatrix(dd);
+
             dd->incRef(sim);
             for(unsigned int i = 0; i < opNum; i++) {    //apply some operations
-                stepForward();
+                stepForward(algo1);
             }
         } else {
-            for(unsigned int i = 0; i < opNum; i++) {
-                iterator++; //just advance the iterator so it points to the operations where we stopped before the edit
-                position++;
-            }
-        }
-        if (iterator != qc1->end() && ((*iterator)->getType() == qc::Measure || (*iterator)->getType() == qc::Reset)) {
-            state.Set("nextIsIrreversible", Napi::Boolean::New(env, true));
-        }
-        if (iterator != qc1->begin()) {
-            auto testForMeasureIt = iterator;
-            --testForMeasureIt;
-            if ((*testForMeasureIt)->getType() == qc::Measure || (*testForMeasureIt)->getType() == qc::Reset) {
-                state.Set("noGoingBack", Napi::Boolean::New(env, true));
+            if(algo1) {
+                for(unsigned int i = 0; i < opNum; i++) {
+                    iterator1++; //just advance the iterator so it points to the operations where we stopped before the edit
+                    //position1++;
+                }
+                position1 = opNum;
+            } else {
+                for(unsigned int i = 0; i < opNum; i++) {
+                    iterator2++; //just advance the iterator so it points to the operations where we stopped before the edit
+                    //position2++;
+                }
+                position2 = opNum;
             }
         }
 
@@ -351,10 +375,14 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
             dd->decRef(sim);
             std::cout << "dereffed old sim" << std::endl;
         }
-        sim = dd->makeZeroState(qc1->getNqubits());
+        //sim = dd->makeZeroState(qc->getNqubits());
+        if(algo1)   sim = qc1->createInitialMatrix(dd);
+        else        sim = qc2->createInitialMatrix(dd);
         dd->incRef(sim);
     }
-    return state;
+
+    if(algo1)   return Napi::Number::New(env, qc1->getNops());
+    else        return Napi::Number::New(env, qc2->getNops());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -362,89 +390,128 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
  * atInitial will be true and in most cases atEnd will be false (special case for empty algorithms: atEnd is also true)
  * after this call.
  *
- * @param info has no parameters
+ * @param info whether the function should be applied to algo1 or algo2
  * @return true if the DD changed, false otherwise (nothing was done or an error occured)
  */
 Napi::Value QDDVer::ToStart(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
-    if(!ready) {
-        Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
-        return Napi::Boolean::New(env, false);
-    } else if (qc1->empty()) {
-        return Napi::Boolean::New(env, false);
+
+    if(info.Length() < 1) {
+        Napi::RangeError::New(env, "Need 1 (bool) argument!").ThrowAsJavaScriptException();
     }
+    if (!info[0].IsBoolean()) {  //algo1
+        Napi::TypeError::New(env, "arg1: Boolean expected!").ThrowAsJavaScriptException();
+    }
+    bool algo1 = (bool)info[0].As<Napi::Boolean>();
 
-    if(atInitial) return Napi::Boolean::New(env, false);  //nothing changed
-    else {
-        try {
-            dd->decRef(sim);
-            sim = dd->makeZeroState(qc1->getNqubits());
-            dd->incRef(sim);
-            atInitial = true;
-            atEnd = false; //now we are definitely not at the end (if there were no operation, so atInitial and atEnd could be true at the same time, if(qc1-empty)
-            // would already have returned
-            iterator = qc1->begin();
-            position = 0;
-            measurements.reset();
-
-            return Napi::Boolean::New(env, true);   //something changed
-
-        } catch(std::exception& e) {
-            std::cout << "Exception while going back to the start!" << std::endl;
-            std::cout << e.what() << std::endl;
+    if(algo1) {
+        if(!ready1) {
+            Napi::Error::New(env, "No algorithm loaded as algo1!").ThrowAsJavaScriptException();
+            return Napi::Boolean::New(env, false);
+        } else if (qc1->empty()) {
+            return Napi::Boolean::New(env, false);
+        } else if(atInitial1) {
+            return Napi::Boolean::New(env, false);  //nothing changed
+        }
+    } else {
+        if(!ready2) {
+            Napi::Error::New(env, "No algorithm loaded as algo2!").ThrowAsJavaScriptException();
+            return Napi::Boolean::New(env, false);
+        } else if (qc2->empty()) {
+            return Napi::Boolean::New(env, false);
+        } else if(atInitial2) {
             return Napi::Boolean::New(env, false);  //nothing changed
         }
     }
+
+    try {
+        dd->decRef(sim);
+        //sim = dd->makeZeroState(qc->getNqubits());
+        if(algo1)   sim = qc1->createInitialMatrix(dd);
+        else        sim = qc2->createInitialMatrix(dd);
+
+        dd->incRef(sim);
+
+        if(algo1) {
+            atInitial1 = true;
+            atEnd1 = false; //now we are definitely not at the end (if there were no operation, so atInitial and atEnd could be true at the same time, if(qc-empty)
+            // would already have returned
+            iterator1 = qc1->begin();
+            position1 = 0;
+        } else {
+            atInitial2 = true;
+            atEnd2 = false; //now we are definitely not at the end (if there were no operation, so atInitial and atEnd could be true at the same time, if(qc-empty)
+            // would already have returned
+            iterator2 = qc2->begin();
+            position2 = 0;
+        }
+
+        return Napi::Boolean::New(env, true);   //something changed
+
+    } catch(std::exception& e) {
+        std::cout << "Exception while going back to the start!" << std::endl;
+        std::cout << e.what() << std::endl;
+        return Napi::Boolean::New(env, false);  //nothing changed
+    }
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/**Goes back to the previous step of the simulation process by applying the inverse of the last processed operation/DD.
+/**Goes back to the previous step of the simulation process by apllying the inverse of the last processed operation/DD.
  * If atInitial is true, nothing happens instead.
- * atEnd will be false (except when the last operation is irreversible).
- * atInitial could end up being true, depending on the position.
+ * atEnd will be false and atInitial could end up being true, depending on the position.
  *
- * @param info has no parameters
- * @return object with members
- * 			changed: true if the DD changed, false otherwise (nothing was done or an error occured)
- * 			noGoingBack: true if the previous operation now is an irreversible operation
+ * @param info whether the function should be applied to algo1 or algo2
+ * @return true if the DD changed, false otherwise (nothing was done or an error occured)
  */
 Napi::Value QDDVer::Prev(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
-    Napi::Object state = Napi::Object::New(env);
-    state.Set("changed", Napi::Boolean::New(env, false));
-    state.Set("noGoingBack", Napi::Boolean::New(env, false));
 
-    if(!ready) {
-        Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
-        return state;
-    } else if (qc1->empty()) {
-        return state;
+    if(info.Length() < 1) {
+        Napi::RangeError::New(env, "Need 1 (bool) argument!").ThrowAsJavaScriptException();
     }
+    if (!info[0].IsBoolean()) {  //algo1
+        Napi::TypeError::New(env, "arg1: Boolean expected!").ThrowAsJavaScriptException();
+    }
+    bool algo1 = (bool)info[0].As<Napi::Boolean>();
 
-    if (atEnd) {
-        atEnd = false;
-    } else if (atInitial) {
-        return state; //we can't go any further back
+    if(algo1) {
+        if(!ready1) {
+            Napi::Error::New(env, "No algorithm loaded as algo1!").ThrowAsJavaScriptException();
+            return Napi::Boolean::New(env, false);
+        } else if (qc1->empty()) {
+            return Napi::Boolean::New(env, false);
+        }
+
+        if (atEnd1) {
+            atEnd1 = false;
+        } else if (atInitial1) {
+            return Napi::Boolean::New(env, false); //we can't go any further back
+        }
+    } else {
+        if(!ready2) {
+            Napi::Error::New(env, "No algorithm loaded as algo2!").ThrowAsJavaScriptException();
+            return Napi::Boolean::New(env, false);
+        } else if (qc2->empty()) {
+            return Napi::Boolean::New(env, false);
+        }
+
+        if (atEnd2) {
+            atEnd2 = false;
+        } else if (atInitial2) {
+            return Napi::Boolean::New(env, false); //we can't go any further back
+        }
     }
 
     try {
-        stepBack();     //go back to the start before the last processed operation
-        state.Set("changed", Napi::Boolean::New(env, true));
+        stepBack(algo1);     //go back to the start before the last processed operation
 
-        if (iterator != qc1->begin()) {
-            auto testForMeasureIt = iterator;
-            --testForMeasureIt;
-            if ((*testForMeasureIt)->getType() == qc::Measure || (*testForMeasureIt)->getType() == qc::Reset) {
-                state.Set("noGoingBack", Napi::Boolean::New(env, true));
-            }
-        }
-
-        return state;   //something changed
+        return Napi::Boolean::New(env, true);   //something changed
 
     } catch(std::exception& e) {
-        std::cout << "Exception while getting the current operation {src: prev}!" << std::endl;
+        std::cout << "Exception while getting the current operation {src: prev}!" << e.what() << std::endl;
         std::cout << e.what() << std::endl;
-        return state;
+        return Napi::Boolean::New(env, false);
     }
 }
 
@@ -453,152 +520,123 @@ Napi::Value QDDVer::Prev(const Napi::CallbackInfo& info) {
  * If atEnd is true, nothing happens instead.
  * atInitial will be false and atEnd could end up being true, depending on the position.
  *
- * @param info has no parameters
- * @return object with members
- * 			changed: true if the DD changed, false otherwise (nothing was done or an error occured)
- * 			nextIsIrreversible: true if the following operation is irreversible
- * 			conductIrreversibleOperation: true if current operation is measurement or reset
- * 			parameter: object containing the measurement/reset parameters
+ * @param info whether the function should be applied to algo1 or algo2
+ * @return true if the DD changed, false otherwise (nothing was done or an error occured)
  */
 Napi::Value QDDVer::Next(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
-    Napi::Object state = Napi::Object::New(env);
-    state.Set("changed", Napi::Boolean::New(env, false));
-    state.Set("conductIrreversibleOperation", Napi::Boolean::New(env, false));
-    state.Set("nextIsIrreversible", Napi::Boolean::New(env, false));
 
-    if(!ready) {
-        Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
-        return state;
-    } else if (qc1->empty()) {
-        return state;
+    if(info.Length() < 1) {
+        Napi::RangeError::New(env, "Need 1 (bool) argument!").ThrowAsJavaScriptException();
     }
+    if (!info[0].IsBoolean()) {  //algo1
+        Napi::TypeError::New(env, "arg1: Boolean expected!").ThrowAsJavaScriptException();
+    }
+    bool algo1 = (bool)info[0].As<Napi::Boolean>();
 
-    if(atInitial){
-        atInitial = false;
-    } else if(atEnd) {
-        return state; //we can't go any further ahead
+    if(algo1) {
+        if(!ready1) {
+            Napi::Error::New(env, "No algorithm loaded as algo1!").ThrowAsJavaScriptException();
+            return Napi::Boolean::New(env, false);
+        } else if (qc1->empty()) {
+            return Napi::Boolean::New(env, false);
+        }
+
+        if(atInitial1){
+            atInitial1 = false;
+        } else if(atEnd1) {
+            return Napi::Boolean::New(env, false); //we can't go any further ahead
+        }
+    } else {
+        if(!ready2) {
+            Napi::Error::New(env, "No algorithm loaded as algo2!").ThrowAsJavaScriptException();
+            return Napi::Boolean::New(env, false);
+        } else if (qc2->empty()) {
+            return Napi::Boolean::New(env, false);
+        }
+
+        if(atInitial2){
+            atInitial2 = false;
+        } else if(atEnd2) {
+            return Napi::Boolean::New(env, false); //we can't go any further ahead
+        }
     }
 
     try {
-        state.Set("changed", Napi::Boolean::New(env, true));
+        stepForward(algo1);          //process the next operation
 
-        if ((*iterator)->getType() == qc::Reset) {
+        return Napi::Boolean::New(env, true);   //something changed
 
-            auto qubits = (*iterator)->getTargets();
-            auto totalResets = qubits.size();
-            auto qubitToReset = qubits.front();
-            auto qubitsReset = 0;
-            fp pzero, pone;
-            std::tie(pzero, pone) = getProbabilities(qubitToReset);
-
-            Napi::Object reset = Napi::Object::New(env);
-            reset.Set("qubit", Napi::Number::New(env, qubitToReset));
-            reset.Set("pzero", Napi::Number::New(env, pzero));
-            reset.Set("pone", Napi::Number::New(env, pone));
-            reset.Set("count", Napi::Number::New(env, qubitsReset));
-            reset.Set("total", Napi::Number::New(env, totalResets));
-            state.Set("parameter", reset);
-            state.Set("conductIrreversibleOperation", Napi::Boolean::New(env, true));
-
-            iterator++; // advance iterator
-            position++;
-            if (iterator == qc1->end()) {    //qc1->end() is after the last operation in the iterator
-                atEnd = true;
-            }
-        } else if ((*iterator)->getType() == qc::Measure) {
-
-            auto qubits = (*iterator)->getControls();
-            auto cbits = (*iterator)->getTargets();
-            auto totalMeasurements = qubits.size();
-            auto qubitToMeasure = qubits.front().qubit;
-            auto cbitToStore = cbits.front();
-            auto qubitsMeasured = 0;
-            fp pzero, pone;
-            std::tie(pzero, pone) = getProbabilities(qubitToMeasure);
-
-            Napi::Object measurement = Napi::Object::New(env);
-            measurement.Set("qubit", Napi::Number::New(env, qubitToMeasure));
-            measurement.Set("pzero", Napi::Number::New(env, pzero));
-            measurement.Set("pone", Napi::Number::New(env, pone));
-            measurement.Set("cbit", Napi::Number::New(env, cbitToStore));
-            measurement.Set("count", Napi::Number::New(env, qubitsMeasured));
-            measurement.Set("total", Napi::Number::New(env, totalMeasurements));
-            state.Set("parameter", measurement);
-            state.Set("conductIrreversibleOperation", Napi::Boolean::New(env, true));
-
-            iterator++; // advance iterator
-            position++;
-            if (iterator == qc1->end()) {    //qc1->end() is after the last operation in the iterator
-                atEnd = true;
-            }
-        } else {
-            stepForward(); //process the next operation
-        }
-
-        if (iterator != qc1->end() && ((*iterator)->getType() == qc::Measure || (*iterator)->getType() == qc::Reset)) {
-            state.Set("nextIsIrreversible", Napi::Boolean::New(env, true));
-        }
-        return state;
     } catch(std::exception& e) {
         std::cout << "Exception while getting the current operation {src: next}!" << std::endl;
         std::cout << e.what() << std::endl;
-        return state;
+        return Napi::Boolean::New(env, false);
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/**Processes all operations until the iterator points to the very end, a barrier or an irreversible operation is reached.
+/**Processes all operations until the iterator points to the very end.
+ * atEnd will be true and in most cases atInitial will be false (special case for empty algorithms: atInitial is also true)
+ * after this call.
  *
- *
- * @param info has no parameters
- * @return object with members
- * 			changed: true if the DD changed, false otherwise (nothing was done or an error occured)
- * 			nextIsIrreversible: true if the following operation is irreversible
- * 			barrier: true if a barrier was encountered
+ * @param info whether the function should be applied to algo1 or algo2
+ * @return true if the DD changed, false otherwise (nothing was done or an error occured)
  */
 Napi::Value QDDVer::ToEnd(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
-    Napi::Object state = Napi::Object::New(env);
-    state.Set("changed", Napi::Boolean::New(env, false));
-    state.Set("nextIsIrreversible", Napi::Boolean::New(env, false));
-    state.Set("barrier", Napi::Boolean::New(env, false));
 
-    if(!ready) {
-        Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
-        return state;
-    } else if (qc1->empty()) {
-        return state;
+    if(info.Length() < 1) {
+        Napi::RangeError::New(env, "Need 1 (bool) argument!").ThrowAsJavaScriptException();
+    }
+    if (!info[0].IsBoolean()) {  //algo1
+        Napi::TypeError::New(env, "arg1: Boolean expected!").ThrowAsJavaScriptException();
+    }
+    bool algo1 = (bool)info[0].As<Napi::Boolean>();
+
+    if(algo1) {
+        if(!ready1) {
+            Napi::Error::New(env, "No algorithm loaded as algo1!").ThrowAsJavaScriptException();
+            return Napi::Boolean::New(env, false);
+        } else if (qc1->empty()) {
+            return Napi::Boolean::New(env, false);
+        } else if(atEnd1) {
+            return Napi::Boolean::New(env, false); //nothing changed
+        }
+
+        atInitial1 = false;  //now we are definitely not at the beginning (if there were no operation, so atInitial
+        // and atEnd could be true at the same time, if(qc-empty) would already have returned
+
+    } else {
+        if(!ready2) {
+            Napi::Error::New(env, "No algorithm loaded as algo2!").ThrowAsJavaScriptException();
+            return Napi::Boolean::New(env, false);
+        } else if (qc2->empty()) {
+            return Napi::Boolean::New(env, false);
+        } else if(atEnd2) {
+            return Napi::Boolean::New(env, false); //nothing changed
+        }
+
+        atInitial2 = false;  //now we are definitely not at the beginning (if there were no operation, so atInitial
+                            // and atEnd could be true at the same time, if(qc-empty) would already have returned
     }
 
-    if(atEnd) return state; //nothing changed
-    else {
-        atInitial = false;  //now we are definitely not at the beginning (if there were no operation, so atInitial and atEnd could be true at the same time, if(qc1-empty)
-        // would already have returned
-        try {
-            state.Set("changed", Napi::Boolean::New(env, true));
-            unsigned long long nops = 0;
-            while (!atEnd) {
-                if ((*iterator)->getType() == qc::Measure || (*iterator)->getType() == qc::Reset) {
-                    state.Set("nextIsIrreversible", Napi::Boolean::New(env, true));
-                    break;
-                } else if ((*iterator)->getType() == qc::Barrier) {
-                    ++nops;
-                    stepForward(); //process the barrier
-                    state.Set("barrier", Napi::Boolean::New(env, true));
-                    break;
-                } else {
-                    ++nops;
-                    stepForward(); //process the next operation
-                }
-            }
-            state.Set("nops", Napi::Number::New(env, nops));
-            return state;
-        } catch(std::exception& e) {
-            std::cout << "Exception while going to the end!" << std::endl;
-            std::cout << e.what() << std::endl;
-            return state;
+    try {
+        if(algo1) {
+            //process one step at a time until all operations have been considered (atEnd is set to true in stepForward())
+            while(!atEnd1) stepForward(true);
+            //now atEnd is true, exactly as it should be
+        } else {
+            //process one step at a time until all operations have been considered (atEnd is set to true in stepForward())
+            while(!atEnd2) stepForward(false);
+            //now atEnd is true, exactly as it should be
         }
+
+        return Napi::Boolean::New(env, true);   //something changed
+
+    } catch(std::exception& e) {
+        std::cout << "Exception while going to the end!" << std::endl;
+        std::cout << e.what() << std::endl;
+        return Napi::Boolean::New(env, false);
     }
 }
 
@@ -606,103 +644,65 @@ Napi::Value QDDVer::ToEnd(const Napi::CallbackInfo& info) {
  * operations/DDs like Prev or operations/DDs normally like Next.
  * atInitial and atEnd could be anything after this call.
  *
- * @param info takes one parameter that determines to which position the iterator should point at after this call
+ * @param info takes two parameter
+ *              int: determines to which position the iterator should point at after this call
+ *              bool: whether the function should be applied to algo1 or algo2
  * @return true if the DD changed, false otherwise (nothing was done or an error occured)
  */
 Napi::Value QDDVer::ToLine(const Napi::CallbackInfo &info) {
     Napi::Env env = info.Env();
     Napi::HandleScope scope(env);
-    Napi::Object state = Napi::Object::New(env);
-    state.Set("changed", Napi::Boolean::New(env, false));
-    state.Set("noGoingBack", Napi::Boolean::New(env, false));
-    state.Set("nextIsIrreversible", Napi::Boolean::New(env, false));
-    state.Set("reset", Napi::Boolean::New(env, false));
-
 
     //check if the correct parameters have been passed
-    if(info.Length() != 1) {
-        Napi::RangeError::New(env, "Need 1 (unsigned int) argument!").ThrowAsJavaScriptException();
-        return state;
+    if(info.Length() < 2) {
+        Napi::RangeError::New(env, "Need 2 (unsigned int, bool) arguments!").ThrowAsJavaScriptException();
+        return Napi::Boolean::New(env, false);
     }
     if (!info[0].IsNumber()) {  //line number/position
         Napi::TypeError::New(env, "arg1: unsigned int expected!").ThrowAsJavaScriptException();
-        return state;
+        return Napi::Boolean::New(env, false);
+    }
+    if (!info[1].IsBoolean()) {  //algo1
+        Napi::TypeError::New(env, "arg1: Boolean expected!").ThrowAsJavaScriptException();
     }
 
     unsigned int param = (unsigned int)info[0].As<Napi::Number>();
-    if(param > qc1->getNops()) param = qc1->getNops();    //we can't go further than to the end
+    bool algo1 = (bool)info[1].As<Napi::Boolean>();
+
+    if(algo1) {
+        if(param > qc1->getNops()) param = qc1->getNops();    //we can't go further than to the end
+    } else {
+        if(param > qc2->getNops()) param = qc2->getNops();    //we can't go further than to the end
+    }
     const unsigned int targetPos = param;
 
     try {
-        if (iterator != qc1->begin()) {
-            auto testForMeasureIt = iterator;
-            --testForMeasureIt;
-            if ((*testForMeasureIt)->getType() == qc::Measure || (*testForMeasureIt)->getType() == qc::Reset) {
-                state.Set("noGoingBack", Napi::Boolean::New(env, true));
-            }
-        }
-        if (iterator != qc1->end() && ((*iterator)->getType() == qc::Measure || (*iterator)->getType() == qc::Reset)) {
-            state.Set("nextIsIrreversible", Napi::Boolean::New(env, true));
-        }
-        if(position == targetPos) return state;   //nothing changed
+        if(algo1) {
+            if(position1 == targetPos) return Napi::Boolean::New(env, false);   //nothing changed
 
-        unsigned long long nops = 0;
-        if (targetPos < position) {
-            unsigned int distanceFromPosition = position - targetPos;
-            // if target position is closer to start as to current position computation can be restarted
-            if( targetPos < distanceFromPosition) {
-                state.Set("reset", Napi::Boolean::New(env, true));
-                state.Set("changed", Napi::Boolean::New(env, true));
-                state.Set("nextIsIrreversible", Napi::Boolean::New(env, false));
-                state.Set("noGoingBack", Napi::Boolean::New(env, true));
+            //only one of the two loops can be entered
+            while(position1 > targetPos) stepBack(true);
+            while(position1 < targetPos) stepForward(true);
 
-                dd->decRef(sim);
-                sim = dd->makeZeroState(qc1->getNqubits());
-                dd->incRef(sim);
-                atInitial = true;
-                atEnd = false;
-                iterator = qc1->begin();
-                position = 0;
-                measurements.reset();
-                if ((*iterator)->getType() == qc::Measure || (*iterator)->getType() == qc::Reset) {
-                    state.Set("nextIsIrreversible", Napi::Boolean::New(env, true));
-                }
-            } else {
-                state.Set("noGoingBack", Napi::Boolean::New(env, false));
-                while(position > targetPos) {
-                    auto testForMeasureIt = iterator;
-                    --testForMeasureIt;
-                    if ((*testForMeasureIt)->getType() == qc::Measure || (*testForMeasureIt)->getType() == qc::Reset) {
-                        state.Set("noGoingBack", Napi::Boolean::New(env, true));
-                        break;
-                    }
-                    ++nops;
-                    stepBack();
-                    state.Set("changed", Napi::Boolean::New(env, true));
-                    state.Set("nextIsIrreversible", Napi::Boolean::New(env, false));
-                }
-            }
+            atInitial1 = false;
+            atEnd1 = false;
+            if(position1 == 0) atInitial1 = true;
+            if(position1 == qc1->getNops()) atEnd1 = true;
+
+        } else {
+            if(position2 == targetPos) return Napi::Boolean::New(env, false);   //nothing changed
+
+            //only one of the two loops can be entered
+            while(position2 > targetPos) stepBack(false);
+            while(position2 < targetPos) stepForward(false);
+
+            atInitial2 = false;
+            atEnd2 = false;
+            if(position2 == 0) atInitial2 = true;
+            if(position2 == qc2->getNops()) atEnd2 = true;
         }
 
-        while (position < targetPos) {
-            if ((*iterator)->getType() == qc::Measure || (*iterator)->getType() == qc::Reset) {
-                state.Set("nextIsIrreversible", Napi::Boolean::New(env, true));
-                break;
-            } else {
-                ++nops;
-                stepForward(); //process the next operation
-            }
-            state.Set("changed", Napi::Boolean::New(env, true));
-            state.Set("noGoingBack", Napi::Boolean::New(env, false));
-        }
-        state.Set("nops", Napi::Number::New(env, nops));
-
-        atInitial = false;
-        atEnd = false;
-        if(position == 0) atInitial = true;
-        else if(position == qc1->getNops()) atEnd = true;
-
-        return state;   //something changed
+        return Napi::Boolean::New(env, true);   //something changed
 
     } catch(std::exception& e) {
         std::string msg = "Exception while going to line ";// + position + " to " + targetPos;
@@ -710,10 +710,10 @@ Napi::Value QDDVer::ToLine(const Napi::CallbackInfo &info) {
         //msg.append(position);
         //msg.append(" to ");
         //msg.append(targetPos);
-        std::cout << "Exception while going from " << position << " to " << targetPos << std::endl;
+        std::cout << "Exception while going from " << (algo1 ? position1 : position2) << " to " << targetPos << std::endl;
         std::cout << e.what() << std::endl;
         Napi::Error::New(env, msg).ThrowAsJavaScriptException();
-        return state;
+        return Napi::Boolean::New(env, false);
     }
 }
 
@@ -732,9 +732,7 @@ Napi::Value QDDVer::GetDD(const Napi::CallbackInfo& info) {
 
     std::stringstream ss{};
     try {
-        //std::cout << "GetDD() called with colored=" << this->showColors << ", edgeLabels=" << this->showEdgeLabels << ", classic=" << this->showClassic << std::endl;
         dd::toDot(sim, ss, true, this->showColors, this->showEdgeLabels, this->showClassic);
-        //std::cout << "Flags afer toDot: " << this->showColors << ", " << this->showEdgeLabels << ", " << this->showClassic << std::endl;
         std::string str = ss.str();
         return Napi::String::New(env, str);
 
@@ -777,32 +775,29 @@ void QDDVer::UpdateExportOptions(const Napi::CallbackInfo& info) {
     this->showClassic = (bool)info[2].As<Napi::Boolean>();
     //std::cout << "Updated the values of the Flags to: " << this->showColors << ", " << this->showEdgeLabels << ", " << this->showClassic << std::endl;
 }
-
 /**
  *
- * @param info {bool} whether it is applied to algo1 or algo2
- * @return value of the field isReady (true meaning an algorithm has been successfully loaded) for the
- *          specified algorithm
+ * @param info whether we want to know about algo1 or algo2
+ * @return value of the field isReady (true meaning an algorithm has been successfully loaded)
  */
 Napi::Value QDDVer::IsReady(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
 
-    if(info.Length() != 1) {
-        Napi::RangeError::New(env, "Need 1 (bool) arguments!").ThrowAsJavaScriptException();
-        //return;
+    if(info.Length() < 1) {
+        Napi::RangeError::New(env, "Need 1 (bool) argument!").ThrowAsJavaScriptException();
     }
-    if (!info[0].IsBoolean()) {  //colored
+    if (!info[0].IsBoolean()) {  //algo1
         Napi::TypeError::New(env, "arg1: Boolean expected!").ThrowAsJavaScriptException();
-        //return;
     }
-    const bool algo1 = (bool)info[0].As<Napi::Boolean>();
+    bool algo1 = (bool)info[0].As<Napi::Boolean>();
 
-    if(algo1) return Napi::Boolean::New(env, this->ready1);
-    else return Napi::Boolean::New(env, this->ready2);
+    if(algo1)   return Napi::Boolean::New(env, this->ready1);
+    else        return Napi::Boolean::New(env, this->ready2);
 }
 
 Napi::Value QDDVer::ConductIrreversibleOperation(const Napi::CallbackInfo& info) {
     Napi::Error::New(info.Env(), "Not supported yet!");
+    return Napi::Value::From(info.Env(), -1);
     //code copied from QDDVis.cpp
     /*
     Napi::Env env = info.Env();

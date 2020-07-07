@@ -238,7 +238,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
 
     //check if the correct parameters have been passed
-    if(info.Length() != 4) {
+    if(info.Length() < 4) {
         Napi::RangeError::New(env, "Need 4 (String, unsigned int, unsigned int, bool) arguments!").ThrowAsJavaScriptException();
         return Napi::Number::New(env, -1);
     }
@@ -303,8 +303,6 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
                 std::cout << "dereffed old sim (process)" << std::endl;
             }
             sim = dd->makeZeroState(qc->getNqubits());
-            //dd->useMatrixNormalization(true);     in constructor of QDDVer        //todo
-            //dd::Edge e = qc1->createInitialMatrix(dd);     instead of makeZeroState
             dd->incRef(sim);
             for(unsigned int i = 0; i < opNum; i++) {    //apply some operations
                 stepForward();
@@ -599,7 +597,7 @@ Napi::Value QDDVis::ToLine(const Napi::CallbackInfo &info) {
 	state.Set("reset", Napi::Boolean::New(env, false));
 
 	//check if the correct parameters have been passed
-    if(info.Length() != 1) {
+    if(info.Length() < 1) {
         Napi::RangeError::New(env, "Need 1 (unsigned int) argument!").ThrowAsJavaScriptException();
         return state;
     }
