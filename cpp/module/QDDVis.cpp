@@ -92,7 +92,7 @@ void QDDVis::stepForward() {
 
     iterator++; // advance iterator
     position++;
-    if (iterator == qc->end()) {    //qc->end() is after the last operation in the iterator
+    if (iterator == qc->end()) {    //qc1->end() is after the last operation in the iterator
         atEnd = true;
     }
 }
@@ -303,6 +303,8 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
                 std::cout << "dereffed old sim (process)" << std::endl;
             }
             sim = dd->makeZeroState(qc->getNqubits());
+            //dd->useMatrixNormalization(true);     in constructor of QDDVer        //todo
+            //dd::Edge e = qc1->createInitialMatrix(dd);     instead of makeZeroState
             dd->incRef(sim);
             for(unsigned int i = 0; i < opNum; i++) {    //apply some operations
                 stepForward();
@@ -359,7 +361,7 @@ Napi::Value QDDVis::ToStart(const Napi::CallbackInfo& info) {
             sim = dd->makeZeroState(qc->getNqubits());
             dd->incRef(sim);
             atInitial = true;
-            atEnd = false; //now we are definitely not at the end (if there were no operation, so atInitial and atEnd could be true at the same time, if(qc-empty)
+            atEnd = false; //now we are definitely not at the end (if there were no operation, so atInitial and atEnd could be true at the same time, if(qc1-empty)
             // would already have returned
             iterator = qc->begin();
             position = 0;
@@ -481,7 +483,7 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
 
 		    iterator++; // advance iterator
 		    position++;
-		    if (iterator == qc->end()) {    //qc->end() is after the last operation in the iterator
+		    if (iterator == qc->end()) {    //qc1->end() is after the last operation in the iterator
 			    atEnd = true;
 		    }
 	    } else if ((*iterator)->getType() == qc::Measure) {
@@ -507,7 +509,7 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
 
 		    iterator++; // advance iterator
 		    position++;
-		    if (iterator == qc->end()) {    //qc->end() is after the last operation in the iterator
+		    if (iterator == qc->end()) {    //qc1->end() is after the last operation in the iterator
 			    atEnd = true;
 		    }
 	    } else {
@@ -551,7 +553,7 @@ Napi::Value QDDVis::ToEnd(const Napi::CallbackInfo& info) {
 
     if(atEnd) return state; //nothing changed
     else {
-        atInitial = false;  //now we are definitely not at the beginning (if there were no operation, so atInitial and atEnd could be true at the same time, if(qc-empty)
+        atInitial = false;  //now we are definitely not at the beginning (if there were no operation, so atInitial and atEnd could be true at the same time, if(qc1-empty)
         // would already have returned
         try {
 	        state.Set("changed", Napi::Boolean::New(env, true));
