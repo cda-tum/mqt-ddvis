@@ -27,6 +27,8 @@ router.post('/register', (req, res) => {
  *     reset:   "true" for true, others for false; determines whether the algorithm should be reset (simulation starts
  *              from the beginning, opNum would then directly apply the corresponding operations) or the current simulation
  *              should stay as it is (opNum just advances the iterator and doesn't apply any operations)
+ *
+ *     algo1:   [Verification only] "true" means that the functionality is used for algo1, "false" for algo2
  * }
  * Sends:   take a look at _sendDD documentation
  *
@@ -40,7 +42,9 @@ router.post('/load', (req, res) => {
             const format = parseInt(req.body.format);
             const reset = req.body.reset === "true";   //whether the algorithm should be reset to the start or if iterator and current DD should stay as they are
 
-            const ret = vis.load(algo, format, opNum, reset);
+            const algo1 = req.body.algo1 === "true";    //needed to determine the algorithm of verification
+
+            const ret = vis.load(algo, format, opNum, reset, algo1);    //algo1 only used for verification
             if(ret.numOfOperations) {
                 _sendDD(res, vis.getDD(), ret);
             } else res.status(500).json({ msg: "Error while loading the algorithm!" });
@@ -58,6 +62,7 @@ router.post('/load', (req, res) => {
  *
  * Params:  the key that provides access to the QDDVis-object as query string ("?dataKey=...")
  *          received from the initial /register-call
+ *
  * Sends:   take a look at _sendDD documentation
  *
  */
@@ -105,14 +110,18 @@ router.put('/updateExportOptions', (req, res) => {
  *
  * Params:  the key that provides access to the QDDVis-object as query string ("?dataKey=...")
  *          received from the initial /register-call
- * Sends:   take a look at _sendDD documentation
+ *
+ *          algo1:   [Verification only] "true" means that the functionality is used for algo1, "false" for algo2
+ *
+ *  Sends:   take a look at _sendDD documentation
  *          may also send back a simple message if the simulation was already at the start and therefore nothing changed
  *
  */
 router.get('/tostart', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
-        const ret = vis.toStart();
+        const algo1 = req.query.algo1 === "true";    //needed to determine the algorithm of verification
+        const ret = vis.toStart(algo1);             //algo1 only used for verification
         if(ret) _sendDD(res, vis.getDD());
         else res.status(403).json({ msg: "you were already at the start" });    //the client will search for res.svg, but it will be null so they won't redraw
 
@@ -125,6 +134,9 @@ router.get('/tostart', (req, res) => {
  *
  * Params:  the key that provides access to the QDDVis-object as query string ("?dataKey=...")
  *          received from the initial /register-call
+ *
+ *          algo1:   [Verification only] "true" means that the functionality is used for algo1, "false" for algo2
+ *
  * Sends:   take a look at _sendDD documentation
  *          may also send back a simple message if the simulation was already at the start and therefore no operation
  *          was undone and nothing changed
@@ -133,7 +145,8 @@ router.get('/tostart', (req, res) => {
 router.get('/prev', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
-        const ret = vis.prev();
+        const algo1 = req.query.algo1 === "true";    //needed to determine the algorithm of verification
+        const ret = vis.prev(algo1);                 //algo1 only used for verification
         if(ret.changed) _sendDD(res, vis.getDD(), {noGoingBack: ret.noGoingBack}); //something changes so we update the shown dd
         else res.status(403).json({ msg: "can't go back because we are at the beginning" });    //the client will search for res.svg, but it will be null so they won't redraw
 
@@ -146,6 +159,9 @@ router.get('/prev', (req, res) => {
  *
  * Params:  the key that provides access to the QDDVis-object as query string ("?dataKey=...")
  *          received from the initial /register-call
+ *
+ *          algo1:   [Verification only] "true" means that the functionality is used for algo1, "false" for algo2
+ *
  * Sends:   take a look at _sendDD documentation
  *          may also send back a simple message if the simulation was already at the end and therefore no operation
  *          was applied and nothing changed
@@ -154,7 +170,8 @@ router.get('/prev', (req, res) => {
 router.get('/next', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
-        const ret = vis.next();
+        const algo1 = req.query.algo1 === "true";    //needed to determine the algorithm of verification
+        const ret = vis.next(algo1);                //algo1 only used for verification
 
         if(ret.changed) _sendDD(res, vis.getDD(), ret); //something changes so we update the shown dd
         else res.send({ msg: "can't go ahead because we are at the end", reload: "false" });
@@ -183,6 +200,9 @@ router.get('/conductIrreversibleOperation', (req, res) => {
  *
  * Params:  the key that provides access to the QDDVis-object as query string ("?dataKey=...")
  *          received from the initial /register-call
+ *
+ *          algo1:   [Verification only] "true" means that the functionality is used for algo1, "false" for algo2
+ *
  * Sends:   take a look at _sendDD documentation
  *          may also send back a simple message if the simulation was already at the end and therefore nothing changed
  *
@@ -190,7 +210,8 @@ router.get('/conductIrreversibleOperation', (req, res) => {
 router.get('/toend', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
-        const ret = vis.toEnd();
+        const algo1 = req.query.algo1 === "true";    //needed to determine the algorithm of verification
+        const ret = vis.toEnd(algo1);               //algo1 only used for verification
         if(ret.changed) _sendDD(res, vis.getDD(), {nops: ret.nops, nextIsIrreversible: ret.nextIsIrreversible, barrier: ret.barrier});  //sendFile(res, data.ip); //something changes so we update the shown dd
         else res.send({ msg: "you were already at the end", reload: "false" });
 
@@ -204,6 +225,9 @@ router.get('/toend', (req, res) => {
  *
  * Params:  the line at which the simulation should be after this call as query string("?line=...")
  *          the key that provides access to the QDDVis-object as query string ("&dataKey=...") - received from the initial /register-call
+ *
+ *          algo1:   [Verification only] "true" means that the functionality is used for algo1, "false" for algo2
+ *
  * Sends:   take a look at _sendDD documentation
  *          may also send back a simple message if the simulation was already at the given line and therefore no operation
  *          was applied or undone, so nothing changed
@@ -212,8 +236,9 @@ router.get('/toend', (req, res) => {
 router.get('/toline', (req, res) => {
     const vis = dm.get(req);
     const line = parseInt(req.query.line);
+    const algo1 = req.query.algo1 === "true";    //needed to determine the algorithm of verification
     if(vis) {
-        const ret = vis.toLine(line);
+        const ret = vis.toLine(line, algo1);    //algo1 only used for verification
         if(ret.changed) _sendDD(res, vis.getDD(), {nops: ret.nops, nextIsIrreversible: ret.nextIsIrreversible, noGoingBack: ret.noGoingBack, reset: ret.reset});  //something changes so we update the shown dd
         else res.send({ msg: "you were already at line " + line, reload: "false" , data: {nextIsIrreversible: ret.nextIsIrreversible, noGoingBack: ret.noGoingBack}});
 

@@ -15,8 +15,7 @@ class DataManager {
 
 const manager = new Map();
 manager.set("sim", new DataManager());
-manager.set("ver1", new DataManager()); //todo only one ver?
-manager.set("ver2", new DataManager());
+manager.set("ver", new DataManager());
 
 /**Retrieves the key for data based on the request.
  *
