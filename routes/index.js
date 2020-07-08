@@ -37,6 +37,7 @@ router.post('/load', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
         try {
+            console.log("algo1: " + req.body.algo1);
             const algo = req.body.algo;
             const opNum = parseInt(req.body.opNum);
             const format = parseInt(req.body.format);
@@ -145,6 +146,7 @@ router.get('/tostart', (req, res) => {
 router.get('/prev', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
+        console.log("algo1: " + req.query.algo1);
         const algo1 = req.query.algo1 === "true";    //needed to determine the algorithm of verification
         const ret = vis.prev(algo1);                 //algo1 only used for verification
         if(ret.changed) _sendDD(res, vis.getDD(), {noGoingBack: ret.noGoingBack}); //something changes so we update the shown dd
@@ -170,9 +172,11 @@ router.get('/prev', (req, res) => {
 router.get('/next', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
+        console.log("algo1: " + req.query.algo1);
         const algo1 = req.query.algo1 === "true";    //needed to determine the algorithm of verification
         const ret = vis.next(algo1);                //algo1 only used for verification
 
+        console.log("came back from backend");
         if(ret.changed) _sendDD(res, vis.getDD(), ret); //something changes so we update the shown dd
         else res.send({ msg: "can't go ahead because we are at the end", reload: "false" });
     } else {

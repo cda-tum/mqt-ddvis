@@ -28,8 +28,10 @@ class AlgoArea {
      * @param changeState {function} allows the algoArea to change the state of its surroundings during simulation
      * @param print {function} for printing/rendering a DD in the .dot format
      * @param error {function} to notify the user as soon as an error occured
+     * @param loadParams {object} needs to be sent on /load, in addition to the standard-parameters
+     *              empty for simulation, { algo1: true/false } for verification
      */
-    constructor(div, idPrefix, changeState, print, error) {
+    constructor(div, idPrefix, changeState, print, error, loadParams={}) {
         this._idPrefix = idPrefix;
 
         this._drop_zone = $(
@@ -81,6 +83,8 @@ class AlgoArea {
         this._changeState = changeState;    //function to change the state on the callers side      //todo do the same ST_values work for verification?
         this._print = print;                //function to print the DD on the callers side
         this._error = error;                //function on the callers side for handling errors
+        this._loadParams = loadParams;      //object that needs to be sent to the server on calling /load
+                                            // { } for simulation, { algo1: true/false } for verification
 
         this._algoFormat = FORMAT_UNKNOWN;  //determines the format in which the algorithm is written to detect operations
         this._emptyAlgo = true;         //flag to avoid loading that would obviously lead to an error
@@ -179,16 +183,18 @@ class AlgoArea {
             const temp = this.preformatAlgorithm(algo, format);
             this._algoChanged = false;
 
-            const call = $.post("/load", {
-                basisStates: null,  //not needed at the moment, but since I started implementing it, I didn't delete it
-                algo: algo + "\n",  //append \n because it doesn't matter semantically, but the parser needs an empty
-                                    // line at the end and for better error message we can't send the pre-formatted
-                                    // algorithm (which would have added \n if it was missing)
-                opNum: opNum,
-                format: format,
-                reset: reset,
-                dataKey: dataKey
-            });
+            this._loadParams.basisStates = null; //not needed at the moment, but since I started implementing it, I
+                                                 // didn't delete it
+            this._loadParams.algo = algo + "\n"; //append \n because it doesn't matter semantically, but the parser
+                                                 // needs an empty line at the end and for better error message we
+                                                 // can't send the pre-formatted algorithm (which would have added
+                                                 // \n if it was missing)
+            this._loadParams.opNum = opNum;
+            this._loadParams.format = format;
+            this._loadParams.reset = reset;
+            this._loadParams.dataKey = dataKey;
+
+            const call = $.post("/load", this._loadParams);
             call.done((res) => {
                 algo = temp.algo;
                 if(temp.set) {

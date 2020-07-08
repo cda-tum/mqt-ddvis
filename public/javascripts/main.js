@@ -69,6 +69,66 @@ function openTab(event, tabId) {
 
 
 
+//####################### STATE MANAGEMENT ######################################
+const STATE_NOTHING_LOADED = 0;     //initial state, goes to LOADED
+const STATE_LOADED = 1;             //can go to SIMULATING and DIASHOW, both of them can lead to LOADED (somewhere between start and end)
+const STATE_LOADED_START = 2;       //can go to SIMULATING, DIASHOW, LOADED or LOADED_END
+const STATE_LOADED_END = 3;         //can go to LOADED or LOADED_START
+const STATE_SIMULATING = 4;         //can go to LOADED
+const STATE_DIASHOW = 5;            //can go to LOADED
+const STATE_LOADED_EMPTY = 6;       //can't navigate
+
+const _generalElements = [
+    "sim_tab", "ver_tab",
+    "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
+    "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
+];
+function generalChangeState(state) {
+    switch (state) {
+        case STATE_NOTHING_LOADED:
+        case STATE_LOADED:
+        case STATE_LOADED_START:
+        case STATE_LOADED_END:
+        case STATE_LOADED_EMPTY:
+            enableElementsWithID(_generalElements);
+            break;
+
+        case STATE_SIMULATING:
+        case STATE_DIASHOW:
+            disableElementsWithID(_generalElements);
+            break;
+
+    }
+}
+
+/**Enables all elements whose id is mentioned in the parameter.
+ *
+ * @param ids string-array with the ids of all elements that should be enabled
+ * @private
+ */
+function enableElementsWithID(ids) {
+    ids.forEach((id) => {
+        const elem = document.getElementById(id);
+        if(!elem) console.log(id);
+        elem.disabled = false;
+    });
+}
+
+/**Disables all elements whose id is mentioned in the parameter.
+ *
+ * @param ids string-array with the ids of all elements that should be disabled
+ * @private
+ */
+function disableElementsWithID(ids) {
+    ids.forEach((id) => {
+        const elem = document.getElementById(id);
+        if(!elem) console.log(id);
+        elem.disabled = true;
+    });
+}
+
+
+// ##################### DRAG & DROP ##############################
 
 const dropListeners = new Map();
 
@@ -99,6 +159,11 @@ function dragOverHandler(event) {
     event.preventDefault(); //needed for all q_algos
 }
 
+
+
+
+//##################### ERRORS ########################################
+
 /**Shows the message contained in the response or an alternative message as error to the client.
  *
  * @param res response of a call to the server
@@ -118,6 +183,9 @@ function showError(error) {
     alert(error);
 }
 
+
+// ################### LOADING ###########################################
+
 function startLoadingAnimation() {
     document.getElementById('loader').style.display = 'block';
 }
@@ -126,6 +194,8 @@ function endLoadingAnimation() {
     document.getElementById('loader').style.display = 'none';
 }
 
+
+// ################## ALGO AREAS #########################################
 
 const algoAreas = new Map();    //stores algoAreas for resizing on window resize-events
 

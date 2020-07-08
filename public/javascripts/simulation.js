@@ -1,11 +1,12 @@
 
 //################### J-QUERY ELEMENTS ###############################################################################################################
 
-const step_duration = $('#stepDuration');
 const algo_div = $('#algo_div');
 const qdd_div = $('#qdd_div');
 const qdd_text = $('#qdd_text');
 
+//todo put these into main.js
+const step_duration = $('#stepDuration');
 const cb_colored = $('#cb_colored');
 const cb_edge_labels = $('#cb_edge_labels');
 const cb_classic = $('#cb_classic');
@@ -23,14 +24,6 @@ let stepDuration = 1000;   //in ms
 
 
 //################### STATE MANAGEMENT ##################################################################################################################
-//states of the simulation tab
-const STATE_NOTHING_LOADED = 0;     //initial state, goes to LOADED
-const STATE_LOADED = 1;             //can go to SIMULATING and DIASHOW, both of them can lead to LOADED (somewhere between start and end)
-const STATE_LOADED_START = 2;       //can go to SIMULATING, DIASHOW, LOADED or LOADED_END
-const STATE_LOADED_END = 3;         //can go to LOADED or LOADED_START
-const STATE_SIMULATING = 4;         //can go to LOADED
-const STATE_DIASHOW = 5;            //can go to LOADED
-const STATE_LOADED_EMPTY = 6;       //can't navigate
 
 let runDia = false;
 let conductedIrreversibleOperation = false;
@@ -41,54 +34,45 @@ let simState = STATE_NOTHING_LOADED;
  * @param state the state we want to switch to
  */
 function changeState(state) {
+    generalChangeState(state);  //changes the state for the tab-unrelated UI elements
     let enable;
     let disable;
     switch (state) {
         case STATE_NOTHING_LOADED:      //no navigation
-            enable = [  "sim_tab", "ver_tab",
-                        "sim_drop_zone", "sim_q_algo",
-                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
-                        "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
+            enable = [
+                "sim_drop_zone", "sim_q_algo"
             ];
             disable = [ "toStart", "prev", "automatic", "next", "toEnd", "toLine" ];
             break;
 
         case STATE_LOADED:
-            enable = [  "sim_tab", "ver_tab",
-                        "sim_drop_zone", "sim_q_algo",
-                        "toStart", "prev", "automatic", "next", "toEnd", "toLine",
-                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
-                        "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
+            enable = [
+                "sim_drop_zone", "sim_q_algo",
+                "toStart", "prev", "automatic", "next", "toEnd", "toLine"
             ];
             disable = [  ];
             break;
 
         case STATE_LOADED_START:
-            enable = [  "sim_tab", "ver_tab",
-                        "sim_drop_zone", "sim_q_algo",
-                        "automatic", "next", "toEnd", "toLine",
-                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
-                        "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
+            enable = [
+                "sim_drop_zone", "sim_q_algo",
+                "automatic", "next", "toEnd", "toLine"
             ];
             disable = [ "toStart", "prev" ];
             break;
 
         case STATE_LOADED_END:
-            enable = [  "sim_tab", "ver_tab",
-                        "sim_drop_zone", "sim_q_algo",
-                        "toStart", "prev", "toLine",
-                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
-                        "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
+            enable = [
+                "sim_drop_zone", "sim_q_algo",
+                "toStart", "prev", "toLine",
             ];
             disable = [ "toEnd", "next", "automatic" ];   //don't disable q_algo because the user might want to add lines to the end
             break;
 
         case STATE_SIMULATING:
             enable =  [];
-            disable = [ "sim_tab", "ver_tab",
-                        "toStart", "prev", "automatic", "next", "toEnd", "toLine",      //navigation buttons
-                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",                   //example algorithms
-                        "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"    //advanced settings
+            disable = [
+                "toStart", "prev", "automatic", "next", "toEnd", "toLine",      //navigation buttons
             ];
             //in firefox my onScroll-event is ignored if sim_q_algo is disabled, so for firefox things must be handled differently and enable it
             if(isFirefox) {
@@ -104,10 +88,8 @@ function changeState(state) {
             runDia = true;
             automatic.text("||");   //\u23F8
             enable = [ "automatic" ];
-            disable = [ "sim_tab", "ver_tab",
-                        "toStart", "prev", "next", "toEnd", "toLine",
-                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
-                        "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
+            disable = [
+                "toStart", "prev", "next", "toEnd", "toLine",
             ];
             //in firefox my onScroll-event is ignored if sim_q_algo is disabled, so for firefox things must be handled differently and enable it
             if(isFirefox) {
@@ -121,43 +103,16 @@ function changeState(state) {
             break;
 
         case STATE_LOADED_EMPTY:    //no navigation allowed (we are at the beginning AND at the end)
-            enable = [  "sim_tab", "ver_tab",
-                        "sim_drop_zone", "sim_q_algo",
-                        "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
-                        "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
+            enable = [ "sim_drop_zone", "sim_q_algo"
             ];
             disable = [ "toStart", "prev", "automatic", "next", "toEnd", "toLine" ];
             break;
     }
 
-    _enableElementsWithID(enable);
-    _disableElementsWithID(disable);
+    enableElementsWithID(enable);
+    disableElementsWithID(disable);
 
     simState = state;
-}
-
-/**Enables all elements whose id is mentioned in the parameter.
- *
- * @param ids string-array with the ids of all elements that should be enabled
- * @private
- */
-function _enableElementsWithID(ids) {
-    ids.forEach((id) => {
-        const elem = document.getElementById(id);
-        elem.disabled = false;
-    });
-}
-
-/**Disables all elements whose id is mentioned in the parameter.
- *
- * @param ids string-array with the ids of all elements that should be disabled
- * @private
- */
-function _disableElementsWithID(ids) {
-    ids.forEach((id) => {
-        const elem = document.getElementById(id);
-        elem.disabled = true;
-    });
 }
 
 //################### UI INITIALIZATION ##################################################################################################################

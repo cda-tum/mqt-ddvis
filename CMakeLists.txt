@@ -43,7 +43,9 @@ endif()
 add_library(${PROJECT_NAME} SHARED
         cpp/module/module.cpp
         cpp/module/QDDVis.cpp
-        cpp/module/QDDVis.h cpp/module/QDDVer.h cpp/module/QDDVer.cpp)
+        cpp/module/QDDVis.h
+		cpp/module/QDDVer.h
+		cpp/module/QDDVer.cpp)
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 
 # always use modern CMake "target_..." commands

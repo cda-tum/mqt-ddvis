@@ -4,18 +4,35 @@ const qddVis = require("./build/Release/QDD_Vis");
 //const data = new Map(); //saves the QDDVis-objects needed for simulation
 
 class DataManager {
-    constructor() {
+    constructor(objCode) {
         this._data = new Map();
+        this._objCode = objCode;
     }
 
     get data() {
         return this._data;
     }
+
+    get objCode() {
+        return this._objCode;
+    }
+
+    addObject(key) {
+        let obj;
+        if(this._objCode === 1)
+            obj = new qddVis.QDDVer();
+        else obj = new qddVis.QDDVis(key);
+
+        this._data.set(key, {                 //save:
+            vis: obj,                       //the actual object needed for the simulation
+            last_access: _getTimeStamp()    //a time stamp to determine "old" entries that can be deleted safely
+        });
+    }
 }
 
 const manager = new Map();
-manager.set("sim", new DataManager());
-manager.set("ver", new DataManager());
+manager.set("sim", new DataManager(0));
+manager.set("ver", new DataManager(1));
 
 /**Retrieves the key for data based on the request.
  *
@@ -85,15 +102,12 @@ function _getTimeStamp() {
  */
 function register(req) {
     const key = _createKey(req);
-    const vis = new qddVis.QDDVis(key);
 
     //create an object in every dataManager the requester might need
     for(const item of manager) { //item: [key, value]
         const m = item[1];
-        m.data.set(key, {                 //save:
-            vis: vis,                       //the actual object needed for the simulation
-            last_access: _getTimeStamp()    //a time stamp to determine "old" entries that can be deleted safely
-        });
+        m.addObject(key);
+
     }
     /*
     data.set(key, {                 //save:
@@ -108,7 +122,7 @@ function register(req) {
  * Updates the last_access time-stamp since there was an interaction with the object.
  *
  * @param req request of a client-call to the server
- * @returns {qddVis.QDDVis} the QDDVis-object associated with the requester
+ * @returns {qddVis.QDDVis} or {qddVis.QDDVer} one of the objects associated with the requester
  */
 function get(req) {
     const key = _getKey(req);

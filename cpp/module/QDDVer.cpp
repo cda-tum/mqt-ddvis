@@ -78,6 +78,7 @@ void QDDVer::stepForward(bool algo1) {
     if(algo1) {
         if(atEnd1) return;   //no further steps possible
         const dd::Edge currDD = (*iterator1)->getDD(dd, line, map1);    //retrieve the "new" current operation
+        std::cout << "stepForward: multiply left from algo1" << std::endl;
 
         auto temp = dd->multiply(currDD, sim);         //process the current operation by multiplying it with the previous simulation-state
         dd->incRef(temp);
@@ -93,6 +94,7 @@ void QDDVer::stepForward(bool algo1) {
     } else {
         if(atEnd2) return;   //no further steps possible
         const dd::Edge currDD = (*iterator2)->getInverseDD(dd, line, map2);    //retrieve the inverse of the "new" current operation
+        std::cout << "stepForward: multiply right with inverse from algo2" << std::endl;
 
         auto temp = dd->multiply(sim, currDD);         //process the current operation by multiplying it with the previous simulation-state
         dd->incRef(temp);
@@ -323,12 +325,16 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
         atEnd1 = false;
         iterator1 = qc1->begin();
         position1 = 0;
+
+        std::cout << "algo1 initialized - " << ready1 << std::endl;
     } else {
         ready2 = true;
         atInitial2 = true;
         atEnd2 = false;
         iterator2 = qc2->begin();
         position2 = 0;
+
+        std::cout << "algo2 initialized - " << ready2 << std::endl;
     }
 
     //the third parameter (how many operations to apply immediately)
@@ -381,8 +387,10 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
         dd->incRef(sim);
     }
 
-    if(algo1)   return Napi::Number::New(env, qc1->getNops());
-    else        return Napi::Number::New(env, qc2->getNops());
+    Napi::Object state = Napi::Object::New(env);
+    if(algo1)   state.Set("numOfOperations", Napi::Number::New(env, qc1->getNops()));
+    else        state.Set("numOfOperations", Napi::Number::New(env, qc2->getNops()));
+    return state;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -413,6 +421,10 @@ Napi::Value QDDVer::ToStart(const Napi::CallbackInfo& info) {
         } else if(atInitial1) {
             return Napi::Boolean::New(env, false);  //nothing changed
         }
+
+        atEnd1 = false;  //now we are definitely not at the end (if there were no operation, so atInitial
+        // and atEnd could be true at the same time, if(qc-empty) would already have returned
+
     } else {
         if(!ready2) {
             Napi::Error::New(env, "No algorithm loaded as algo2!").ThrowAsJavaScriptException();
@@ -422,28 +434,20 @@ Napi::Value QDDVer::ToStart(const Napi::CallbackInfo& info) {
         } else if(atInitial2) {
             return Napi::Boolean::New(env, false);  //nothing changed
         }
+
+        atEnd2 = false;  //now we are definitely not at the end (if there were no operation, so atInitial
+        // and atEnd could be true at the same time, if(qc-empty) would already have returned
     }
 
     try {
-        dd->decRef(sim);
-        //sim = dd->makeZeroState(qc->getNqubits());
-        if(algo1)   sim = qc1->createInitialMatrix(dd);
-        else        sim = qc2->createInitialMatrix(dd);
-
-        dd->incRef(sim);
-
         if(algo1) {
-            atInitial1 = true;
-            atEnd1 = false; //now we are definitely not at the end (if there were no operation, so atInitial and atEnd could be true at the same time, if(qc-empty)
-            // would already have returned
-            iterator1 = qc1->begin();
-            position1 = 0;
+            //go one step back at a time until all operations have been reversed (atInitial is set to true in stepBack)
+            while(!atInitial1) stepBack(true);
+            //now atEnd is true, exactly as it should be
         } else {
-            atInitial2 = true;
-            atEnd2 = false; //now we are definitely not at the end (if there were no operation, so atInitial and atEnd could be true at the same time, if(qc-empty)
-            // would already have returned
-            iterator2 = qc2->begin();
-            position2 = 0;
+            //go one step back at a time until all operations have been reversed (atInitial is set to true in stepBack)
+            while(!atInitial2) stepBack(false);
+            //now atInitial is true, exactly as it should be
         }
 
         return Napi::Boolean::New(env, true);   //something changed
@@ -453,7 +457,6 @@ Napi::Value QDDVer::ToStart(const Napi::CallbackInfo& info) {
         std::cout << e.what() << std::endl;
         return Napi::Boolean::New(env, false);  //nothing changed
     }
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -466,52 +469,57 @@ Napi::Value QDDVer::ToStart(const Napi::CallbackInfo& info) {
  */
 Napi::Value QDDVer::Prev(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
+    Napi::Object state = Napi::Object::New(env);
+    state.Set("changed", Napi::Boolean::New(env, false));
 
     if(info.Length() < 1) {
         Napi::RangeError::New(env, "Need 1 (bool) argument!").ThrowAsJavaScriptException();
+        return state;
     }
     if (!info[0].IsBoolean()) {  //algo1
         Napi::TypeError::New(env, "arg1: Boolean expected!").ThrowAsJavaScriptException();
+        return state;
     }
     bool algo1 = (bool)info[0].As<Napi::Boolean>();
 
     if(algo1) {
         if(!ready1) {
             Napi::Error::New(env, "No algorithm loaded as algo1!").ThrowAsJavaScriptException();
-            return Napi::Boolean::New(env, false);
+            return state;
         } else if (qc1->empty()) {
-            return Napi::Boolean::New(env, false);
+            return state;
         }
 
         if (atEnd1) {
             atEnd1 = false;
         } else if (atInitial1) {
-            return Napi::Boolean::New(env, false); //we can't go any further back
+            return state; //we can't go any further back
         }
     } else {
         if(!ready2) {
             Napi::Error::New(env, "No algorithm loaded as algo2!").ThrowAsJavaScriptException();
-            return Napi::Boolean::New(env, false);
+            return state;
         } else if (qc2->empty()) {
-            return Napi::Boolean::New(env, false);
+            return state;
         }
 
         if (atEnd2) {
             atEnd2 = false;
         } else if (atInitial2) {
-            return Napi::Boolean::New(env, false); //we can't go any further back
+            return state; //we can't go any further back
         }
     }
 
     try {
+        state.Set("changed", true);   //something changed
         stepBack(algo1);     //go back to the start before the last processed operation
 
-        return Napi::Boolean::New(env, true);   //something changed
+        return state;
 
     } catch(std::exception& e) {
         std::cout << "Exception while getting the current operation {src: prev}!" << e.what() << std::endl;
         std::cout << e.what() << std::endl;
-        return Napi::Boolean::New(env, false);
+        return state;
     }
 }
 
@@ -525,52 +533,57 @@ Napi::Value QDDVer::Prev(const Napi::CallbackInfo& info) {
  */
 Napi::Value QDDVer::Next(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
+    Napi::Object state = Napi::Object::New(env);
+    state.Set("changed", Napi::Boolean::New(env, false));
 
     if(info.Length() < 1) {
         Napi::RangeError::New(env, "Need 1 (bool) argument!").ThrowAsJavaScriptException();
+        return state;
     }
     if (!info[0].IsBoolean()) {  //algo1
         Napi::TypeError::New(env, "arg1: Boolean expected!").ThrowAsJavaScriptException();
+        return state;
     }
     bool algo1 = (bool)info[0].As<Napi::Boolean>();
 
     if(algo1) {
         if(!ready1) {
             Napi::Error::New(env, "No algorithm loaded as algo1!").ThrowAsJavaScriptException();
-            return Napi::Boolean::New(env, false);
+            return state;
         } else if (qc1->empty()) {
-            return Napi::Boolean::New(env, false);
+            return state;
         }
 
-        if(atInitial1){
+        if(atInitial1) {
             atInitial1 = false;
         } else if(atEnd1) {
-            return Napi::Boolean::New(env, false); //we can't go any further ahead
+            return state;
         }
     } else {
         if(!ready2) {
             Napi::Error::New(env, "No algorithm loaded as algo2!").ThrowAsJavaScriptException();
-            return Napi::Boolean::New(env, false);
+            return state;
         } else if (qc2->empty()) {
-            return Napi::Boolean::New(env, false);
+            return state;
         }
 
         if(atInitial2){
             atInitial2 = false;
         } else if(atEnd2) {
-            return Napi::Boolean::New(env, false); //we can't go any further ahead
+            return state;
         }
     }
 
     try {
+        state.Set("changed", Napi::Boolean::New(env, true));
         stepForward(algo1);          //process the next operation
 
-        return Napi::Boolean::New(env, true);   //something changed
+        return state;
 
     } catch(std::exception& e) {
         std::cout << "Exception while getting the current operation {src: next}!" << std::endl;
         std::cout << e.what() << std::endl;
-        return Napi::Boolean::New(env, false);
+        return state;
     }
 }
 
@@ -584,23 +597,27 @@ Napi::Value QDDVer::Next(const Napi::CallbackInfo& info) {
  */
 Napi::Value QDDVer::ToEnd(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
+    Napi::Object state = Napi::Object::New(env);
+    state.Set("changed", Napi::Boolean::New(env, false));
 
     if(info.Length() < 1) {
         Napi::RangeError::New(env, "Need 1 (bool) argument!").ThrowAsJavaScriptException();
+        return state;
     }
     if (!info[0].IsBoolean()) {  //algo1
         Napi::TypeError::New(env, "arg1: Boolean expected!").ThrowAsJavaScriptException();
+        return state;
     }
     bool algo1 = (bool)info[0].As<Napi::Boolean>();
 
     if(algo1) {
         if(!ready1) {
             Napi::Error::New(env, "No algorithm loaded as algo1!").ThrowAsJavaScriptException();
-            return Napi::Boolean::New(env, false);
+            return state;
         } else if (qc1->empty()) {
-            return Napi::Boolean::New(env, false);
+            return state;
         } else if(atEnd1) {
-            return Napi::Boolean::New(env, false); //nothing changed
+            return state; //nothing changed
         }
 
         atInitial1 = false;  //now we are definitely not at the beginning (if there were no operation, so atInitial
@@ -609,11 +626,11 @@ Napi::Value QDDVer::ToEnd(const Napi::CallbackInfo& info) {
     } else {
         if(!ready2) {
             Napi::Error::New(env, "No algorithm loaded as algo2!").ThrowAsJavaScriptException();
-            return Napi::Boolean::New(env, false);
+            return state;
         } else if (qc2->empty()) {
-            return Napi::Boolean::New(env, false);
+            return state;
         } else if(atEnd2) {
-            return Napi::Boolean::New(env, false); //nothing changed
+            return state; //nothing changed
         }
 
         atInitial2 = false;  //now we are definitely not at the beginning (if there were no operation, so atInitial
@@ -621,6 +638,7 @@ Napi::Value QDDVer::ToEnd(const Napi::CallbackInfo& info) {
     }
 
     try {
+        state.Set("changed", Napi::Boolean::New(env, true));  //something changed
         if(algo1) {
             //process one step at a time until all operations have been considered (atEnd is set to true in stepForward())
             while(!atEnd1) stepForward(true);
@@ -631,12 +649,12 @@ Napi::Value QDDVer::ToEnd(const Napi::CallbackInfo& info) {
             //now atEnd is true, exactly as it should be
         }
 
-        return Napi::Boolean::New(env, true);   //something changed
+        return state;
 
     } catch(std::exception& e) {
         std::cout << "Exception while going to the end!" << std::endl;
         std::cout << e.what() << std::endl;
-        return Napi::Boolean::New(env, false);
+        return state;
     }
 }
 
@@ -732,7 +750,7 @@ Napi::Value QDDVer::GetDD(const Napi::CallbackInfo& info) {
 
     std::stringstream ss{};
     try {
-        dd::toDot(sim, ss, true, this->showColors, this->showEdgeLabels, this->showClassic);
+        dd::toDot(sim, ss, false, this->showColors, this->showEdgeLabels, this->showClassic);
         std::string str = ss.str();
         return Napi::String::New(env, str);
 

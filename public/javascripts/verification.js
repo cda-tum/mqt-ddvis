@@ -9,23 +9,218 @@ const ver_graphviz = d3.select("#ver_qdd_div").graphviz({
     fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
 }).tweenPaths(true).tweenShapes(true);
 
+// ######################### STATE MANAGEMENT ##################################
+let ver1RunDia = false;
+let ver1State = STATE_NOTHING_LOADED;
+let ver2RunDia = false;
+let ver2State = STATE_NOTHING_LOADED;
 
-function ver_changeState(state) {
-    console.log("Verification changed state to " + state);
+/**Changes the state of the verification-UI by properly enabling and disabling certain UI elements.
+ *
+ * @param state the state we want to switch to
+ * @param algo1 whether the state changes for the left (true) or right (false) algoDiv
+ */
+function ver_changeState(state, algo1=true) {
+    //normally this outer if shouldn't be needed since if one algo is in SIMULATING or DIASHOW, the user
+    // can't interact with the other one so it shouldn't be able to change its state
+    if(algo1) {
+        //if we were previously in a state that affected the other algo_div and are now no longer in this
+        // state (should be always the case since SIM doesn't go to SIM etc.), we need to re-enable the
+        // UI-elements of the other algo_div according to its state
+        if( ver1State === STATE_SIMULATING && state !== STATE_SIMULATING ||
+            ver1State === STATE_DIASHOW && state !== STATE_DIASHOW) {
+            ver1State = state;
+            ver_changeState(ver2State, false);      //todo are recursive endless-loops possible?
+
+        } else ver1State = state;
+    } else {
+        //if we were previously in a state that affected the other algo_div and are now no longer in this
+        // state (should be always the case since SIM doesn't go to SIM etc.), we need to re-enable the
+        // UI-elements of the other algo_div according to its state
+        if( ver2State === STATE_SIMULATING && state !== STATE_SIMULATING ||
+            ver2State === STATE_DIASHOW && state !== STATE_DIASHOW) {
+            ver2State = state;
+            ver_changeState(ver1State, true);      //todo are recursive endless-loops possible?
+
+        } else ver2State = state;
+    }
+
+    _ver_generalChangeState(ver1State, ver2State);  //changes the state for the tab-unrelated UI elements
+
+    let enableWithPrefix = [];
+    let enableNoPrefix = [];
+    let disableWithPrefix = [];
+    let disableNoPrefix = [];
+    //the prefix ("ver1_" or "ver2_") are added later
+    switch (state) {
+        case STATE_NOTHING_LOADED:      //no navigation
+            enableWithPrefix = [
+                "drop_zone", "q_algo"
+            ];
+            disableWithPrefix = [ "toStart", "prev", "automatic", "next", "toEnd" ];
+            break;
+
+        case STATE_LOADED:
+            enableWithPrefix = [
+                "drop_zone", "q_algo",
+                "toStart", "prev", "automatic", "next", "toEnd"
+            ];
+            disableWithPrefix = [  ];
+            break;
+
+        case STATE_LOADED_START:
+            enableWithPrefix = [
+                "drop_zone", "q_algo",
+                "automatic", "next", "toEnd"
+            ];
+            disableWithPrefix = [ "toStart", "prev" ];
+            break;
+
+        case STATE_LOADED_END:
+            enableWithPrefix = [
+                "drop_zone", "q_algo",
+                "toStart", "prev"
+            ];
+            disableWithPrefix = [ "toEnd", "next", "automatic" ];   //don't disable q_algo because the user might want to add lines to the end
+            break;
+
+        case STATE_SIMULATING:      //also affects the other algo_div
+            enableNoPrefix =  [];
+            disableNoPrefix = [
+                "ver1_toStart", "ver1_prev", "ver1_automatic", "ver1_next", "ver1_toEnd", //navigation
+                "ver2_toStart", "ver2_prev", "ver2_automatic", "ver2_next", "ver2_toEnd", //navigation
+            ];
+            //in firefox my onScroll-event is ignored if sim_q_algo is disabled, so for firefox things must be
+            // handled differently and enable it
+            if(isFirefox) {
+                enableNoPrefix.push("ver1_drop_zone");
+                enableNoPrefix.push("ver1_q_algo");
+                enableNoPrefix.push("ver2_drop_zone");
+                enableNoPrefix.push("ver2_q_algo");
+            } else {
+                disableNoPrefix.push("ver1_drop_zone");
+                disableNoPrefix.push("ver1_q_algo");
+                disableNoPrefix.push("ver2_drop_zone");
+                disableNoPrefix.push("ver2_q_algo");
+            }
+            break;
+
+        case STATE_DIASHOW:     //also affects the other algo_div
+            enableWithPrefix = [ "automatic" ];
+            disableNoPrefix = [
+                "ver1_toStart", "ver1_prev", "ver1_next", "ver1_toEnd", //navigation
+                "ver2_toStart", "ver2_prev", "ver2_next", "ver2_toEnd", //navigation
+            ];
+            //in firefox my onScroll-event is ignored if sim_q_algo is disabled, so for firefox things must be handled
+            // differently and enable it
+            if(isFirefox) {
+                enableNoPrefix.push("ver1_drop_zone");
+                enableNoPrefix.push("ver1_q_algo");
+                enableNoPrefix.push("ver2_drop_zone");
+                enableNoPrefix.push("ver2_q_algo");
+            } else {
+                disableNoPrefix.push("ver1_drop_zone");
+                disableNoPrefix.push("ver1_q_algo");
+                disableNoPrefix.push("ver2_drop_zone");
+                disableNoPrefix.push("ver2_q_algo");
+            }
+
+            if(algo1) {
+                ver1RunDia = true;
+                ver1_automatic.text("||");   //\u23F8
+                disableNoPrefix.push("ver2_automatic"); //disable the other dia-button
+            } else {
+                ver2RunDia = true;
+                ver2_automatic.text("||");   //\u23F8
+                disableNoPrefix.push("ver1_automatic"); //disable the other dia-button
+            }
+
+            break;
+
+        case STATE_LOADED_EMPTY:    //no navigation allowed (we are at the beginning AND at the end)
+            enableWithPrefix = [
+                "drop_zone", "q_algo"
+            ];
+            disableWithPrefix = [ "toStart", "prev", "automatic", "next", "toEnd" ];
+            break;
+    }
+
+    const idPrefix = algo1 ? "ver1_" : "ver2_";
+    const enable = [];
+    enableWithPrefix.forEach(v => enable.push(idPrefix + v));
+    enableNoPrefix.forEach(v => enable.push(v));
+    const disable = [];
+    disableWithPrefix.forEach(v => disable.push(idPrefix + v));
+    disableNoPrefix.forEach(v => disable.push(v));
+
+    enableElementsWithID(enable);
+    disableElementsWithID(disable);
+}
+
+function _ver_generalChangeState(state1, state2) {
+    //while one state is simulating, the user must not interact with the server
+    if(state1 === STATE_SIMULATING || state2 === STATE_SIMULATING)  {
+        generalChangeState(STATE_SIMULATING);
+        return;
+    }
+
+    //while one state is in diashow, the user must not interact with the server
+    if(state1 === STATE_DIASHOW || state2 === STATE_DIASHOW) {
+        generalChangeState(STATE_DIASHOW);
+        return;
+    }
+
+    //since no state is in SIMULATING or DIASHOW, we are in a LOADED state, and (right now) they
+    // all just enable the general elements
+    generalChangeState(STATE_LOADED);   //doesn't matter which one we choose
+}
+
+function _ver_generalStateChange(algo1) {
+    endLoadingAnimation();
+
+    if(algo1) {
+        //determine our current position in the algorithm
+        if(ver1_algoArea.hlManager.highlightedLines <= 0)
+            ver_changeState(STATE_LOADED_START, algo1);
+        else if(ver1_algoArea.hlManager.highlightedLines >= ver1_algoArea.numOfOperations)
+            ver_changeState(STATE_LOADED_END, algo1);
+        else
+            ver_changeState(STATE_LOADED, algo1);
+
+    } else {
+        //determine our current position in the algorithm
+        if(ver2_algoArea.hlManager.highlightedLines <= 0)
+            ver_changeState(STATE_LOADED_START, algo1);
+        else if(ver2_algoArea.hlManager.highlightedLines >= ver2_algoArea.numOfOperations)
+            ver_changeState(STATE_LOADED_END, algo1);
+        else
+            ver_changeState(STATE_LOADED, algo1);
+    }
+}
+
+/**ver1_algoAreaChangeState
+ *
+ * @param state
+ */
+function ver1_aacs(state) {
+    ver_changeState(state, true);
+}
+/**ver1_algoAreaChangeState
+ *
+ * @param state
+ */
+function ver2_aacs(state) {
+    ver_changeState(state, false);
 }
 
 let ver_svgHeight = 0;
 function ver_print(dd, callback, resetZoom=false) {
-    console.log("Verification should print " + dd);
-
     if(dd) {
-        //document.getElementById('color_map').style.display = 'block';
         if(ver_svgHeight === 0) {
             //subtract the whole height of the qdd-text from the height of qdd-div to get the space that is available for the graph
             ver_svgHeight = parseInt(ver_qdd_div.css('height')) - (
                 parseInt(ver_qdd_text.css('height')) + parseInt(ver_qdd_text.css('margin-top')) + parseInt(ver_qdd_text.css('margin-bottom'))    //height of the qdd-text
             );
-            //ver_svgHeight = 300;    //todo remove, just for testing
         }
 
         let animationDuration = 500;
@@ -45,21 +240,17 @@ function ver_print(dd, callback, resetZoom=false) {
                 .renderDot(dd).on("transitionStart", callback);
         }
 
-
-        //$('#color_map').html(
-        //    '<svg><rect width="20" height="20" fill="purple"></rect></svg>'
-        //);
-
     } else {
         ver_qdd_div.html(ver_qdd_text);
-        //document.getElementById('color_map').style.display = 'none';
     }
-
-    endLoadingAnimation();  //todo must be in callback
 }
 
-const ver1_algoArea = new AlgoArea(ver1_algo_div, "ver1", ver_changeState, ver_print, showError);
-const ver2_algoArea = new AlgoArea(ver2_algo_div, "ver2", ver_changeState, ver_print, showError);
+const ver1_algoArea = new AlgoArea(ver1_algo_div, "ver1", ver1_aacs, ver_print, showError,
+    { targetManager: "ver", algo1: true }
+);
+const ver2_algoArea = new AlgoArea(ver2_algo_div, "ver2", ver2_aacs, ver_print, showError,
+    { targetManager: "ver", algo1: false }
+);
 
 registerAlgoArea("ver1", ver1_algoArea);
 registerAlgoArea("ver2", ver2_algoArea);
@@ -67,19 +258,19 @@ registerAlgoArea("ver2", ver2_algoArea);
 //append the navigation divs below the algoAreas
 ver1_algo_div.append(
     '<div id="ver1_nav_div" class="nav-div">\n' +
-    '        <button type="button" id="ver1_toStart" class="nav-button" onclick="gotoStart()" ' +
+    '        <button type="button" id="ver1_toStart" class="nav-button" onclick="ver_gotoStart(true)" ' +
     'title="Go back to the initial state"' +
     '        >&#8606</button>\n' +
-    '        <button type="button" id="ver1_prev" class="nav-button" onclick="goBack()" ' +
+    '        <button type="button" id="ver1_prev" class="nav-button" onclick="ver_goBack(true)" ' +
     'title="Go to the previous operation"' +
     '        >&#8592</button>\n' +
-    '        <button type="button" id="ver1_automatic" class="nav-button" onclick="diashow()" ' +
+    '        <button type="button" id="ver1_automatic" class="nav-button" onclick="ver_diashow(true)" ' +
     'title="Start a diashow"' +
     '        >&#9654</button>\n' +
-    '        <button type="button" id="ver1_next" class="nav-button" onclick="goForward()" ' +
+    '        <button type="button" id="ver1_next" class="nav-button" onclick="ver_goForward(true)" ' +
     'title="Apply the current operation"' +
     '        >&#8594</button>\n' +
-    '        <button type="button" id="ver1_toEnd" class="nav-button" onclick="gotoEnd()" ' +
+    '        <button type="button" id="ver1_toEnd" class="nav-button" onclick="ver_gotoEnd(true)" ' +
     'title="Apply all remaining operations"' +
     '        >&#8608</button>\n' +
     //'        <p></p>\n' +
@@ -89,19 +280,19 @@ ver1_algo_div.append(
 );
 ver2_algo_div.append(
     '<div id="ver2_nav_div" class="nav-div">\n' +
-    '        <button type="button" id="ver2_toStart" class="nav-button" onclick="gotoStart()" ' +
+    '        <button type="button" id="ver2_toStart" class="nav-button" onclick="ver_gotoStart(false)" ' +
     'title="Go back to the initial state"' +
     '        >&#8606</button>\n' +
-    '        <button type="button" id="ver2_prev" class="nav-button" onclick="goBack()" ' +
+    '        <button type="button" id="ver2_prev" class="nav-button" onclick="ver_goBack(false)" ' +
     'title="Go to the previous operation"' +
     '        >&#8592</button>\n' +
-    '        <button type="button" id="ver2_automatic" class="nav-button" onclick="diashow()" ' +
+    '        <button type="button" id="ver2_automatic" class="nav-button" onclick="ver_diashow(false)" ' +
     'title="Start a diashow"' +
     '        >&#9654</button>\n' +
-    '        <button type="button" id="ver2_next" class="nav-button" onclick="goForward()" ' +
+    '        <button type="button" id="ver2_next" class="nav-button" onclick="ver_goForward(false)" ' +
     'title="Apply the current operation"' +
     '        >&#8594</button>\n' +
-    '        <button type="button" id="ver2_toEnd" class="nav-button" onclick="gotoEnd()" ' +
+    '        <button type="button" id="ver2_toEnd" class="nav-button" onclick="ver_gotoEnd(false)" ' +
     'title="Apply all remaining operations"' +
     '        >&#8608</button>\n' +
     //'        <p></p>\n' +
@@ -110,22 +301,183 @@ ver2_algo_div.append(
     '</div>'
 );
 
-function gotoStart() {
+const ver1_automatic = $('#ver1_automatic');
+const ver2_automatic = $('#ver2_automatic');
 
+
+// ##################### NAVIGATION #######################################################
+
+function ver_gotoStart(algo1) {
+    ver_changeState(STATE_SIMULATING, algo1);
+    startLoadingAnimation();
+
+    const call = $.ajax({
+        url: '/tostart?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
+        contentType: 'application/json',
+        success: (res) => {
+            if(res.dot) {
+                ver_print(res.dot, () => {
+                    if(algo1)   ver1_algoArea.hlManager.initialHighlighting();
+                    else        ver2_algoArea.hlManager.initialHighlighting();
+                    endLoadingAnimation();
+                    ver_changeState(STATE_LOADED_START, algo1);
+                });
+            } else {
+                endLoadingAnimation();
+                ver_changeState(STATE_LOADED_START, algo1);
+            }
+        }
+    });
+    call.fail((res) => {
+        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+        showResponseError(res, "Going back to the start failed!");
+        _ver_generalStateChange(algo1);
+    });
 }
 
-function goBack() {
+function ver_goBack(algo1) {
+    ver_changeState(STATE_SIMULATING, algo1);
+    startLoadingAnimation();
 
+    const call = $.ajax({
+        url: '/prev?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
+        contentType: 'application/json',
+        success: (res) => {
+            if(res.dot) {
+                ver_print(res.dot, () => {
+                    if(algo1)   ver1_algoArea.hlManager.decreaseHighlighting();
+                    else        ver2_algoArea.hlManager.decreaseHighlighting();
+
+                    _ver_generalStateChange(algo1);
+                });
+            } else {
+                _ver_generalStateChange(algo1);
+            } //should never reach this code because the button should be disabled when we reach the start
+        }
+    });
+    call.fail((res) => {
+        //404 means that we are no longer registered and therefore need to reload
+        if(res.status === 404) window.location.reload(false);
+
+        showResponseError(res, "Going a step back for " + (algo1 ? "algo1" : "algo2") + " failed!");
+        //_generalStateChange();
+    });
 }
 
-function diashow() {
+function ver_diashow(algo1) {
+    /**Convenience function to avoid code duplication. Simply sets everything that is needed to properly stop the diashow.
+     *
+     */
+    function endDia() {
+        if(algo1) {
+            ver1RunDia = false;
+            _ver_generalStateChange(true);  //in error-cases we also call endDia(), and in normal cases it doesn't matter that we call this function
+            ver1_automatic.text("\u25B6");   //play-symbol in unicode
+        } else {
+            ver2RunDia = false;
+            _ver_generalStateChange(false);  //in error-cases we also call endDia(), and in normal cases it doesn't matter that we call this function
+            ver2_automatic.text("\u25B6");   //play-symbol in unicode
+        }
+    }
 
+    /**Periodically calls /next and updates DD if necessary
+     *
+     */
+    const func = () => {
+        if(algo1 && ver1RunDia || !algo1 && ver2RunDia) {
+            const startTime = performance.now();
+            const call = $.ajax({
+                url: '/next?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
+                contentType: 'application/json',
+                success: (res) => {
+                    if(res.dot) {
+                        ver_print(res.dot, () => {
+                            if(algo1)   ver1_algoArea.hlManager.increaseHighlighting();
+                            else        ver2_algoArea.hlManager.increaseHighlighting();
+                            //calculate the duration of the API-call so the time between two steps is constant
+                            const duration = performance.now() - startTime;
+                            //wait a bit so the current qdd can be shown to the user
+                            setTimeout(() => func(), Math.min(Math.abs(stepDuration - duration), stepDuration));
+                        });
+
+                    } else endDia();
+                }
+            });
+            call.fail((res) => {
+                //404 means that we are no longer registered and therefore need to reload
+                if(res.status === 404) window.location.reload(false);
+
+                if(res.responseJSON && res.responseJSON.msg) showError(res.responseJSON.msg + "\nAborting diashow.");
+                else if(altMsg) showError("Going a step ahead failed! Aborting diashow.");
+                endDia();
+            });
+        }
+    };
+
+    if(algo1 && ver1RunDia || !algo1 && ver2RunDia) endDia();
+    else {
+        if(algo1)   ver1RunDia = true;
+        else        ver2RunDia = true;
+        ver_changeState(STATE_DIASHOW, algo1);
+        setTimeout(() => func(), stepDuration);
+    }
 }
 
-function goForward() {
+function ver_goForward(algo1) {
+    ver_changeState(STATE_SIMULATING, algo1);
+    startLoadingAnimation();
 
+    const call = $.ajax({
+        url: '/next?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
+        contentType: 'application/json',
+        success: (res) => {
+            if(res.dot) {   //we haven't reached the end yet
+                ver_print(res.dot, () => {
+                    if(algo1)   ver1_algoArea.hlManager.increaseHighlighting();
+                    else        ver2_algoArea.hlManager.increaseHighlighting();
+
+                    _ver_generalStateChange(algo1);
+                });
+            }
+        }
+    });
+    call.fail((res) => {
+        //404 means that we are no longer registered and therefore need to reload
+        if(res.status === 404) window.location.reload(false);
+
+        showResponseError(res, "Going a step ahead for " + (algo1 ? "algo1" : "algo2") + " failed!");
+        _ver_generalStateChange(algo1);
+    });
 }
 
-function gotoEnd() {
+function ver_gotoEnd(algo1) {
+    ver_changeState(STATE_SIMULATING, algo1);
+    startLoadingAnimation();
 
+    const call = $.ajax({
+        url: '/toend?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
+        contentType: 'application/json',
+        success: (res) => {
+            if(res.dot) {
+                ver_print(res.dot, () => {
+                    if(algo1)   ver1_algoArea.hlManager.highlightEverything();
+                    else        ver2_algoArea.hlManager.highlightEverything();
+                    endLoadingAnimation();
+                    ver_changeState(STATE_LOADED_END, algo1);
+                });
+            } else {
+                endLoadingAnimation();
+                ver_changeState(STATE_LOADED_END, algo1);
+            }
+        }
+    });
+    call.fail((res) => {
+        //404 means that we are no longer registered and therefore need to reload
+        if(res.status === 404) window.location.reload(false);
+
+        showResponseError(res, "Going to the end failed!");
+        _ver_generalStateChange();
+    });
 }
+
+//+ '&targetManager=ver&algo1=' + algo1
