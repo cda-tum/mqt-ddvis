@@ -174,7 +174,7 @@ class AlgoArea {
             const errMsg = "Format of your algorithm wasn't recognized. Please make sure it is either Real or QASM and try again.";
             this._error(errMsg);
             this._showInvalidAlgoWarning(errMsg);
-            changeState(STATE_NOTHING_LOADED);
+            this._changeState(STATE_NOTHING_LOADED);
             endLoadingAnimation();
             return;
         }
@@ -239,7 +239,7 @@ class AlgoArea {
                     this._hlManager.setHighlights();
                 }
 
-                changeState(STATE_NOTHING_LOADED);  //since an error occured on loading, nothing is loaded now
+                this._changeState(STATE_NOTHING_LOADED);  //since an error occured on loading, nothing is loaded now
                 endLoadingAnimation();
 
                 if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
@@ -248,10 +248,20 @@ class AlgoArea {
                     else this._error("Internal Server Error");
 
                 } else {  //this should be invalid-algorithm-error
-                    this._setLineNumbers();
-                    const errMsg = this._parseErrorMessage(res);
-                    this._showInvalidAlgoWarning(errMsg);
-                    this._error(errMsg);
+                    const msg = res.responseJSON.msg;
+                    if(msg.startsWith("Invalid algorithm!")) {
+                        //an invalid algorithm was loaded
+                        this._setLineNumbers();
+                        const errMsg = this._parseErrorMessage(res);
+                        this._showInvalidAlgoWarning(errMsg);
+                        this._error(errMsg);
+
+                    } else {
+                        //another invalidity, for example non-matching number of qubits for verification
+                        this._setLineNumbers(); //although they're not necessary, it may look weird if we don't set them
+                        this._showInvalidAlgoWarning(msg);
+                        this._error(msg);
+                    }
                 }
             });
         }
