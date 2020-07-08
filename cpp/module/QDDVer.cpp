@@ -257,31 +257,33 @@ void QDDVer::measureQubit(unsigned short qubitIdx, bool measureOne, fp pzero, fp
  */
 Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
+    Napi::Object state = Napi::Object::New(env);
+    state.Set("numOfOperations", Napi::Number::New(env, -1));
 
     //check if the correct parameters have been passed
     if(info.Length() < 5) {
         Napi::RangeError::New(env, "Need 5 (String, unsigned int, unsigned int, bool, bool) arguments!").ThrowAsJavaScriptException();
-        return Napi::Number::New(env, -1);
+        return state;
     }
     if (!info[0].IsString()) {  //algorithm
         Napi::TypeError::New(env, "arg1: String expected!").ThrowAsJavaScriptException();
-        return Napi::Number::New(env, -1);
+        return state;
     }
     if (!info[1].IsNumber()) {  //format code (1 = QASM, 2 = Real)
         Napi::TypeError::New(env, "arg3: unsigned int expected!").ThrowAsJavaScriptException();
-        return Napi::Number::New(env, -1);
+        return state;
     }
     if (!info[2].IsNumber()) {  //number of operations to immediately process
         Napi::TypeError::New(env, "arg2: unsigned int expected!").ThrowAsJavaScriptException();
-        return Napi::Number::New(env, -1);
+        return state;
     }
     if (!info[3].IsBoolean()) { //whether operations should be processed while advancing the iterator to opNum or not (true = new simulation; false = continue simulation)
         Napi::TypeError::New(env, "arg3: boolean expected!").ThrowAsJavaScriptException();
-        return Napi::Number::New(env, -1);
+        return state;
     }
     if (!info[4].IsBoolean()) { //whether we load as algo1 (true) or algo2 (false)
         Napi::TypeError::New(env, "arg4: boolean expected!").ThrowAsJavaScriptException();
-        return Napi::Number::New(env, -1);
+        return state;
     }
 
     //the first parameter (algorithm)
@@ -300,15 +302,34 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
         else if(formatCode == 2)    format = qc::Real;
         else {
             Napi::Error::New(env, "Invalid format-code!").ThrowAsJavaScriptException();
-            return Napi::Number::New(env, -1);
+            return state;
         }
 
         if(algo1)   {
             qc1->import(ss, format);
             map1 = qc1->initialLayout;
+
+            //check if the number of qubits is the same for both algorithms
+            if(ready2 && qc1->getNqubits() != qc2->getNqubits()) {
+                //algo2 is already loaded (because ready2 is true), so we reset algo1
+                qc1->reset();
+                ready1 = false;
+                Napi::Error::New(env, "Both algorithms need to have the same number of qubits!").ThrowAsJavaScriptException();;
+                return state;
+            }
+
         } else {
             qc2->import(ss, format);
             map2 = qc2->initialLayout;
+
+            //check if the number of qubits is the same for both algorithms
+            if(ready1 && qc1->getNqubits() != qc2->getNqubits()) {
+                //algo1 is already loaded (because ready2 is true), so we reset algo2
+                qc2->reset();
+                ready2 = false;
+                Napi::Error::New(env, "Both algorithms need to have the same number of qubits!").ThrowAsJavaScriptException();;
+                return state;
+            }
         }
 
     } catch(std::exception& e) {
@@ -326,7 +347,6 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
         iterator1 = qc1->begin();
         position1 = 0;
 
-        std::cout << "algo1 initialized - " << ready1 << std::endl;
     } else {
         ready2 = true;
         atInitial2 = true;
@@ -334,7 +354,6 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
         iterator2 = qc2->begin();
         position2 = 0;
 
-        std::cout << "algo2 initialized - " << ready2 << std::endl;
     }
 
     //the third parameter (how many operations to apply immediately)
@@ -387,7 +406,6 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
         dd->incRef(sim);
     }
 
-    Napi::Object state = Napi::Object::New(env);
     if(algo1)   state.Set("numOfOperations", Napi::Number::New(env, qc1->getNops()));
     else        state.Set("numOfOperations", Napi::Number::New(env, qc2->getNops()));
     return state;
@@ -814,7 +832,7 @@ Napi::Value QDDVer::IsReady(const Napi::CallbackInfo& info) {
 }
 
 Napi::Value QDDVer::ConductIrreversibleOperation(const Napi::CallbackInfo& info) {
-    Napi::Error::New(info.Env(), "Not supported yet!");
+    Napi::Error::New(info.Env(), "Not supported yet!").ThrowAsJavaScriptException();
     return Napi::Value::From(info.Env(), -1);
     //code copied from QDDVis.cpp
     /*

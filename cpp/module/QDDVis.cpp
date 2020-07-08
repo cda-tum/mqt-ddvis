@@ -236,27 +236,31 @@ void QDDVis::measureQubit(unsigned short qubitIdx, bool measureOne, fp pzero, fp
  */
 Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
+    Napi::Object state = Napi::Object::New(env);
+    state.Set("numOfOperations", Napi::Number::New(env, -1));
+    state.Set("nextIsIrreversible", Napi::Boolean::New(env, false));
+    state.Set("noGoingBack", Napi::Boolean::New(env, false));
 
     //check if the correct parameters have been passed
     if(info.Length() < 4) {
         Napi::RangeError::New(env, "Need 4 (String, unsigned int, unsigned int, bool) arguments!").ThrowAsJavaScriptException();
-        return Napi::Number::New(env, -1);
+        return state;
     }
     if (!info[0].IsString()) {  //algorithm
         Napi::TypeError::New(env, "arg1: String expected!").ThrowAsJavaScriptException();
-        return Napi::Number::New(env, -1);
+        return state;
     }
     if (!info[1].IsNumber()) {  //format code (1 = QASM, 2 = Real)
         Napi::TypeError::New(env, "arg3: unsigned int expected!").ThrowAsJavaScriptException();
-        return Napi::Number::New(env, -1);
+        return state;
     }
     if (!info[2].IsNumber()) {  //number of operations to immediately process
         Napi::TypeError::New(env, "arg2: unsigned int expected!").ThrowAsJavaScriptException();
-        return Napi::Number::New(env, -1);
+        return state;
     }
     if (!info[3].IsBoolean()) { //whether operations should be processed while advancing the iterator to opNum or not (true = new simulation; false = continue simulation)
         Napi::TypeError::New(env, "arg3: boolean expected!").ThrowAsJavaScriptException();
-        return Napi::Number::New(env, -1);
+        return state;
     }
 
     //the first parameter (algorithm)
@@ -271,12 +275,14 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         else if(formatCode == 2)    qc->import(ss, qc::Real);
         else {
             Napi::Error::New(env, "Invalid format-code!").ThrowAsJavaScriptException();
+            return state;
         }
 
     } catch(std::exception& e) {
         std::cout << "Exception while loading the algorithm: " << e.what() << std::endl;
         std::string err(e.what());
         Napi::Error::New(env, "Invalid algorithm!\n" + err).ThrowAsJavaScriptException();
+        return state;
     }
 
     //re-initialize some variables (though depending on opNum they might change in the next lines)
@@ -286,10 +292,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     iterator = qc->begin();
     position = 0;
 
-	Napi::Object state = Napi::Object::New(env);
 	state.Set("numOfOperations", Napi::Number::New(env, qc->getNops()));
-	state.Set("nextIsIrreversible", Napi::Boolean::New(env, false));
-	state.Set("noGoingBack", Napi::Boolean::New(env, false));
 
     //the third parameter (how many operations to apply immediately)
     unsigned int opNum = (unsigned int)info[2].As<Napi::Number>();    //at this point opNum may be bigger than the number of operations the algorithm has!

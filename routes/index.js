@@ -37,7 +37,6 @@ router.post('/load', (req, res) => {
     const vis = dm.get(req);
     if(vis) {
         try {
-            console.log("algo1: " + req.body.algo1);
             const algo = req.body.algo;
             const opNum = parseInt(req.body.opNum);
             const format = parseInt(req.body.format);
