@@ -314,7 +314,9 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
                 //algo2 is already loaded (because ready2 is true), so we reset algo1
                 qc1->reset();
                 ready1 = false;
-                Napi::Error::New(env, "Both algorithms need to have the same number of qubits!").ThrowAsJavaScriptException();;
+                std::stringstream msg;
+                msg << "Number of qubits don't match! This algorithm needs " << qc2->getNqubits() << " qubits.";
+                Napi::Error::New(env, msg.str()).ThrowAsJavaScriptException();
                 return state;
             }
 
@@ -327,7 +329,9 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
                 //algo1 is already loaded (because ready2 is true), so we reset algo2
                 qc2->reset();
                 ready2 = false;
-                Napi::Error::New(env, "Both algorithms need to have the same number of qubits!").ThrowAsJavaScriptException();;
+                std::stringstream msg;
+                msg << "Number of qubits don't match! This algorithm needs " << qc1->getNqubits() << " qubits.";
+                Napi::Error::New(env, msg.str()).ThrowAsJavaScriptException();
                 return state;
             }
         }
