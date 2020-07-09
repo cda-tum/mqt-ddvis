@@ -362,7 +362,6 @@ class AlgoArea {
         this._print(null, () => {
             this._changeState(STATE_NOTHING_LOADED);
         });    //reset dd
-
     }
 
     /**Dynamically changes sizes of the html-elements depending on the line numbers and scrollbars.
@@ -513,6 +512,7 @@ class AlgoArea {
 
         if(newAlgo.trim().length === 0) {   //user deleted everything, so we reset
             this.resetAlgorithm();
+            this._hideInvalidAlgoWarning();
             return;
         }
 
