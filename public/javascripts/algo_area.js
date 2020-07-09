@@ -29,10 +29,11 @@ class AlgoArea {
      * @param print {function} for printing/rendering a DD in the .dot format
      * @param error {function} to notify the user as soon as an error occured
      * @param resetAlgoCallback {function} called when the algorithm is reset (e.g. user deltes everything)
+     * @param onLoadError {function} called when loading the algorithm failed but not due to invalid syntax
      * @param loadParams {object} needs to be sent on /load, in addition to the standard-parameters
      *              empty for simulation, { algo1: true/false } for verification
      */
-    constructor(div, idPrefix, changeState, print, error, resetAlgoCallback, loadParams={}) {
+    constructor(div, idPrefix, changeState, print, error, resetAlgoCallback, onLoadError, loadParams={}) {
         this._idPrefix = idPrefix;
 
         this._drop_zone = $(
@@ -86,6 +87,7 @@ class AlgoArea {
         this._error = error;                //function on the callers side for handling errors
         this._resetAlgoCallback = resetAlgoCallback;    //function on the callers side for additional stuff when
                                                         // resetting the algorithm
+        this._onLoadError = onLoadError;    //allows handling of non-syntax errors when loading an algorithm
         this._loadParams = loadParams;      //object that needs to be sent to the server on calling /load
                                             // { } for simulation, { algo1: true/false } for verification
 
@@ -262,8 +264,9 @@ class AlgoArea {
                     } else {
                         //another invalidity, for example non-matching number of qubits for verification
                         this._setLineNumbers(); //although they're not necessary, it may look weird if we don't set them
-                        this._showInvalidAlgoWarning(msg);
-                        this._error(msg);
+                        if(this._onLoadError) this._onLoadError(msg);
+                        else this._error(msg);  //default case, so simulation doesn't need to provide a function
+                                                // (though for simulation it shouldn't be possible to reach this code)
                     }
                 }
             });
@@ -352,8 +355,9 @@ class AlgoArea {
 
     /**Resets algoArea to its initial state right after the constructor.
      *
+     * @param applyCallback {boolean} whether the given resetAlgoCallback should be called or not
      */
-    resetAlgorithm() {
+    resetAlgorithm(applyCallback=true) {
         this._emptyAlgo = true;
         this.algoFormat = FORMAT_UNKNOWN;
 
@@ -362,7 +366,7 @@ class AlgoArea {
         this._q_algo.val("");
         this._setQAlgoMarginLeft();   //reset margin-left to the initial/default value
 
-        this._resetAlgoCallback();  //allows the caller to do stuff when the algorithm is reset
+        if(applyCallback) this._resetAlgoCallback();  //allows the caller to do stuff when the algorithm is reset
     }
 
     /**Dynamically changes sizes of the html-elements depending on the line numbers and scrollbars.

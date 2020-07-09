@@ -268,11 +268,30 @@ function ver_onAlgoReset() {
     }
 }
 
+/**Is called from an algoArea when the numbers of qubits of the algos don't match.
+ *
+ * @param algo1 {boolean}
+ * @param msg {string} the error message
+ */
+function ver_onLoadError(algo1, msg) {
+    showError(msg);
+
+    if(algo1)   ver1_algoArea.resetAlgorithm(false);
+    else        ver2_algoArea.resetAlgorithm(false);
+}
+
+function ver1_onLoadError(msg) {
+    ver_onLoadError(true, msg);
+}
+function ver2_onLoadError(msg) {
+    ver_onLoadError(false, msg);
+}
+
 const ver1_algoArea = new AlgoArea(ver1_algo_div, "ver1", ver1_aacs, ver_print, showError, ver_onAlgoReset,
-    { targetManager: "ver", algo1: true }
+    ver1_onLoadError, { targetManager: "ver", algo1: true }
 );
 const ver2_algoArea = new AlgoArea(ver2_algo_div, "ver2", ver2_aacs, ver_print, showError, ver_onAlgoReset,
-    { targetManager: "ver", algo1: false }
+    ver2_onLoadError, { targetManager: "ver", algo1: false }
 );
 
 registerAlgoArea("ver1", ver1_algoArea);
