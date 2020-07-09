@@ -242,13 +242,36 @@ function ver_print(dd, callback, resetZoom=false) {
 
     } else {
         ver_qdd_div.html(ver_qdd_text);
+        if(callback) callback();
     }
 }
 
-const ver1_algoArea = new AlgoArea(ver1_algo_div, "ver1", ver1_aacs, ver_print, showError,
+function ver_onAlgoReset() {
+    if(ver1_algoArea.emptyAlgo && ver2_algoArea.emptyAlgo) {
+        //both are empty so we reset the displayed DD
+        print(null, () => {
+            ver_changeState(STATE_NOTHING_LOADED, true);
+            ver_changeState(STATE_NOTHING_LOADED, false);
+        });
+
+    } else if(ver1_algoArea.emptyAlgo) {
+        ver_gotoStart(true, () => {    //reset algo1
+            //and then "force" the state to NOTHING_LOADED
+            ver_changeState(STATE_NOTHING_LOADED, true);
+        });
+
+    } else if(ver2_algoArea.emptyAlgo) {
+        ver_gotoStart(false, () => {    //reset algo2
+            //and then "force" the state to NOTHING_LOADED
+            ver_changeState(STATE_NOTHING_LOADED, false);
+        });
+    }
+}
+
+const ver1_algoArea = new AlgoArea(ver1_algo_div, "ver1", ver1_aacs, ver_print, showError, ver_onAlgoReset,
     { targetManager: "ver", algo1: true }
 );
-const ver2_algoArea = new AlgoArea(ver2_algo_div, "ver2", ver2_aacs, ver_print, showError,
+const ver2_algoArea = new AlgoArea(ver2_algo_div, "ver2", ver2_aacs, ver_print, showError, ver_onAlgoReset,
     { targetManager: "ver", algo1: false }
 );
 
@@ -307,7 +330,12 @@ const ver2_automatic = $('#ver2_automatic');
 
 // ##################### NAVIGATION #######################################################
 
-function ver_gotoStart(algo1) {
+/**
+ *
+ * @param algo1
+ * @param callback needed if we go back to the start because the algorithm was reset
+ */
+function ver_gotoStart(algo1, callback) {
     ver_changeState(STATE_SIMULATING, algo1);
     startLoadingAnimation();
 
@@ -321,6 +349,7 @@ function ver_gotoStart(algo1) {
                     else        ver2_algoArea.hlManager.initialHighlighting();
                     endLoadingAnimation();
                     ver_changeState(STATE_LOADED_START, algo1);
+                    if(callback) callback();
                 });
             } else {
                 endLoadingAnimation();
