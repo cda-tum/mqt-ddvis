@@ -1,4 +1,5 @@
 
+const fs = require('fs');
 const express = require('express');
 const router = express.Router();
 const dm = require('../datamanager');
@@ -246,6 +247,49 @@ router.get('/toline', (req, res) => {
         res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
     }
 });
+
+const exAlgoDir = "./cpp/sample_qasm"
+const exAlgoNames = [];
+const exampleAlgos = [];
+//load all example algorithms
+fs.readdirSync(exAlgoDir).forEach(file => {
+    const endingIndex = file.lastIndexOf(".");
+    const name = file.substring(0, endingIndex);
+    const ending = file.substring(endingIndex+1);    //skip the .
+    if(ending === "qasm") {
+        exAlgoNames.push(name);
+
+        const algo = fs.readFileSync(exAlgoDir + '/' + file, 'utf-8');
+        exampleAlgos.push({
+           algo: algo,
+           name: name,
+           format: 1        //QASM_FORMAT       //todo it would be safer if we just send "qasm" and let the client determine the format-code
+        });
+    } else if(ending === "real") {
+        exAlgoNames.push(name);
+
+        const algo = fs.readFileSync(exAlgoDir + '/' + file, 'utf-8');
+        exampleAlgos.push({
+            algo: algo,
+            name: name,
+            format: 2       //REAL_FORMAT       //todo it would be safer if we just send "qasm" and let the client determine the format-code
+        });
+    }
+});
+router.get('/exampleAlgos', (req, res) => {
+    res.status(200).json(exAlgoNames);
+});
+
+router.get('/exampleAlgo', (req, res) => {
+    const name = req.query.name;
+    for(ea of exampleAlgos) {
+        if(ea.name === name) {
+            res.status(200).json(ea);
+            return;
+        }
+    }
+    res.status(404);
+})
 
 //####################################################################################################################################################################
 

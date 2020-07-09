@@ -55,27 +55,50 @@
     <title>QDD Visualizer</title>
 </head>
 <body>
+<!--
     <header>
         <h1>QDD Visualizer</h1>
     </header>
+-->
+    <nav id="settings_menu">
+        <p>Settings</p>
 
-    <!-- the three main tabs -->
-    <div class="tab">
-        <button id="sim_tab" class="tablinks" onclick="openTab(event, 'simulation')">Simulation</button>
-        <button id="ver_tab" class="tablinks" onclick="openTab(event, 'verification')">Verification</button>
-        <!--<button id="emu_tab" class="tablinks" onclick="openTab(event, 'emulation')">Emulation</button>-->
-    </div>
+        Load Algorithm at <br>
+        <input type="radio" id="radio_algo1" name="algo">
+        <label for="radio_algo1" class="radio-algo">Left</label>
+        <input type="radio" id="radio_algo2" name="algo">
+        <label for="radio_algo2" class="radio-algo">Right</label>
+        <div id="ex_algo_div" class="dropdown">
+            <button onclick="exAlgoDropDown()" class="dropbtn">Example Algorithms</button>
+            <div id="ex_algo_dropdown" class="dropdown-content">
+                <input type="text" placeholder="Search..." id="ex_algo_search_text" onkeyup="exAlgoFilterFunction()">
+            </div>
 
-    <div id="loader"></div>
+        </div>
+    </nav>
 
-    <section id="simulation" class="tabcontent">
-    </section>
+    <main id="main_content">
+        <!-- the three main tabs -->
+        <div class="tab">
+            <button id="start_tab" class="tablinks" onclick="openTab(event, 'start')">Welcome</button>
+            <button id="sim_tab" class="tablinks" onclick="openTab(event, 'simulation')">Simulation</button>
+            <button id="ver_tab" class="tablinks" onclick="openTab(event, 'verification')">Verification</button>
+            <!--<button id="emu_tab" class="tablinks" onclick="openTab(event, 'emulation')">Emulation</button>-->
+        </div>
 
-    <section id="verification" class="tabcontent">
-    </section>
+        <div id="loader"></div> <!-- for displaying a loading animation -->
 
-    <section id="emulation" class="tabcontent">
-    </section>
+        <section id="start" class="tabcontent">
+            <h1>QDD Visualizer</h1>
+        </section>
+
+        <section id="simulation" class="tabcontent">
+        </section>
+
+        <section id="verification" class="tabcontent">
+        </section>
+
+    </main>
 
 </body>
 </html>

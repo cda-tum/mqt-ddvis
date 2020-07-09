@@ -47,7 +47,6 @@ mainCall.fail((res) => {
  */
 //from: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_tabs
 function openTab(event, tabId) {
-
     let i, tabcontent, tablinks;
     tabcontent = document.getElementsByClassName("tabcontent");
     for (i = 0; i < tabcontent.length; i++) {
@@ -57,7 +56,15 @@ function openTab(event, tabId) {
     for (i = 0; i < tablinks.length; i++) {
         tablinks[i].className = tablinks[i].className.replace(" active", "");
     }
-    document.getElementById(tabId).style.display = "block";
+console.log("ABSTURZ");
+    const tab = document.getElementById(tabId);
+    tab.style.display = "block";
+    /*const tab_button = document.getElementById(tabId + '_tab');
+    if(event && tab_button == event.currentTarget) {
+        debugger
+    } else {
+        debugger
+    }*/
     event.currentTarget.className += " active";
 
     updateAllAlgoAreaSizes();
@@ -65,6 +72,59 @@ function openTab(event, tabId) {
     //if(tabId === "simulation") {
     //    algoAreas.get("sim").updateSizes();
     //}
+}
+
+/* When the user clicks on the button,
+toggle between hiding and showing the dropdown content */
+function exAlgoDropDown() {
+    document.getElementById("ex_algo_dropdown").classList.toggle("show");
+}
+
+function exAlgoFilterFunction() {
+    const input = document.getElementById("ex_algo_search_text");
+    const filter = input.value.toUpperCase();
+    const dropdown = document.getElementById("ex_algo_dropdown");
+    const a = dropdown.getElementsByTagName("button");
+    for (let i = 0; i < a.length; i++) {
+        const txtValue = a[i].textContent || a[i].innerText;
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            a[i].style.display = "";
+        } else {
+            a[i].style.display = "none";
+        }
+    }
+}
+
+//init example algorithms of the dropdown
+const call = $.ajax({
+    url: '/exampleAlgos',
+    contentType: 'application/json',
+    success: (res) => {
+        if(res) {
+            //const ex_algo_dd = $('#ex_algo_dropdown');
+            const ex_algo_dd = document.getElementById('ex_algo_dropdown');
+            res.forEach(name => {
+                const button = document.createElement("button");
+                button.innerText = name;
+                button.className = "example-algo";
+                button.onclick = () => loadExampleAlgo(name);
+                ex_algo_dd.appendChild(button);
+            });
+
+        } else {
+
+        }
+    }
+});
+call.fail((res) => {
+    //404 means that we are no longer registered and therefore need to reload
+    if(res.status === 404) window.location.reload(false);
+
+    showResponseError(res, "Going a step back failed!");
+    _generalStateChange();
+});
+function loadExampleAlgo(name) {
+    console.log("Loading " + name);
 }
 
 
@@ -97,7 +157,6 @@ function generalChangeState(state) {
         case STATE_DIASHOW:
             disableElementsWithID(_generalElements);
             break;
-
     }
 }
 
