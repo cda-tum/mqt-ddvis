@@ -28,10 +28,11 @@ class AlgoArea {
      * @param changeState {function} allows the algoArea to change the state of its surroundings during simulation
      * @param print {function} for printing/rendering a DD in the .dot format
      * @param error {function} to notify the user as soon as an error occured
+     * @param resetAlgoCallback {function} called when the algorithm is reset (e.g. user deltes everything)
      * @param loadParams {object} needs to be sent on /load, in addition to the standard-parameters
      *              empty for simulation, { algo1: true/false } for verification
      */
-    constructor(div, idPrefix, changeState, print, error, loadParams={}) {
+    constructor(div, idPrefix, changeState, print, error, resetAlgoCallback, loadParams={}) {
         this._idPrefix = idPrefix;
 
         this._drop_zone = $(
@@ -83,6 +84,8 @@ class AlgoArea {
         this._changeState = changeState;    //function to change the state on the callers side      //todo do the same ST_values work for verification?
         this._print = print;                //function to print the DD on the callers side
         this._error = error;                //function on the callers side for handling errors
+        this._resetAlgoCallback = resetAlgoCallback;    //function on the callers side for additional stuff when
+                                                        // resetting the algorithm
         this._loadParams = loadParams;      //object that needs to be sent to the server on calling /load
                                             // { } for simulation, { algo1: true/false } for verification
 
@@ -359,9 +362,7 @@ class AlgoArea {
         this._q_algo.val("");
         this._setQAlgoMarginLeft();   //reset margin-left to the initial/default value
 
-        this._print(null, () => {
-            this._changeState(STATE_NOTHING_LOADED);
-        });    //reset dd
+        this._resetAlgoCallback();  //allows the caller to do stuff when the algorithm is reset
     }
 
     /**Dynamically changes sizes of the html-elements depending on the line numbers and scrollbars.

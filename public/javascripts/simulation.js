@@ -133,7 +133,7 @@ for (let i = 0; i < acc.length; i++) {
 }
 
 
-const algoArea = new AlgoArea(algo_div, "sim", changeState, print, showError);
+const algoArea = new AlgoArea(algo_div, "sim", changeState, print, showError, onAlgoReset);
 registerAlgoArea("sim", algoArea);  //register at main for resizing
 
 //append the navigation div below algoArea
@@ -815,6 +815,7 @@ function print(dot, callback, resetZoom=false) {
     } else {
         qdd_div.html(qdd_text);
         //document.getElementById('color_map').style.display = 'none';
+        if(callback) callback();
     }
 }
 
@@ -871,4 +872,11 @@ function updateExportOptions() {
         showResponseError(res, "");
         _generalStateChange();
     });
+}
+
+function onAlgoReset() {
+    print(null, () => {
+        console.log("here");
+        changeState(STATE_NOTHING_LOADED);
+    });    //reset dd
 }
