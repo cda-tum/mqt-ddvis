@@ -72,13 +72,12 @@ QDDVer::QDDVer(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVer>(info) 
 /**Applies the current operation/DD (determined by iterator) and increments both iterator and position.
  * If iterator reaches its end, atEnd will be set to true.
  *
- * The parameter decides whether the function should be applied to algo1 or algo2.
+ * @param algo1 decides whether the function should be applied to algo1 or algo2.
  */
 void QDDVer::stepForward(bool algo1) {
     if(algo1) {
         if(atEnd1) return;   //no further steps possible
         const dd::Edge currDD = (*iterator1)->getDD(dd, line, map1);    //retrieve the "new" current operation
-        std::cout << "stepForward: multiply left from algo1" << std::endl;
 
         auto temp = dd->multiply(currDD, sim);         //process the current operation by multiplying it with the previous simulation-state
         dd->incRef(temp);
@@ -94,7 +93,6 @@ void QDDVer::stepForward(bool algo1) {
     } else {
         if(atEnd2) return;   //no further steps possible
         const dd::Edge currDD = (*iterator2)->getInverseDD(dd, line, map2);    //retrieve the inverse of the "new" current operation
-        std::cout << "stepForward: multiply right with inverse from algo2" << std::endl;
 
         auto temp = dd->multiply(sim, currDD);         //process the current operation by multiplying it with the previous simulation-state
         dd->incRef(temp);
@@ -113,7 +111,7 @@ void QDDVer::stepForward(bool algo1) {
  * first decrement both position and iterator before applying the inverse of the operation/DD the iterator is then
  * pointing at.
  *
- * The parameter decides whether the function should be applied to algo1 or algo2.
+ * @param algo1 decides whether the function should be applied to algo1 or algo2.
  *
  */
 void QDDVer::stepBack(bool algo1) {
@@ -154,6 +152,24 @@ void QDDVer::stepBack(bool algo1) {
         dd->decRef(sim);
         sim = temp;
         dd->garbageCollect();
+    }
+}
+
+/**Removes all applied operations by taking steps back until atInitial is true.
+ * atInitial will be true and in most cases atEnd will be false (special case for empty algorithms: atEnd is also true)
+ * after this call.
+ *
+ * @param algo1 decides whether the function should be applied to algo1 or algo2.
+ */
+void QDDVer::stepToStart(bool algo1) {
+    if(algo1) {
+        //go one step back at a time until all operations have been reversed (atInitial is set to true in stepBack)
+        while(!atInitial1) stepBack(true);
+        //now atInitial is true, exactly as it should be
+    } else {
+        //go one step back at a time until all operations have been reversed (atInitial is set to true in stepBack)
+        while(!atInitial2) stepBack(false);
+        //now atInitial is true, exactly as it should be
     }
 }
 
@@ -291,6 +307,13 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
     const std::string algo = arg.Utf8Value();
     std::stringstream ss{algo};
 
+    //the third parameter (how many operations to apply immediately)
+    unsigned int opNum = (unsigned int)info[2].As<Napi::Number>();
+    //at this point opNum might be bigger than the number of operations the algorithm has!
+
+    //the fourth parameter tells us to process iterated operations or not
+    const bool process = (bool)info[3].As<Napi::Boolean>();
+
     //the fifth parameter (algo1)
     bool algo1 = (bool)info[4].As<Napi::Boolean>();
 
@@ -340,7 +363,29 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
         std::cout << "Exception while loading the algorithm: " << e.what() << std::endl;
         std::string err(e.what());
         Napi::Error::New(env, "Invalid algorithm!\n" + err).ThrowAsJavaScriptException();
-        return Napi::Number::New(env, -1);
+        return state;
+    }
+
+    //if sim hasn't been set yet or only one algorithm is loaded (meaning the other isn't ready), we create its initial state/matrix
+    if(sim.p == nullptr || algo1 && !ready2 || !algo1 && !ready1) {
+        //sim = dd->makeZeroState(qc->getNqubits());
+        if(algo1)   sim = qc1->createInitialMatrix(dd);
+        else        sim = qc2->createInitialMatrix(dd);
+        dd->incRef(sim);
+
+    } else {    //reset the previously loaded algorithm if process is true
+        if(process) {
+            try {
+                if(algo1 && ready1)         stepToStart(true);
+                else if(!algo1 && ready2)   stepToStart(false);
+            } catch(std::exception& e) {
+                std::cout << "Exception while resetting algo" << (algo1 ? "1" : "2") << e.what() << std::endl;
+                std::string err(e.what());
+                Napi::Error::New(env, "Something went wrong with resetting the old algorithm.\n"
+                                      "Please try to load the algorithm again!" + err).ThrowAsJavaScriptException();
+                return state;
+            }
+        }
     }
 
     //re-initialize some variables (though depending on opNum they might change in the next lines)
@@ -357,57 +402,30 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
         atEnd2 = false;
         iterator2 = qc2->begin();
         position2 = 0;
-
     }
 
-    //the third parameter (how many operations to apply immediately)
-    unsigned int opNum = (unsigned int)info[2].As<Napi::Number>();    //at this point opNum might be bigger than the number of operations the algorithm has!
     if(algo1 && opNum > qc1->getNops())         opNum = qc1->getNops();
-    else if(!algo1 && opNum > qc2->getNops())    opNum = qc2->getNops();
+    else if(!algo1 && opNum > qc2->getNops())   opNum = qc2->getNops();
 
+    std::cout << "opNum = " << opNum << std::endl;
     if(opNum > 0) {
         if(algo1)   atInitial1 = false;
         else        atInitial2 = false;
-        const bool process = (bool)info[3].As<Napi::Boolean>(); //the fourth parameter tells us to process iterated operations or not
         if(process) {
-            if(sim.p != nullptr) {
-                dd->decRef(sim);
-                std::cout << "dereffed old sim (process)" << std::endl;
-            }
+            //apply some operations
+            for(unsigned int i = 0; i < opNum; i++) stepForward(algo1);
 
-            //sim = dd->makeZeroState(qc->getNqubits());
-            if(algo1)   sim = qc1->createInitialMatrix(dd);
-            else        sim = qc2->createInitialMatrix(dd);
-
-            dd->incRef(sim);
-            for(unsigned int i = 0; i < opNum; i++) {    //apply some operations
-                stepForward(algo1);
-            }
         } else {
             if(algo1) {
-                for(unsigned int i = 0; i < opNum; i++) {
-                    iterator1++; //just advance the iterator so it points to the operations where we stopped before the edit
-                    //position1++;
-                }
+                //just advance the iterator so it points to the operations where we stopped before the edit
+                for(unsigned int i = 0; i < opNum; i++) iterator1++;
                 position1 = opNum;
             } else {
-                for(unsigned int i = 0; i < opNum; i++) {
-                    iterator2++; //just advance the iterator so it points to the operations where we stopped before the edit
-                    //position2++;
-                }
+                //just advance the iterator so it points to the operations where we stopped before the edit
+                for(unsigned int i = 0; i < opNum; i++) iterator2++;
                 position2 = opNum;
             }
         }
-
-    } else {    //sim needs to be initialized in some cases
-        if(sim.p != nullptr) {
-            dd->decRef(sim);
-            std::cout << "dereffed old sim" << std::endl;
-        }
-        //sim = dd->makeZeroState(qc->getNqubits());
-        if(algo1)   sim = qc1->createInitialMatrix(dd);
-        else        sim = qc2->createInitialMatrix(dd);
-        dd->incRef(sim);
     }
 
     if(algo1)   state.Set("numOfOperations", Napi::Number::New(env, qc1->getNops()));
@@ -416,7 +434,7 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/**Sets the iterator and position back to the very beginning.
+/**Removes all applied operations by taking steps back until atInitial is true.
  * atInitial will be true and in most cases atEnd will be false (special case for empty algorithms: atEnd is also true)
  * after this call.
  *
@@ -462,16 +480,7 @@ Napi::Value QDDVer::ToStart(const Napi::CallbackInfo& info) {
     }
 
     try {
-        if(algo1) {
-            //go one step back at a time until all operations have been reversed (atInitial is set to true in stepBack)
-            while(!atInitial1) stepBack(true);
-            //now atEnd is true, exactly as it should be
-        } else {
-            //go one step back at a time until all operations have been reversed (atInitial is set to true in stepBack)
-            while(!atInitial2) stepBack(false);
-            //now atInitial is true, exactly as it should be
-        }
-
+        stepToStart(algo1);
         return Napi::Boolean::New(env, true);   //something changed
 
     } catch(std::exception& e) {

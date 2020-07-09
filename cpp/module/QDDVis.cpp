@@ -307,6 +307,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
             }
             sim = dd->makeZeroState(qc->getNqubits());
             dd->incRef(sim);
+
             for(unsigned int i = 0; i < opNum; i++) {    //apply some operations
                 stepForward();
             }

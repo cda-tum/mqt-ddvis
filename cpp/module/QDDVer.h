@@ -24,6 +24,7 @@ private:
     //"private" methods
     void stepForward(bool algo1);   //whether it is applied on algo1 or algo2
     void stepBack(bool algo1);      //whether it is applied on algo1 or algo2
+    void stepToStart(bool algo1);   //whether it is applied on algo1 or algo2
     //std::pair<fp, fp> getProbabilities(unsigned short qubitIdx);
     //void measureQubit(unsigned short qubitIdx, bool measureOne, fp pzero, fp pone);
 
