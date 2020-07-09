@@ -876,7 +876,6 @@ function updateExportOptions() {
 
 function onAlgoReset() {
     print(null, () => {
-        console.log("here");
         changeState(STATE_NOTHING_LOADED);
     });    //reset dd
 }
