@@ -39,33 +39,46 @@ mainCall.fail((res) => {
 });
 
 
-
+// ################### TAB_MANAGEMENT ################################################
+const START_TAB = 0;
+const SIM_TAB = 1;
+const VER_TAB = 2;
+let curTab = START_TAB;
 //todo on tab change certain things need to be done:
 /*
     - "kill" the current simulation/verification/emulation process
     - maybe reset the tab-data?
  */
 //from: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_tabs
-function openTab(event, tabId) {
-    let i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("tabcontent");
-    for (i = 0; i < tabcontent.length; i++) {
+function openTab(tabId) {
+    //deactivate all tabs
+    const tabcontent = document.getElementsByClassName("tabcontent");
+    for (let i = 0; i < tabcontent.length; i++) {
         tabcontent[i].style.display = "none";
     }
-    tablinks = document.getElementsByClassName("tablinks");
-    for (i = 0; i < tablinks.length; i++) {
+    //deactivate all tab-buttons
+    const tablinks = document.getElementsByClassName("tablinks");
+    for (let i = 0; i < tablinks.length; i++) {
         tablinks[i].className = tablinks[i].className.replace(" active", "");
     }
-console.log("ABSTURZ");
-    const tab = document.getElementById(tabId);
+
+    //open the selected tab and activate its button
+    const tab = document.getElementById(tabId + '_sec');
     tab.style.display = "block";
-    /*const tab_button = document.getElementById(tabId + '_tab');
-    if(event && tab_button == event.currentTarget) {
-        debugger
-    } else {
-        debugger
-    }*/
-    event.currentTarget.className += " active";
+    const tab_button = document.getElementById(tabId + '_tab');
+    tab_button.className += " active";
+
+    switch (tabId) {
+        case "sim": curTab = SIM_TAB;
+                    disableElementsWithID([ "radio_algo1", "radio_algo2" ]);
+                    break;
+        case "ver": curTab = VER_TAB;
+                    enableElementsWithID([ "radio_algo1", "radio_algo2" ]);
+                    break;
+
+        default:    curTab = START_TAB;
+                    disableElementsWithID([ "radio_algo1", "radio_algo2" ]);
+    }
 
     updateAllAlgoAreaSizes();
     //this would be a more efficient approach, but since we just have a couple of algoAreas it shouldn't matter
@@ -73,6 +86,10 @@ console.log("ABSTURZ");
     //    algoAreas.get("sim").updateSizes();
     //}
 }
+
+
+
+// ################ EXAMPLE ALGOS ###########################################
 
 /* When the user clicks on the button,
 toggle between hiding and showing the dropdown content */
@@ -101,7 +118,6 @@ const call = $.ajax({
     contentType: 'application/json',
     success: (res) => {
         if(res) {
-            //const ex_algo_dd = $('#ex_algo_dropdown');
             const ex_algo_dd = document.getElementById('ex_algo_dropdown');
             res.forEach(name => {
                 const button = document.createElement("button");
@@ -110,23 +126,133 @@ const call = $.ajax({
                 button.onclick = () => loadExampleAlgo(name);
                 ex_algo_dd.appendChild(button);
             });
-
         } else {
-
+            //todo reload?
         }
     }
 });
-call.fail((res) => {
-    //404 means that we are no longer registered and therefore need to reload
-    if(res.status === 404) window.location.reload(false);
+call.fail((res) => showResponseError(res, "Loading example algorithms failed!"));
 
-    showResponseError(res, "Going a step back failed!");
-    _generalStateChange();
-});
-function loadExampleAlgo(name) {
-    console.log("Loading " + name);
+
+const emptyReal =   ".version 2.0 \n" +
+    ".numvars 0 \n" +
+    ".variables \n" +
+    ".begin \n" +
+    "\n" +
+    ".end \n";
+const emptyQasm =   "OPENQASM 2.0;\n" +
+    "include \"qelib1.inc\";\n" +
+    "\n" +
+    "qreg q[];\n" +
+    "creg c[];\n";
+
+//todo implement properly
+function loadEmptyReal() {
+    if(curTab === START_TAB) return;
+
+    algoArea.resetAlgorithm();
+    algoArea.algoFormat = REAL_FORMAT;
+    algoArea.algo = emptyReal;
 }
 
+function loadEmptyQasm() {
+    if(curTab === START_TAB) return;
+
+    algoArea.resetAlgorithm();
+    algoArea.algoFormat = QASM_FORMAT;
+    algoArea.algo = emptyQasm;
+}
+
+function loadExampleAlgo(name) {
+    if(curTab === START_TAB) return;
+
+    const call = $.ajax({
+        url: '/exampleAlgo?name=' + name,
+        contentType: 'application/json',
+        success: (res) => {
+            if(res) {
+                if(curTab === SIM_TAB) {
+                    sim_loadExAlgo(res.algo, res.format);
+
+                } else if(curTab === VER_TAB) {
+                    const algo1 = document.getElementById("radio_algo1").checked;
+                    ver_loadExAlgo(res.algo, res.format, algo1);
+                }
+
+            } else {
+                //todo reload?
+                console.log("Error?");
+            }
+        }
+    });
+    call.fail((res) => {
+        showResponseError(res, "Loading " + name + " failed!");
+    });
+}
+
+// ###################### ADVANCED SETTINGS ######################################
+const cb_colored = $('#cb_colored');
+const cb_edge_labels = $('#cb_edge_labels');
+const cb_classic = $('#cb_classic');
+
+let stepDuration = 1000;   //in ms
+
+/**Checks if the number the user entered in step_duration is an integer > 0. If this is not the
+ * case an error is shown and the value is reset to the previous value.
+ *
+ */
+function validateStepDuration() {
+    const input = step_duration.val();
+    if(input.includes(".") || input.includes(",")) {
+        showError("Floats are not allowed!\nPlease enter an unsigned integer instead.");
+        step_duration.val(stepDuration);
+    } else {
+        const newVal = parseInt(input);
+        if(0 <= newVal) {
+            stepDuration = newVal;
+            step_duration.val(newVal);  //needs to be done because of parseInt possible Floats are cut off
+
+        } else {
+            showError("Invalid number for step-duration: Only unsigned integers allowed!");
+            step_duration.val(stepDuration);
+        }
+    }
+}
+
+/**Updates the export options that define some visual properties of the DD by calling /updateExportOptions and udpating
+ * the DD if necessary.
+ *
+ */
+function updateExportOptions() {
+
+    const colored = cb_colored.prop('checked');
+    const edgeLabels = cb_edge_labels.prop('checked');
+    const classic = cb_classic.prop('checked');
+    /*
+    const lastState = simState;
+    changeState(STATE_SIMULATING);
+    startLoadingAnimation();
+
+    const call = jQuery.ajax({
+        type: 'PUT',
+        url: '/updateExportOptions',
+        data: { colored: colored, edgeLabels: edgeLabels, classic: classic, updateDD: !algoArea.emptyAlgo, dataKey: dataKey },
+        success: (res) => {
+            if (res.dot) print(res.dot, () => {
+                endLoadingAnimation();
+                changeState(lastState); //go back to the previous state
+            });
+        }
+    });
+    call.fail((res) => {
+        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
+        endLoadingAnimation();
+        showResponseError(res, "");
+        _generalStateChange();
+    });
+    */
+}
 
 
 //####################### STATE MANAGEMENT ######################################
@@ -140,7 +266,6 @@ const STATE_LOADED_EMPTY = 6;       //can't navigate
 
 const _generalElements = [
     "sim_tab", "ver_tab",
-    "ex_real", "ex_qasm", "ex_deutsch", "ex_alu",
     "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
 ];
 function generalChangeState(state) {
@@ -150,11 +275,24 @@ function generalChangeState(state) {
         case STATE_LOADED_START:
         case STATE_LOADED_END:
         case STATE_LOADED_EMPTY:
+            if(curTab === VER_TAB) enableElementsWithID([ "radio_algo1", "radio_algo2" ]);
+
+            //enable all example-algos (buttons)
+            const ea_enable = document.getElementsByClassName("example-algo");
+            for(let i = 0; i < ea_enable.length; i++) ea_enable[i].disabled = false;
+
             enableElementsWithID(_generalElements);
             break;
 
         case STATE_SIMULATING:
         case STATE_DIASHOW:
+            //disabling doesn't make a difference, but seems more consistent with the other UI elements
+            if(curTab === VER_TAB) disableElementsWithID([ "radio_algo1", "radio_algo2" ]);
+
+            //disable all example-algos (buttons)
+            const ea_disable = document.getElementsByClassName("example-algo");
+            for(let i = 0; i < ea_disable.length; i++) ea_disable[i].disabled = true;
+
             disableElementsWithID(_generalElements);
             break;
     }

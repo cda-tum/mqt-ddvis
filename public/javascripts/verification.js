@@ -346,6 +346,33 @@ ver2_algo_div.append(
 const ver1_automatic = $('#ver1_automatic');
 const ver2_automatic = $('#ver2_automatic');
 
+// ###################### EXAMPLE ALGORITHMS ###############################################
+
+/**
+ *
+ * @param algo {string} the algorithm to load
+ * @param format {number} the format of the algorithm
+ * @param algo1 {boolean} whether we load it as algo1 (left) or algo2 (right)
+ */
+function ver_loadExAlgo(algo, format, algo1) {
+    if(algo1) {
+        ver1_algoArea.emptyAlgo = false;
+        ver1_algoArea.algoChanged = true;
+        ver1_algoArea.algoFormat = format;
+        ver1_algoArea.algo = algo;
+
+        ver1_algoArea.loadAlgorithm(format, true);   //new algorithm -> new simulation
+
+
+    } else {
+        ver2_algoArea.emptyAlgo = false;
+        ver2_algoArea.algoChanged = true;
+        ver2_algoArea.algoFormat = format;
+        ver2_algoArea.algo = algo;
+
+        ver2_algoArea.loadAlgorithm(format, true);   //new algorithm -> new simulation
+    }
+}
 
 // ##################### NAVIGATION #######################################################
 

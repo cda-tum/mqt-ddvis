@@ -55,6 +55,11 @@ svg {
     margin-left: 20px;
 }
 
+#stepDuration {
+    width: 100%;
+    max-width: 150px;
+}
+
 #settings_menu {
     float: left;
     width: 15%;

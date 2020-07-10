@@ -5,22 +5,12 @@ const algo_div = $('#algo_div');
 const qdd_div = $('#qdd_div');
 const qdd_text = $('#qdd_text');
 
-//todo put these into main.js
-const step_duration = $('#stepDuration');
-const cb_colored = $('#cb_colored');
-const cb_edge_labels = $('#cb_edge_labels');
-const cb_classic = $('#cb_classic');
-
 const irreversibleDialog = $("#irreversibleDialog");
 
 const graphviz = d3.select("#qdd_div").graphviz({
     width: "70%",     //make it smaller so we have space around where we can scroll through the page
     fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
 }).tweenPaths(true).tweenShapes(true);
-
-//################### CONFIGURATION ##################################################################################################################
-
-let stepDuration = 1000;   //in ms
 
 
 //################### STATE MANAGEMENT ##################################################################################################################
@@ -99,7 +89,6 @@ function changeState(state) {
                 disable.push("sim_drop_zone");
                 disable.push("sim_q_algo");
             }
-
             break;
 
         case STATE_LOADED_EMPTY:    //no navigation allowed (we are at the beginning AND at the end)
@@ -174,17 +163,19 @@ changeState(STATE_NOTHING_LOADED);      //prepare initial state
 
 //################### ALGORITHM LOADING ##################################################################################################################
 
-const emptyQasm =   "OPENQASM 2.0;\n" +
-                    "include \"qelib1.inc\";\n" +
-                    "\n" +
-                    "qreg q[];\n" +
-                    "creg c[];\n";
-const emptyReal =   ".version 2.0 \n" +
-                    ".numvars 0 \n" +
-                    ".variables \n" +
-                    ".begin \n" +
-                    "\n" +
-                    ".end \n";
+/**
+ *
+ * @param algo {string} the algorithm to load
+ * @param format {number} the format of the algorithm
+ */
+function sim_loadExAlgo(algo, format) {
+    algoArea.emptyAlgo = false;
+    algoArea.algoChanged = true;
+
+    algoArea.algoFormat = format;
+    algoArea.algo = algo;
+    algoArea.loadAlgorithm(format, true);   //new algorithm -> new simulation
+}
 
 /**Load empty QASM-Format
  *
@@ -817,61 +808,6 @@ function print(dot, callback, resetZoom=false) {
         //document.getElementById('color_map').style.display = 'none';
         if(callback) callback();
     }
-}
-
-/**Checks if the number the user entered in step_duration is an integer > 0. If this is not the
- * case an error is shown and the value is reset to the previous value.
- *
- */
-function validateStepDuration() {
-    const input = step_duration.val();
-    if(input.includes(".") || input.includes(",")) {
-        showError("Floats are not allowed!\nPlease enter an unsigned integer instead.");
-        step_duration.val(stepDuration);
-    } else {
-        const newVal = parseInt(input);
-        if(0 <= newVal) {
-            stepDuration = newVal;
-            step_duration.val(newVal);  //needs to be done because of parseInt possible Floats are cut off
-
-        } else {
-            showError("Invalid number for step-duration: Only unsigned integers allowed!");
-            step_duration.val(stepDuration);
-        }
-    }
-}
-
-/**Updates the export options that define some visual properties of the DD by calling /updateExportOptions and udpating
- * the DD if necessary.
- *
- */
-function updateExportOptions() {
-    const colored = cb_colored.prop('checked');
-    const edgeLabels = cb_edge_labels.prop('checked');
-    const classic = cb_classic.prop('checked');
-
-    const lastState = simState;
-    changeState(STATE_SIMULATING);
-    startLoadingAnimation();
-
-    const call = jQuery.ajax({
-        type: 'PUT',
-        url: '/updateExportOptions',
-        data: { colored: colored, edgeLabels: edgeLabels, classic: classic, updateDD: !algoArea.emptyAlgo, dataKey: dataKey },
-        success: (res) => {
-            if (res.dot) print(res.dot, () => {
-                endLoadingAnimation();
-                changeState(lastState); //go back to the previous state
-            });
-        }
-    });
-    call.fail((res) => {
-        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
-
-        endLoadingAnimation();
-        showResponseError(res, "");
-        _generalStateChange();
-    });
 }
 
 function onAlgoReset() {

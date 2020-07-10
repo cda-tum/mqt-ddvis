@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -36,12 +36,12 @@
     <!-- load the html of the three main tabs -->
     <script>
         $(() => {
-            $("#simulation").load("./views/simulation.html");
+            $("#sim_sec").load("./views/simulation.html");
         });
     </script>
     <script>
         $(() => {
-            $("#verification").load("./views/verification.html");
+            $("#ver_sec").load("./views/verification.html");
         });
     </script>
     <!--
@@ -63,40 +63,66 @@
     <nav id="settings_menu">
         <p>Settings</p>
 
-        Load Algorithm at <br>
-        <input type="radio" id="radio_algo1" name="algo">
-        <label for="radio_algo1" class="radio-algo">Left</label>
-        <input type="radio" id="radio_algo2" name="algo">
-        <label for="radio_algo2" class="radio-algo">Right</label>
-        <div id="ex_algo_div" class="dropdown">
-            <button onclick="exAlgoDropDown()" class="dropbtn">Example Algorithms</button>
-            <div id="ex_algo_dropdown" class="dropdown-content">
-                <input type="text" placeholder="Search..." id="ex_algo_search_text" onkeyup="exAlgoFilterFunction()">
+        <div style="width: 100%">
+            Load Algorithm at <br>
+
+            <input checked="checked" id="radio_algo1" name="algo" type="radio" disabled="disabled">
+            <label for="radio_algo1" class="radio-algo">Left</label>
+            <input id="radio_algo2" name="algo" type="radio" disabled="disabled">
+            <label for="radio_algo2" class="radio-algo">Right</label>
+
+            <div id="ex_algo_div" class="dropdown">
+                <button id="ex_algo_button" onclick="exAlgoDropDown()" class="dropbtn">Example Algorithms</button>
+                <div id="ex_algo_dropdown" class="dropdown-content">
+                    <input type="text" placeholder="Search..." id="ex_algo_search_text" onkeyup="exAlgoFilterFunction()">
+                    <button class="example-algo" onclick="loadEmptyReal()">Empty Real</button>
+                    <button class="example-algo" onclick="loadEmptyQasm()">Empty QASM</button>
+                </div>
             </div>
+        </div>
+        <p></p>
+        <div style="width: 100%">
+            <label for="stepDuration" title="Duration of a step during the diashow">Step duration in ms: </label>
+            <input type="number" id="stepDuration" min="0" value="1000" step="100" onchange="validateStepDuration()"
+                   title="Duration of a step during the diashow" style="margin-right: 150px"/>
+
+            <p></p>
+            <label for="cb_colored" class="checkbox" title="Enable/disable color coding of edge weights">Colored</label>
+            <input type="checkbox" id="cb_colored" title="Enable/disable color coding of edge weights" onchange="updateExportOptions()" checked/>
+            <br>
+            <label for="cb_edge_labels" class="checkbox" title="Show/hide edge weights as edge labels">Edge Labels</label>
+            <input type="checkbox" id="cb_edge_labels" title="Show/hide edge weights as edge labels" onchange="updateExportOptions()"/>
+            <br>
+            <label for="cb_classic" class="checkbox" title="Enable/disable classic decision diagram look">Classic</label>
+            <input type="checkbox" id="cb_classic" title="Enable/disable classic decision diagram look" onchange="updateExportOptions()"/>
 
         </div>
+
     </nav>
 
     <main id="main_content">
         <!-- the three main tabs -->
         <div class="tab">
-            <button id="start_tab" class="tablinks" onclick="openTab(event, 'start')">Welcome</button>
-            <button id="sim_tab" class="tablinks" onclick="openTab(event, 'simulation')">Simulation</button>
-            <button id="ver_tab" class="tablinks" onclick="openTab(event, 'verification')">Verification</button>
+            <!-- initially open start_tab -->
+            <button id="start_tab" class="tablinks active" onclick="openTab('start')">Welcome</button>
+            <button id="sim_tab" class="tablinks" onclick="openTab('sim')">Simulation</button>
+            <button id="ver_tab" class="tablinks" onclick="openTab('ver')">Verification</button>
             <!--<button id="emu_tab" class="tablinks" onclick="openTab(event, 'emulation')">Emulation</button>-->
         </div>
 
         <div id="loader"></div> <!-- for displaying a loading animation -->
 
-        <section id="start" class="tabcontent">
+        <section id="start_sec" class="tabcontent" style="display: block">  <!-- initially open this tab -->
             <h1>QDD Visualizer</h1>
         </section>
 
-        <section id="simulation" class="tabcontent">
+        <section id="sim_sec" class="tabcontent">
         </section>
 
-        <section id="verification" class="tabcontent">
+        <section id="ver_sec" class="tabcontent">
         </section>
+
+        <script src="./javascripts/init.js"></script>
 
     </main>
 
