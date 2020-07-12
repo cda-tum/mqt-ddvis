@@ -15,7 +15,7 @@ header, footer {
     background-color: white; /*rgb(140, 188, 243);*/
     padding: 30px;
     text-align: center;
-    color: black;
+    color: #685972;
 }
 
 header {
@@ -47,8 +47,56 @@ svg {
     border: 2px solid #685972;
 }
 
+.settings-div {
+    width: 100%;
+    padding-top: 5px;
+    margin-bottom: 50px;
+}
+
 .radio-algo {
     width: 35%;
+}
+
+.algo-div, .svg-div {
+    height: 700px;
+}
+
+.algo-div {
+    padding: 0;
+    margin-top: 5px;
+    text-align: center;
+}
+
+.nav-div {
+    padding: 10px;
+}
+
+.nav-button {
+    width: 40px;
+}
+
+.svg-div {
+    padding: 0;
+    margin-top: 5px;
+    text-align: center;
+}
+
+.tab, #settings_headline_div {
+    height: 50px;
+}
+
+#settings_menu {
+    float: left;
+    width: 15%;
+    height: 100%;
+    padding: 0 10px 10px 10px;
+    /*background-color: #3498db;*/
+}
+
+#settings_headline_div {
+    text-align: center;
+    vertical-align: middle;
+    line-height: 50px;  /* same as the elements height */
 }
 
 #radio_algo1 {
@@ -60,15 +108,10 @@ svg {
     max-width: 150px;
 }
 
-#settings_menu {
-    float: left;
-    width: 15%;
-    padding: 10px;
-}
-
 #main_content {
     float: right;
     width: 85%;
+    height: 100%;
 }
 
 /* clear the space after the tab-content so no content can slip into the tab */
@@ -76,28 +119,6 @@ svg {
     content: "";
     display: table;
     clear: both;
-}
-
-.nav-button {
-    width: 40px;
-}
-
-.algo-div {
-    height: 750px;
-    padding: 0;
-    margin-top: 5px;
-    text-align: center;
-}
-
-.nav-div {
-    padding: 10px;
-}
-
-.svg-div {
-    height: 750px;
-    padding: 0;
-    margin-top: 5px;
-    text-align: center;
 }
 
 
@@ -113,6 +134,7 @@ svg {
   
 /* Style the buttons inside the tab */
 .tab button {
+    height: 100%;
     background-color: inherit;
     float: left;
     border: none;
@@ -196,46 +218,44 @@ svg {
 
 
 /* dropdown button related code adapted from https://www.w3schools.com/howto/howto_js_filter_dropdown.asp */
-#ex_algo_div {
+#ex_algo_div, #ex_algo_button {
     width: 100%;
 }
 
 .example-algo {
-    margin: 0 5%;
     height: 30px;
-    width: 95%;
+    width: 100%;
 }
 
 /* Dropdown Button */
 .dropbtn {
-    background-color: #4CAF50;
-    color: white;
+    background-color: #ddd;
+    color: black;
     padding: 16px;
-    font-size: 16px;
     border: none;
     cursor: pointer;
 }
 
 /* Dropdown button on hover & focus */
 .dropbtn:hover, .dropbtn:focus {
-    background-color: #3e8e41;
+    background-color: #ccc;
 }
 
 /* The search field */
 #ex_algo_search_text {
     width: 100%;
     box-sizing: border-box;
-    /*background-image: url('searchicon.png');*/
+    /*background-image: url('searchicon.png');
     background-position: 14px 12px;
-    background-repeat: no-repeat;
-    font-size: 16px;
-    padding: 14px 20px 12px 45px;
+    background-repeat: no-repeat;*/
+    padding: 14px 20px 12px 20px;
     border: none;
     border-bottom: 1px solid #ddd;
+    height: 20px;
 }
 
 /* The search field when it gets focus/clicked on */
-#ex_algo_search_text:focus {outline: 3px solid #ddd;}
+/* #ex_algo_search_text:focus {outline: 3px solid #ddd;} */
 
 /* The container <div> - needed to position the dropdown content */
 .dropdown {
@@ -253,16 +273,16 @@ svg {
     z-index: 1;
 }
 
-/* Links inside the dropdown */
+/* Links inside the dropdown
 .dropdown-content a {
     color: black;
     padding: 12px 16px;
     text-decoration: none;
     display: block;
-}
+}*/
 
 /* Change color of dropdown links on hover */
-.dropdown-content a:hover {background-color: #f1f1f1}
+.dropdown-content button:hover { background-color: #ccc }
 
 /* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
-.show {display:block;}
+.show { display:block; }
