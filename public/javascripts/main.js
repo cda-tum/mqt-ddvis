@@ -150,17 +150,45 @@ const emptyQasm =   "OPENQASM 2.0;\n" +
 function loadEmptyReal() {
     if(curTab === START_TAB) return;
 
-    algoArea.resetAlgorithm();
-    algoArea.algoFormat = REAL_FORMAT;
-    algoArea.algo = emptyReal;
+    if(curTab === SIM_TAB) {
+        algoArea.resetAlgorithm();
+        algoArea.algoFormat = QASM_FORMAT;
+        algoArea.algo = emptyReal;
+
+    } else if(curTab === VER_TAB) {
+        const algo1 = document.getElementById("radio_algo1").checked;
+        if(algo1) {
+            ver1_algoArea.resetAlgorithm();
+            ver1_algoArea.algoFormat = QASM_FORMAT;
+            ver1_algoArea.algo = emptyReal;
+        } else {
+            ver2_algoArea.resetAlgorithm();
+            ver2_algoArea.algoFormat = QASM_FORMAT;
+            ver2_algoArea.algo = emptyReal;
+        }
+    }
 }
 
 function loadEmptyQasm() {
     if(curTab === START_TAB) return;
 
-    algoArea.resetAlgorithm();
-    algoArea.algoFormat = QASM_FORMAT;
-    algoArea.algo = emptyQasm;
+    if(curTab === SIM_TAB) {
+        algoArea.resetAlgorithm();
+        algoArea.algoFormat = QASM_FORMAT;
+        algoArea.algo = emptyQasm;
+
+    } else if(curTab === VER_TAB) {
+        const algo1 = document.getElementById("radio_algo1").checked;
+        if(algo1) {
+            ver1_algoArea.resetAlgorithm();
+            ver1_algoArea.algoFormat = QASM_FORMAT;
+            ver1_algoArea.algo = emptyQasm;
+        } else {
+            ver2_algoArea.resetAlgorithm();
+            ver2_algoArea.algoFormat = QASM_FORMAT;
+            ver2_algoArea.algo = emptyQasm;
+        }
+    }
 }
 
 function loadExampleAlgo(name) {
