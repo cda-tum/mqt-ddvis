@@ -32,6 +32,7 @@ Napi::Object QDDVer::Init(Napi::Env env, Napi::Object exports) {
                                   InstanceMethod("toLine", &QDDVer::ToLine),
                                   InstanceMethod("getDD", &QDDVer::GetDD),
                                   InstanceMethod("updateExportOptions", &QDDVer::UpdateExportOptions),
+                                  InstanceMethod("getExportOptions", &QDDVer::GetExportOptions),
                                   InstanceMethod("isReady", &QDDVer::IsReady)//,
                                   //InstanceMethod("conductIrreversibleOperation", &QDDVer::ConductIrreversibleOperation)
                           }
@@ -824,16 +825,28 @@ void QDDVer::UpdateExportOptions(const Napi::CallbackInfo& info) {
     this->showClassic = (bool)info[2].As<Napi::Boolean>();
     //std::cout << "Updated the values of the Flags to: " << this->showColors << ", " << this->showEdgeLabels << ", " << this->showClassic << std::endl;
 }
+
+Napi::Value QDDVer::GetExportOptions(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    Napi::Object state = Napi::Object::New(env);
+
+    state.Set("colored", this->showColors);
+    state.Set("edgeLabels", this->showEdgeLabels);
+    state.Set("classic", this->showClassic);
+    return state;
+}
+
 /**
  *
  * @param info whether we want to know about algo1 or algo2
- * @return value of the field isReady (true meaning an algorithm has been successfully loaded)
+ * @return true if an algorithm has been loaded, false otherwise
  */
 Napi::Value QDDVer::IsReady(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
 
     if(info.Length() < 1) {
-        Napi::RangeError::New(env, "Need 1 (bool) argument!").ThrowAsJavaScriptException();
+        //if no parameter is given, check if one of the two algos are ready, meaning a DD can be shown
+        return Napi::Boolean::New(env, this->ready1 || this->ready2);
     }
     if (!info[0].IsBoolean()) {  //algo1
         Napi::TypeError::New(env, "arg1: Boolean expected!").ThrowAsJavaScriptException();

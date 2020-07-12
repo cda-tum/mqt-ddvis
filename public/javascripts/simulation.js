@@ -810,6 +810,42 @@ function print(dot, callback, resetZoom=false) {
     }
 }
 
+/**Updates the export options for the simulation-dd
+ *
+ * @param colored whether the edges should be colored based on their weight or be black and dotted/thick
+ * @param edgeLabels whether the weights should be displayed as labels on the edges or not
+ * @param classic whether a node should be a rounded-rectangle or a classical circle
+ */
+function sim_updateExportOptions(colored, edgeLabels, classic) {
+    const lastState = simState;
+    changeState(STATE_SIMULATING);
+    startLoadingAnimation();
+
+    const call = jQuery.ajax({
+        type: 'PUT',
+        url: '/updateExportOptions',
+        data: { colored: colored, edgeLabels: edgeLabels, classic: classic, updateDD: !algoArea.emptyAlgo, dataKey: dataKey },
+        success: (res) => {
+            if (res.dot) {
+                print(res.dot, () => {
+                    endLoadingAnimation();
+                    changeState(lastState); //go back to the previous state
+                });
+            } else {
+                endLoadingAnimation();
+                changeState(lastState);
+            }
+        }
+    });
+    call.fail((res) => {
+        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
+        endLoadingAnimation();
+        showResponseError(res, "");
+        _generalStateChange();
+    });
+}
+
 function onAlgoReset() {
     print(null, () => {
         changeState(STATE_NOTHING_LOADED);

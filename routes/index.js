@@ -100,7 +100,18 @@ router.put('/updateExportOptions', (req, res) => {
         vis.updateExportOptions(showColored, showEdgeLabels, showClassic);
 
         if(vis.isReady() && updateDD) _sendDD(res, vis.getDD());
-        else res.status(200).json();
+        else res.status(200).end(); //end the call without sending data
+
+    } else {
+        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
+    }
+});
+
+router.get('/getExportOptions', (req, res) => {
+    const vis = dm.get(req);
+    if(vis) {
+        const exportOptions = vis.getExportOptions();
+        res.status(200).json(exportOptions);
 
     } else {
         res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });

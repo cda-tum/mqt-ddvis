@@ -68,23 +68,61 @@ function openTab(tabId) {
     const tab_button = document.getElementById(tabId + '_tab');
     tab_button.className += " active";
 
-    switch (tabId) {
-        case "sim": curTab = SIM_TAB;
-                    disableElementsWithID([ "radio_algo1", "radio_algo2" ]);
-                    break;
-        case "ver": curTab = VER_TAB;
-                    enableElementsWithID([ "radio_algo1", "radio_algo2" ]);
-                    break;
-
-        default:    curTab = START_TAB;
-                    disableElementsWithID([ "radio_algo1", "radio_algo2" ]);
-    }
-
+    onTabChange(tabId);
     updateAllAlgoAreaSizes();
     //this would be a more efficient approach, but since we just have a couple of algoAreas it shouldn't matter
     //if(tabId === "simulation") {
     //    algoAreas.get("sim").updateSizes();
     //}
+}
+
+function onTabChange(newTab) {
+
+    function setExportOptions(targetManager) {
+        //set the checkboxes of the export options to their correct values
+        const call = $.ajax({
+            url: '/getExportOptions?dataKey=' + dataKey + '&targetManager=' + targetManager,
+            contentType: 'application/json',
+            success: (res) => {
+                if(res) {
+                    cb_colored.checked = res.colored ? 'checked' : '';
+                    cb_edge_labels.checked = res.edgeLabels ? 'checked' : '';
+                    cb_classic.checked = res.classic ? 'checked' : '';
+
+                } else {
+                    //endLoadingAnimation();
+                    //changeState(STATE_LOADED_START);
+                }
+            }
+        });
+        call.fail((res) => {
+            //if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+            showResponseError(res, "Getting the updateOptions of sim failed!");
+            //_generalStateChange();
+        });
+    }
+
+    switch (newTab) {
+        case "sim": curTab = SIM_TAB;
+                    enableElementsWithID([ "cb_colored", "cb_edge_labels", "cb_classic" ]);
+                    disableElementsWithID([ "radio_algo1", "radio_algo2" ]);
+                    setExportOptions("sim");
+                    break;
+
+        case "ver": curTab = VER_TAB;
+                    enableElementsWithID([
+                        "radio_algo1", "radio_algo2",
+                        "cb_colored", "cb_edge_labels", "cb_classic"
+                    ]);
+                    setExportOptions("ver");
+                    break;
+
+        default:    curTab = START_TAB;
+                    disableElementsWithID([
+                        "radio_algo1", "radio_algo2",
+                        "cb_colored", "cb_edge_labels", "cb_classic"
+                    ]);
+    }
 }
 
 
@@ -146,7 +184,6 @@ const emptyQasm =   "OPENQASM 2.0;\n" +
     "qreg q[];\n" +
     "creg c[];\n";
 
-//todo implement properly
 function loadEmptyReal() {
     if(curTab === START_TAB) return;
 
@@ -219,10 +256,7 @@ function loadExampleAlgo(name) {
 }
 
 // ###################### ADVANCED SETTINGS ######################################
-const cb_colored = $('#cb_colored');
-const cb_edge_labels = $('#cb_edge_labels');
-const cb_classic = $('#cb_classic');
-
+//step_duration and checkboxes are initialized in init.js
 let stepDuration = 1000;   //in ms
 
 /**Checks if the number the user entered in step_duration is an integer > 0. If this is not the
@@ -252,34 +286,19 @@ function validateStepDuration() {
  *
  */
 function updateExportOptions() {
+    if(curTab === START_TAB) return;
 
-    const colored = cb_colored.prop('checked');
-    const edgeLabels = cb_edge_labels.prop('checked');
-    const classic = cb_classic.prop('checked');
-    /*
-    const lastState = simState;
-    changeState(STATE_SIMULATING);
-    startLoadingAnimation();
+    const colored = cb_colored.checked;
+    const edgeLabels = cb_edge_labels.checked;
+    const classic = cb_classic.checked;
+    //console.log(colored + ", " + edgeLabels + ", " + classic);
 
-    const call = jQuery.ajax({
-        type: 'PUT',
-        url: '/updateExportOptions',
-        data: { colored: colored, edgeLabels: edgeLabels, classic: classic, updateDD: !algoArea.emptyAlgo, dataKey: dataKey },
-        success: (res) => {
-            if (res.dot) print(res.dot, () => {
-                endLoadingAnimation();
-                changeState(lastState); //go back to the previous state
-            });
-        }
-    });
-    call.fail((res) => {
-        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+    if(curTab === SIM_TAB) {
+        sim_updateExportOptions(colored, edgeLabels, classic);
 
-        endLoadingAnimation();
-        showResponseError(res, "");
-        _generalStateChange();
-    });
-    */
+    } else if(curTab === VER_TAB) {
+        ver_updateExportOptions(colored, edgeLabels, classic);
+    }
 }
 
 

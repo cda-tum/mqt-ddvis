@@ -346,7 +346,7 @@ ver2_algo_div.append(
 const ver1_automatic = $('#ver1_automatic');
 const ver2_automatic = $('#ver2_automatic');
 
-// ###################### EXAMPLE ALGORITHMS ###############################################
+// ###################### SETTINGS INTERACTIONS ###############################################
 
 /**
  *
@@ -372,6 +372,46 @@ function ver_loadExAlgo(algo, format, algo1) {
 
         ver2_algoArea.loadAlgorithm(format, true);   //new algorithm -> new simulation
     }
+}
+
+/**Updates the export options for the simulation-dd
+ *
+ * @param colored whether the edges should be colored based on their weight or be black and dotted/thick
+ * @param edgeLabels whether the weights should be displayed as labels on the edges or not
+ * @param classic whether a node should be a rounded-rectangle or a classical circle
+ */
+function ver_updateExportOptions(colored, edgeLabels, classic) {
+    const lastState1 = ver1State;
+    const lastState2 = ver2State;
+    ver_changeState(STATE_SIMULATING, true);
+    ver_changeState(STATE_SIMULATING, false);
+    startLoadingAnimation();
+
+    const callback = () => {
+        endLoadingAnimation();
+        ver_changeState(lastState1, true); //go back to the previous state
+        ver_changeState(lastState2, false); //go back to the previous state
+    }
+
+    const updateDD = !ver1_algoArea.emptyAlgo || !ver2_algoArea.emptyAlgo;  //check if at least one algorithm is loaded
+    const call = jQuery.ajax({
+        type: 'PUT',
+        url: '/updateExportOptions',
+        data: { colored: colored, edgeLabels: edgeLabels, classic: classic,
+            updateDD: updateDD, dataKey: dataKey, targetManager: "ver" },
+        success: (res) => {
+            if (res.dot) ver_print(res.dot, callback);
+            else callback();
+        }
+    });
+    call.fail((res) => {
+        if(res.status === 404) window.location.reload(false);   //404 means that we are no longer registered and therefore need to reload
+
+        endLoadingAnimation();
+        showResponseError(res, "");
+        _ver_generalStateChange(true);
+        _ver_generalStateChange(false);
+    });
 }
 
 // ##################### NAVIGATION #######################################################

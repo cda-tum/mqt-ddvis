@@ -28,6 +28,7 @@ Napi::Object QDDVis::Init(Napi::Env env, Napi::Object exports) {
                             InstanceMethod("toLine", &QDDVis::ToLine),
                             InstanceMethod("getDD", &QDDVis::GetDD),
                             InstanceMethod("updateExportOptions", &QDDVis::UpdateExportOptions),
+                            InstanceMethod("getExportOptions", &QDDVis::GetExportOptions),
                             InstanceMethod("isReady", &QDDVis::IsReady),
                             InstanceMethod("conductIrreversibleOperation", &QDDVis::ConductIrreversibleOperation)
                         }
@@ -758,6 +759,17 @@ void QDDVis::UpdateExportOptions(const Napi::CallbackInfo& info) {
     this->showClassic = (bool)info[2].As<Napi::Boolean>();
     //std::cout << "Updated the values of the Flags to: " << this->showColors << ", " << this->showEdgeLabels << ", " << this->showClassic << std::endl;
 }
+
+Napi::Value QDDVis::GetExportOptions(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    Napi::Object state = Napi::Object::New(env);
+
+    state.Set("colored", this->showColors);
+    state.Set("edgeLabels", this->showEdgeLabels);
+    state.Set("classic", this->showClassic);
+    return state;
+}
+
 /**
  *
  * @param info has no parameters

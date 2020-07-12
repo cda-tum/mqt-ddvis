@@ -32,6 +32,7 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
         Napi::Value ToLine(const Napi::CallbackInfo& info);
         Napi::Value GetDD(const Napi::CallbackInfo& info);
         void UpdateExportOptions(const Napi::CallbackInfo& info);
+        Napi::Value GetExportOptions(const Napi::CallbackInfo& info);
         Napi::Value IsReady(const Napi::CallbackInfo& info);
 		Napi::Value ConductIrreversibleOperation(const Napi::CallbackInfo& info);
 
