@@ -87,10 +87,16 @@ svg {
 
 #settings_menu {
     float: left;
-    width: 15%;
+    overflow: hidden;
+    width: 0;
     height: 100%;
-    padding: 0 10px 10px 10px;
+    padding: 0;
     /*background-color: #3498db;*/
+    transition: width 1.5s;
+}
+
+#settings_menu > * {
+    padding-left: 10px;
 }
 
 #settings_headline_div {
@@ -109,9 +115,10 @@ svg {
 }
 
 #main_content {
-    float: right;
-    width: 85%;
+    float: left;
+    width: 100%;
     height: 100%;
+    transition: width 1.5s;
 }
 
 /* clear the space after the tab-content so no content can slip into the tab */
@@ -120,7 +127,6 @@ svg {
     display: table;
     clear: both;
 }
-
 
 
 /* ################################## specific element types ################################## */
@@ -218,71 +224,44 @@ svg {
 
 
 /* dropdown button related code adapted from https://www.w3schools.com/howto/howto_js_filter_dropdown.asp */
-#ex_algo_div, #ex_algo_button {
-    width: 100%;
-}
-
 .example-algo {
     height: 30px;
     width: 100%;
 }
 
-/* Dropdown Button */
-.dropbtn {
+.example-algo:hover {
     background-color: #ddd;
-    color: black;
-    padding: 16px;
-    border: none;
-    cursor: pointer;
 }
 
-/* Dropdown button on hover & focus */
-.dropbtn:hover, .dropbtn:focus {
-    background-color: #ccc;
+#ex_algo_headline {
+    width: 100%;
 }
 
 /* The search field */
 #ex_algo_search_text {
     width: 100%;
+    height: 20px;
     box-sizing: border-box;
     /*background-image: url('searchicon.png');
     background-position: 14px 12px;
     background-repeat: no-repeat;*/
-    padding: 14px 20px 12px 20px;
+    padding: 14px 20px 12px 0;
     border: none;
     border-bottom: 1px solid #ddd;
-    height: 20px;
+}
+
+#ex_algo_ver_loading {
+    width: 100%;
+    height: 0;
+    transition: height 1.5s;
+}
+
+#ex_algo_list {
+    width: 100%;
+    height: 250px;
+    overflow-y: auto;
 }
 
 /* The search field when it gets focus/clicked on */
 /* #ex_algo_search_text:focus {outline: 3px solid #ddd;} */
 
-/* The container <div> - needed to position the dropdown content */
-.dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-/* Dropdown Content (Hidden by Default) */
-.dropdown-content {
-    display: none;
-    position: absolute;
-    background-color: #f6f6f6;
-    width: 100%;
-    border: 1px solid #ddd;
-    z-index: 1;
-}
-
-/* Links inside the dropdown
-.dropdown-content a {
-    color: black;
-    padding: 12px 16px;
-    text-decoration: none;
-    display: block;
-}*/
-
-/* Change color of dropdown links on hover */
-.dropdown-content button:hover { background-color: #ccc }
-
-/* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
-.show { display:block; }

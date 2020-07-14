@@ -77,6 +77,7 @@ function openTab(tabId) {
 }
 
 function onTabChange(newTab) {
+    const oldTab = curTab;
 
     function setExportOptions(targetManager) {
         //set the checkboxes of the export options to their correct values
@@ -104,12 +105,14 @@ function onTabChange(newTab) {
 
     switch (newTab) {
         case "sim": curTab = SIM_TAB;
+                    ex_algo_ver_loading.style.height = "0"; //hide it
                     enableElementsWithID([ "cb_colored", "cb_edge_labels", "cb_classic" ]);
                     disableElementsWithID([ "radio_algo1", "radio_algo2" ]);
                     setExportOptions("sim");
                     break;
 
         case "ver": curTab = VER_TAB;
+                    ex_algo_ver_loading.style.height = "60px";
                     enableElementsWithID([
                         "radio_algo1", "radio_algo2",
                         "cb_colored", "cb_edge_labels", "cb_classic"
@@ -118,10 +121,22 @@ function onTabChange(newTab) {
                     break;
 
         default:    curTab = START_TAB;
+                    ex_algo_ver_loading.style.height = "0"; //hide it
                     disableElementsWithID([
                         "radio_algo1", "radio_algo2",
                         "cb_colored", "cb_edge_labels", "cb_classic"
                     ]);
+    }
+
+    if(oldTab === START_TAB && curTab !== START_TAB) {
+        //settings_menu.style.display = "block";
+        settings_menu.style.width = "15%";
+        main_content.style.width = "85%";
+
+    } else if(curTab === START_TAB && oldTab !== START_TAB) {
+        //settings_menu.style.display = "none";
+        settings_menu.style.width = "0";
+        main_content.style.width = "100%";
     }
 }
 
@@ -138,7 +153,7 @@ function exAlgoDropDown() {
 function exAlgoFilterFunction() {
     const input = document.getElementById("ex_algo_search_text");
     const filter = input.value.toUpperCase();
-    const dropdown = document.getElementById("ex_algo_dropdown");
+    const dropdown = ex_algo_list;//document.getElementById("ex_algo_dropdown");
     const a = dropdown.getElementsByTagName("button");
     for (let i = 0; i < a.length; i++) {
         const txtValue = a[i].textContent || a[i].innerText;
@@ -156,7 +171,7 @@ const call = $.ajax({
     contentType: 'application/json',
     success: (res) => {
         if(res) {
-            const ex_algo_dd = document.getElementById('ex_algo_dropdown');
+            const ex_algo_dd = ex_algo_list;//document.getElementById('ex_algo_dropdown');
             res.forEach(name => {
                 const button = document.createElement("button");
                 button.innerText = name;
