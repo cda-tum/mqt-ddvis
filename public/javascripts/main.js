@@ -109,14 +109,22 @@ function onTabChange(newTab) {
 
     switch (newTab) {
         case "sim": curTab = SIM_TAB;
+
                     ex_algo_ver_loading.style.height = "0"; //hide it
+                    reset_btn.textContent = "Reset Algorithm";
+                    reset_btn.style.display = "block";
+
                     enableElementsWithID([ "cb_colored", "cb_edge_labels", "cb_classic" ]);
                     disableElementsWithID([ "radio_algo1", "radio_algo2" ]);
                     setExportOptions("sim");
                     break;
 
         case "ver": curTab = VER_TAB;
+
                     ex_algo_ver_loading.style.height = "60px";
+                    reset_btn.textContent = "Reset Algorithms";
+                    reset_btn.style.display = "block";
+
                     enableElementsWithID([
                         "radio_algo1", "radio_algo2",
                         "cb_colored", "cb_edge_labels", "cb_classic"
@@ -125,7 +133,10 @@ function onTabChange(newTab) {
                     break;
 
         default:    curTab = START_TAB;
+
                     ex_algo_ver_loading.style.height = "0"; //hide it
+                    reset_btn.style.display = "none";
+
                     disableElementsWithID([
                         "radio_algo1", "radio_algo2",
                         "cb_colored", "cb_edge_labels", "cb_classic"

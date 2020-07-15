@@ -122,7 +122,9 @@ svg {
 }
 
 #reset_btn {
+    display: none;  /* hidden on the start tab */
     float: right;
+    width: 150px;
     border: 2px dashed #3498db;
 }
 

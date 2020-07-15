@@ -13,3 +13,4 @@ const ex_algo_ver_loading = document.getElementById('ex_algo_ver_loading');
 
 
 const main_content = document.getElementById('main_content');
+const reset_btn = document.getElementById('reset_btn');
