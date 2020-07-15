@@ -30,6 +30,7 @@ Napi::Object QDDVis::Init(Napi::Env env, Napi::Object exports) {
                             InstanceMethod("updateExportOptions", &QDDVis::UpdateExportOptions),
                             InstanceMethod("getExportOptions", &QDDVis::GetExportOptions),
                             InstanceMethod("isReady", &QDDVis::IsReady),
+                            InstanceMethod("unready", &QDDVis::Unready),
                             InstanceMethod("conductIrreversibleOperation", &QDDVis::ConductIrreversibleOperation)
                         }
                     );
@@ -778,6 +779,10 @@ Napi::Value QDDVis::GetExportOptions(const Napi::CallbackInfo& info) {
 Napi::Value QDDVis::IsReady(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     return Napi::Boolean::New(env, this->ready);
+}
+
+void QDDVis::Unready(const Napi::CallbackInfo& info) {
+    this->ready = false;
 }
 
 Napi::Value QDDVis::ConductIrreversibleOperation(const Napi::CallbackInfo& info) {

@@ -39,6 +39,7 @@ private:
     void UpdateExportOptions(const Napi::CallbackInfo& info);
     Napi::Value GetExportOptions(const Napi::CallbackInfo& info);
     Napi::Value IsReady(const Napi::CallbackInfo& info);
+    void Unready(const Napi::CallbackInfo& info);
     Napi::Value ConductIrreversibleOperation(const Napi::CallbackInfo& info);
 
     //fields

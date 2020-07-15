@@ -121,6 +121,11 @@ svg {
     transition: width 1.5s;
 }
 
+#reset_btn {
+    float: right;
+    border: 2px dashed #3498db;
+}
+
 /* clear the space after the tab-content so no content can slip into the tab */
 #start:after, #simulation:after, #verification:after {
     content: "";

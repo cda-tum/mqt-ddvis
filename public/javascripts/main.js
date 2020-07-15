@@ -40,6 +40,10 @@ mainCall.fail((res) => {
 
 
 // ################### TAB_MANAGEMENT ################################################
+const SIM_ID_PREFIX = "sim";
+const VER1_ID_PREFIX = "ver1";
+const VER2_ID_PREFIX = "ver2";
+
 const START_TAB = 0;
 const SIM_TAB = 1;
 const VER_TAB = 2;
@@ -153,8 +157,7 @@ function exAlgoDropDown() {
 function exAlgoFilterFunction() {
     const input = document.getElementById("ex_algo_search_text");
     const filter = input.value.toUpperCase();
-    const dropdown = ex_algo_list;//document.getElementById("ex_algo_dropdown");
-    const a = dropdown.getElementsByTagName("button");
+    const a = ex_algo_list.getElementsByTagName("button");
     for (let i = 0; i < a.length; i++) {
         const txtValue = a[i].textContent || a[i].innerText;
         if (txtValue.toUpperCase().indexOf(filter) > -1) {
@@ -443,7 +446,7 @@ function showError(error) {
 }
 
 
-// ################### LOADING ###########################################
+// ################### LOADING ANIMATION ###########################################
 
 function startLoadingAnimation() {
     document.getElementById('loader').style.display = 'block';
@@ -476,3 +479,16 @@ function updateAllAlgoAreaSizes() {
 window.addEventListener('resize', (event) => {
     updateAllAlgoAreaSizes();
 });
+
+function resetAlgorithm() {
+    if(curTab === START_TAB) return;
+
+    if(curTab === SIM_TAB) {
+        algoAreas.get(SIM_ID_PREFIX).resetAlgorithm();
+
+    } else if(curTab === VER_TAB) {
+        algoAreas.get(VER1_ID_PREFIX).resetAlgorithm(false);
+        algoAreas.get(VER2_ID_PREFIX).resetAlgorithm(false);
+        ver_onAlgoReset();  //call it after both algorithms were reset (hence applyCallback is false)
+    }
+}

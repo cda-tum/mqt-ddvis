@@ -59,6 +59,24 @@ router.post('/load', (req, res) => {
     }
 });
 
+router.post('/reset', (req, res) => {
+    const vis = dm.get(req);
+    if(vis) {
+        try {
+            const algo1 = req.body.algo1 === "true";    //needed to determine the algorithm of verification
+            vis.unready(algo1);
+            res.status(200).end();
+
+        } catch(err) {
+            const retry = err.message.startsWith("Invalid algorithm!"); //if the algorithm is invalid, we need to send the last valid algorithm
+            res.status(400).json({ msg: err.message, retry: retry});    //I think retry is no longer needed!
+        }
+
+    } else {
+        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
+    }
+})
+
 /**Tries to retrieve the QDDVis-object associated with the requester and sends back its respective DD.
  *
  * Params:  the key that provides access to the QDDVis-object as query string ("?dataKey=...")

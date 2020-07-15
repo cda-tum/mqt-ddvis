@@ -247,24 +247,60 @@ function ver_print(dd, callback, resetZoom=false) {
 }
 
 function ver_onAlgoReset() {
+    function reset(algo1) {
+        const call = $.post("/reset", { targetManager: "ver", algo1: algo1, dataKey: dataKey });
+        call.done((res) => {
+            //console.log("unready worked");
+        });
+        call.fail(res => {
+            if(res.status === 404) {
+                if(res.responseJSON && res.responseJSON.msg) showError(res.responseJSON.msg);
+                else showError("Error 404");
+                window.location.reload(false);//404 means that we are no longer registered and therefore need to reload
+
+            } else if(res.status === 500) {
+                if(res.responseJSON && res.responseJSON.msg) showError(res.responseJSON.msg);
+                else showError("Internal Server Error");
+
+            } else {
+                if(algo1)   ver1_onLoadError(res.responseJSON.msg);
+                else        ver2_onLoadError(res.responseJSON.msg);
+            }
+        });
+    }
+
     if(ver1_algoArea.emptyAlgo && ver2_algoArea.emptyAlgo) {
         //both are empty so we reset the displayed DD
-        print(null, () => {
+        ver_print(null, () => {
             ver_changeState(STATE_NOTHING_LOADED, true);
             ver_changeState(STATE_NOTHING_LOADED, false);
         });
 
     } else if(ver1_algoArea.emptyAlgo) {
-        ver_gotoStart(true, () => {    //reset algo1
-            //and then "force" the state to NOTHING_LOADED
+        if(ver1_algoArea.hlManager.highlightedLines > 0) {
+            //only go to the start if an operation has been processed (in the other cases we are still at the start
+            ver_gotoStart(true, () => {    //reset algo1
+                reset(true);
+                //and then "force" the state to NOTHING_LOADED
+                ver_changeState(STATE_NOTHING_LOADED, true);
+            });
+        } else {
+            reset(true);
             ver_changeState(STATE_NOTHING_LOADED, true);
-        });
+        }
 
     } else if(ver2_algoArea.emptyAlgo) {
-        ver_gotoStart(false, () => {    //reset algo2
-            //and then "force" the state to NOTHING_LOADED
+        //only go to the start if an operation has been processed (in the other cases we are still at the start
+        if(ver2_algoArea.hlManager.highlightedLines > 0) {
+            ver_gotoStart(false, () => {    //reset algo2
+                reset(false);
+                //and then "force" the state to NOTHING_LOADED
+                ver_changeState(STATE_NOTHING_LOADED, false);
+            });
+        } else {
+            reset(false);
             ver_changeState(STATE_NOTHING_LOADED, false);
-        });
+        }
     }
 }
 
@@ -287,15 +323,15 @@ function ver2_onLoadError(msg) {
     ver_onLoadError(false, msg);
 }
 
-const ver1_algoArea = new AlgoArea(ver1_algo_div, "ver1", ver1_aacs, ver_print, showError, ver_onAlgoReset,
+const ver1_algoArea = new AlgoArea(ver1_algo_div, VER1_ID_PREFIX, ver1_aacs, ver_print, showError, ver_onAlgoReset,
     ver1_onLoadError, { targetManager: "ver", algo1: true }
 );
-const ver2_algoArea = new AlgoArea(ver2_algo_div, "ver2", ver2_aacs, ver_print, showError, ver_onAlgoReset,
+const ver2_algoArea = new AlgoArea(ver2_algo_div, VER2_ID_PREFIX, ver2_aacs, ver_print, showError, ver_onAlgoReset,
     ver2_onLoadError, { targetManager: "ver", algo1: false }
 );
 
-registerAlgoArea("ver1", ver1_algoArea);
-registerAlgoArea("ver2", ver2_algoArea);
+registerAlgoArea(VER1_ID_PREFIX, ver1_algoArea);
+registerAlgoArea(VER2_ID_PREFIX, ver2_algoArea);
 
 //append the navigation divs below the algoAreas
 ver1_algo_div.append(

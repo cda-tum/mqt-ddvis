@@ -33,7 +33,8 @@ Napi::Object QDDVer::Init(Napi::Env env, Napi::Object exports) {
                                   InstanceMethod("getDD", &QDDVer::GetDD),
                                   InstanceMethod("updateExportOptions", &QDDVer::UpdateExportOptions),
                                   InstanceMethod("getExportOptions", &QDDVer::GetExportOptions),
-                                  InstanceMethod("isReady", &QDDVer::IsReady)//,
+                                  InstanceMethod("isReady", &QDDVer::IsReady),
+                                  InstanceMethod("unready", &QDDVer::Unready)
                                   //InstanceMethod("conductIrreversibleOperation", &QDDVer::ConductIrreversibleOperation)
                           }
             );
@@ -455,11 +456,14 @@ Napi::Value QDDVer::ToStart(const Napi::CallbackInfo& info) {
 
     if(algo1) {
         if(!ready1) {
-            Napi::Error::New(env, "No algorithm loaded as algo1!").ThrowAsJavaScriptException();
+            //Napi::Error::New(env, "No algorithm loaded as algo1!").ThrowAsJavaScriptException();
+            std::cout << "not ready 1" << std::endl;
             return Napi::Boolean::New(env, false);
         } else if (qc1->empty()) {
+            std::cout << "empty 2" << std::endl;
             return Napi::Boolean::New(env, false);
         } else if(atInitial1) {
+            std::cout << "at initial 2" << std::endl;
             return Napi::Boolean::New(env, false);  //nothing changed
         }
 
@@ -468,11 +472,14 @@ Napi::Value QDDVer::ToStart(const Napi::CallbackInfo& info) {
 
     } else {
         if(!ready2) {
-            Napi::Error::New(env, "No algorithm loaded as algo2!").ThrowAsJavaScriptException();
+            //Napi::Error::New(env, "No algorithm loaded as algo2!").ThrowAsJavaScriptException();
+            std::cout << "not ready 2" << std::endl;
             return Napi::Boolean::New(env, false);
         } else if (qc2->empty()) {
+            std::cout << "empty 2" << std::endl;
             return Napi::Boolean::New(env, false);
         } else if(atInitial2) {
+            std::cout << "atInitial 2" << std::endl;
             return Napi::Boolean::New(env, false);  //nothing changed
         }
 
@@ -855,6 +862,23 @@ Napi::Value QDDVer::IsReady(const Napi::CallbackInfo& info) {
 
     if(algo1)   return Napi::Boolean::New(env, this->ready1);
     else        return Napi::Boolean::New(env, this->ready2);
+}
+
+void QDDVer::Unready(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    if(info.Length() < 1) {
+        //if no parameter is given, check if one of the two algos are ready, meaning a DD can be shown
+        return;
+    }
+    if (!info[0].IsBoolean()) {  //algo1
+        Napi::TypeError::New(env, "arg1: Boolean expected!").ThrowAsJavaScriptException();
+        return;
+    }
+    bool algo1 = (bool)info[0].As<Napi::Boolean>();
+
+    if(algo1)   this->ready1 = false;
+    else        this->ready2 = false;
 }
 
 Napi::Value QDDVer::ConductIrreversibleOperation(const Napi::CallbackInfo& info) {
