@@ -280,31 +280,42 @@ router.get('/toline', (req, res) => {
 const exAlgoDir = "./cpp/sample_qasm"
 const exAlgoNames = [];
 const exampleAlgos = [];
-//load all example algorithms
-fs.readdirSync(exAlgoDir).forEach(file => {
-    const endingIndex = file.lastIndexOf(".");
-    const name = file.substring(0, endingIndex);
-    const ending = file.substring(endingIndex+1);    //skip the .
-    if(ending === "qasm") {
-        exAlgoNames.push(name);
 
-        const algo = fs.readFileSync(exAlgoDir + '/' + file, 'utf-8');
-        exampleAlgos.push({
-           algo: algo,
-           name: name,
-           format: 1        //QASM_FORMAT       //todo it would be safer if we just send "qasm" and let the client determine the format-code
-        });
-    } else if(ending === "real") {
-        exAlgoNames.push(name);
+function _readFiles(dirPath) {
+    //load all example algorithms
+    fs.readdirSync(dirPath).forEach(file => {
+        const endingIndex = file.lastIndexOf(".");
 
-        const algo = fs.readFileSync(exAlgoDir + '/' + file, 'utf-8');
-        exampleAlgos.push({
-            algo: algo,
-            name: name,
-            format: 2       //REAL_FORMAT       //todo it would be safer if we just send "qasm" and let the client determine the format-code
-        });
-    }
-});
+        if(endingIndex >= 0) {  //file found
+            const name = file.substring(0, endingIndex);
+            const ending = file.substring(endingIndex+1);    //skip the .
+            if(ending === "qasm") {
+                exAlgoNames.push(name);
+
+                const algo = fs.readFileSync(dirPath + '/' + file, 'utf-8');
+                exampleAlgos.push({
+                    algo: algo,
+                    name: name,
+                    format: 1        //QASM_FORMAT       //todo it would be safer if we just send "qasm" and let the client determine the format-code
+                });
+            } else if(ending === "real") {
+                exAlgoNames.push(name);
+
+                const algo = fs.readFileSync(dirPath + '/' + file, 'utf-8');
+                exampleAlgos.push({
+                    algo: algo,
+                    name: name,
+                    format: 2       //REAL_FORMAT       //todo it would be safer if we just send "qasm" and let the client determine the format-code
+                });
+            }
+        } else {    //potential directory found
+            const path = dirPath + "/" + file;
+            if(fs.lstatSync(path).isDirectory()) _readFiles(path);
+        }
+    });
+}
+_readFiles(exAlgoDir);
+
 router.get('/exampleAlgos', (req, res) => {
     res.status(200).json(exAlgoNames);
 });
