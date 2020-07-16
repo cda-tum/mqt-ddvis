@@ -18,6 +18,10 @@
     }
 }
 
+#irreversibleDialog {
+    display: none;
+}
+
 /*
 #color_map {
     display: block;

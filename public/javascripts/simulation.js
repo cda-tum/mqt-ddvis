@@ -490,6 +490,7 @@ function _resizeDialog(dialog, pzero, pone) {
 }
 
 function _startDialog(dialog, title, text, pzero, pone) {
+    dialog.css('display', 'block');
     dialog.html(text);
     const def = $.Deferred();
 
@@ -505,10 +506,12 @@ function _startDialog(dialog, title, text, pzero, pone) {
             'Option 0': {id: 'm0', text: '0', click: function() {
                     def.resolve("0");
                     $( this ).dialog( "close" );
+                    dialog.css('display', 'none');  //hide the dialog text
                 }},
             'Option 1': {id: 'm1', text: '1', click: function() {
                     def.resolve("1");
                     $( this ).dialog( "close" );
+                    dialog.css('display', 'none');  //hide the dialog text
                 }},
         },
         close: function() {
