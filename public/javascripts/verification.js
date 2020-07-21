@@ -382,6 +382,10 @@ ver2_algo_div.append(
 const ver1_automatic = $('#ver1_automatic');
 const ver2_automatic = $('#ver2_automatic');
 
+//prepare the initial state
+ver_changeState(STATE_NOTHING_LOADED, true);
+ver_changeState(STATE_NOTHING_LOADED, false);
+
 // ###################### SETTINGS INTERACTIONS ###############################################
 
 /**
@@ -398,7 +402,6 @@ function ver_loadExAlgo(algo, format, algo1) {
         ver1_algoArea.algo = algo;
 
         ver1_algoArea.loadAlgorithm(format, true);   //new algorithm -> new simulation
-
 
     } else {
         ver2_algoArea.emptyAlgo = false;
