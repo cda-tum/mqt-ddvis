@@ -207,6 +207,7 @@ class AlgoArea {
                     //also set the highlights because the lines might have changed
                     this._hlManager.text = algo;
                     this._hlManager._updateDiv();
+                    this._updateHeights();
                 }
 
                 this._oldAlgo = algo;   //update this value so we can properly edit the algorithm
@@ -638,12 +639,17 @@ class AlgoArea {
     isOperation(line, format = this._algoFormat) {
         if(line) {
             if(format === QASM_FORMAT) {
-                return !(line.trim() === "" ||
+                return !(
+                    line.trim() === "" ||
                     line.includes("OPENQASM") ||
                     line.includes("include") ||
                     line.includes("qreg") ||
                     line.includes("creg") ||
-                    AlgoArea.isComment(line, format));
+                    //line.includes("{") ||
+                    //line.endsWith("}") ||
+                    line.includes("gate") ||
+                    AlgoArea.isComment(line, format)
+                );
 
             } else if(format === REAL_FORMAT) {
                 return !(line.startsWith(".") ||   //all non-operation lines start with "."
@@ -677,15 +683,28 @@ class AlgoArea {
         if(format === QASM_FORMAT) {
             let temp = "";
             const lines = algo.split('\n');
+
             let insideGateDef = false;
             for(let i = 0; i < lines.length; i++) {
                 const line = lines[i];
+
                 if(line.includes("{")) insideGateDef = true;
                 if(insideGateDef) {
-                    temp += line;
-                    //don't create a new line for the last line, because the way splitting works there was no \n at the end of the last line
-                    if(i < lines.length-1) temp += "\n";
-                    if(line.includes("}")) insideGateDef = false;
+                    const index = line.indexOf("}");
+                    if(index > -1) {
+                        insideGateDef = false;
+                        temp += line.substring(0, index+1);  //include "}"
+                        //check if there are characters left in this line
+                        if(index+1 < line.length) temp += "\n" + line.substring(index+1);
+
+                        //don't create a new line for the last line, because the way splitting works there was no \n at the end of the last line
+                        if(i < lines.length-1) temp += "\n";
+
+                    } else {
+                        temp += line;
+                        //don't create a new line for the last line, because the way splitting works there was no \n at the end of the last line
+                        if(i < lines.length-1) temp += "\n";
+                    }
 
                 } else {
                     //"\n" needs to be added separately because it was removed while splitting
