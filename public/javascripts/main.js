@@ -358,6 +358,7 @@ function generalChangeState(state) {
             for(let i = 0; i < ea_enable.length; i++) ea_enable[i].disabled = false;
 
             enableElementsWithID(_generalElements);
+            if(curTab === START_TAB) disableElementsWithID([ "cb_colored", "cb_edge_labels", "cb_classic" ]);
             break;
 
         case STATE_SIMULATING:
