@@ -218,18 +218,18 @@ function loadEmptyReal() {
 
     if(curTab === SIM_TAB) {
         algoArea.resetAlgorithm();
-        algoArea.algoFormat = QASM_FORMAT;
+        algoArea.algoFormat = REAL_FORMAT;
         algoArea.algo = emptyReal;
 
     } else if(curTab === VER_TAB) {
         const algo1 = document.getElementById("radio_algo1").checked;
         if(algo1) {
             ver1_algoArea.resetAlgorithm();
-            ver1_algoArea.algoFormat = QASM_FORMAT;
+            ver1_algoArea.algoFormat = REAL_FORMAT;
             ver1_algoArea.algo = emptyReal;
         } else {
             ver2_algoArea.resetAlgorithm();
-            ver2_algoArea.algoFormat = QASM_FORMAT;
+            ver2_algoArea.algoFormat = REAL_FORMAT;
             ver2_algoArea.algo = emptyReal;
         }
     }
@@ -496,11 +496,11 @@ function resetAlgorithm() {
     if(curTab === START_TAB) return;
 
     if(curTab === SIM_TAB) {
-        algoAreas.get(SIM_ID_PREFIX).resetAlgorithm();
+        algoAreas.get(SIM_ID_PREFIX).resetAlgorithm(true);
 
     } else if(curTab === VER_TAB) {
-        algoAreas.get(VER1_ID_PREFIX).resetAlgorithm(false);
-        algoAreas.get(VER2_ID_PREFIX).resetAlgorithm(false);
+        algoAreas.get(VER1_ID_PREFIX).resetAlgorithm(true);
+        algoAreas.get(VER2_ID_PREFIX).resetAlgorithm(true);
         ver_onAlgoReset();  //call it after both algorithms were reset (hence applyCallback is false)
     }
 }

@@ -272,35 +272,25 @@ function ver_onAlgoReset() {
     if(ver1_algoArea.emptyAlgo && ver2_algoArea.emptyAlgo) {
         //both are empty so we reset the displayed DD
         ver_print(null, () => {
+            reset(true);
+            reset(false);
             ver_changeState(STATE_NOTHING_LOADED, true);
             ver_changeState(STATE_NOTHING_LOADED, false);
         });
 
     } else if(ver1_algoArea.emptyAlgo) {
-        if(ver1_algoArea.hlManager.highlightedLines > 0) {
-            //only go to the start if an operation has been processed (in the other cases we are still at the start
-            ver_gotoStart(true, () => {    //reset algo1
-                reset(true);
-                //and then "force" the state to NOTHING_LOADED
-                ver_changeState(STATE_NOTHING_LOADED, true);
-            });
-        } else {
+        ver_gotoStart(true, () => {    //reset algo1
             reset(true);
+            //and then "force" the state to NOTHING_LOADED
             ver_changeState(STATE_NOTHING_LOADED, true);
-        }
+        });
 
     } else if(ver2_algoArea.emptyAlgo) {
-        //only go to the start if an operation has been processed (in the other cases we are still at the start
-        if(ver2_algoArea.hlManager.highlightedLines > 0) {
-            ver_gotoStart(false, () => {    //reset algo2
-                reset(false);
-                //and then "force" the state to NOTHING_LOADED
-                ver_changeState(STATE_NOTHING_LOADED, false);
-            });
-        } else {
+        ver_gotoStart(false, () => {    //reset algo2
             reset(false);
+            //and then "force" the state to NOTHING_LOADED
             ver_changeState(STATE_NOTHING_LOADED, false);
-        }
+        });
     }
 }
 

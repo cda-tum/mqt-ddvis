@@ -354,7 +354,7 @@ class AlgoArea {
         return errMsg;
     }
 
-    /**Resets algoArea to its initial state right after the constructor.
+    /**Resets algoArea by removing its algorithm.
      *
      * @param applyCallback {boolean} whether the given resetAlgoCallback should be called or not
      */
@@ -366,6 +366,8 @@ class AlgoArea {
         this._line_numbers.html("");  //remove line numbers
         this._q_algo.val("");
         this._setQAlgoMarginLeft();   //reset margin-left to the initial/default value
+
+        this._hideInvalidAlgoWarning(); //an empty algorithm can no longer have any errors, so we hide the warning
 
         if(applyCallback) this._resetAlgoCallback();  //allows the caller to do stuff when the algorithm is reset
     }
@@ -518,7 +520,6 @@ class AlgoArea {
 
         if(newAlgo.trim().length === 0) {   //user deleted everything, so we reset
             this.resetAlgorithm();
-            this._hideInvalidAlgoWarning();
             return;
         }
 
