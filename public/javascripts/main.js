@@ -110,7 +110,7 @@ function onTabChange(newTab) {
     switch (newTab) {
         case "sim": curTab = SIM_TAB;
 
-                    ex_algo_ver_loading.style.height = "0"; //hide it
+                    ex_algo_ver_loading.style.display = "none"; //hide it
                     reset_btn.textContent = "Reset Algorithm";
                     reset_btn.style.display = "block";
 
@@ -121,7 +121,7 @@ function onTabChange(newTab) {
 
         case "ver": curTab = VER_TAB;
 
-                    ex_algo_ver_loading.style.height = "60px";
+                    ex_algo_ver_loading.style.display = "block";    //show it
                     reset_btn.textContent = "Reset Algorithms";
                     reset_btn.style.display = "block";
 
@@ -133,8 +133,7 @@ function onTabChange(newTab) {
                     break;
 
         default:    curTab = START_TAB;
-
-                    ex_algo_ver_loading.style.height = "0"; //hide it
+                    ex_algo_ver_loading.style.display = "none"; //hide it
                     reset_btn.style.display = "none";
 
                     disableElementsWithID([
@@ -144,12 +143,10 @@ function onTabChange(newTab) {
     }
 
     if(oldTab === START_TAB && curTab !== START_TAB) {
-        //settings_menu.style.display = "block";
         settings_menu.style.width = "15%";
         main_content.style.width = "85%";
 
     } else if(curTab === START_TAB && oldTab !== START_TAB) {
-        //settings_menu.style.display = "none";
         settings_menu.style.width = "0";
         main_content.style.width = "100%";
     }
