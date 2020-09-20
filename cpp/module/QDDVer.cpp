@@ -57,7 +57,7 @@ QDDVer::QDDVer(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVer>(info) 
     Napi::HandleScope scope(env);
 
     this->dd = std::make_unique<dd::Package>();
-    this->dd->useMatrixNormalization(true);
+    this->dd->setMode(dd::Matrix);
     this->line.fill(qc::LINE_DEFAULT);
 
     this->qc1 = std::make_unique<qc::QuantumComputation>();
@@ -369,7 +369,7 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
     }
 
     //if sim hasn't been set yet or only one algorithm is loaded (meaning the other isn't ready), we create its initial state/matrix
-    if(sim.p == nullptr || algo1 && !ready2 || !algo1 && !ready1) {
+    if(sim.p == nullptr || (algo1 && !ready2) || (!algo1 && !ready1)) {
         //sim = dd->makeZeroState(qc->getNqubits());
         if(algo1)   sim = qc1->createInitialMatrix(dd);
         else        sim = qc2->createInitialMatrix(dd);

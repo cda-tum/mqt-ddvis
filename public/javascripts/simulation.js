@@ -121,7 +121,6 @@ for (let i = 0; i < acc.length; i++) {
     });
 }
 
-
 const algoArea = new AlgoArea(algo_div, SIM_ID_PREFIX, changeState, print, showError, onAlgoReset);
 registerAlgoArea(SIM_ID_PREFIX, algoArea);  //register at main for resizing
 
@@ -643,12 +642,14 @@ function print(dot, callback, resetZoom=false) {
         let animationDuration = 500;
         if(stepDuration < 1000) animationDuration = stepDuration / 2;
 
-        if(resetZoom) {
+        if(resetZoom && graphviz._zoomSelection) {
             graphviz.options({ zoomScaleExtent: [minZoomScaleExtent, maxZoomScaleExtent] })
                 .height(svgHeight)
                 .transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration))
                 .renderDot(dot).on("transitionStart", callback)
-                .resetZoom();
+                .resetZoom(d3.transition("smooth")
+                    .duration(animationDuration)
+                    .ease(d3.easeLinear));
         } else {
             graphviz.options({ zoomScaleExtent: [minZoomScaleExtent, maxZoomScaleExtent] })
                 .height(svgHeight)

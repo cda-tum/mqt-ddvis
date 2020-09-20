@@ -226,7 +226,7 @@ function ver_print(dd, callback, resetZoom=false) {
         let animationDuration = 500;
         if(stepDuration < 1000) animationDuration = stepDuration / 2;   //todo different for sim and ver?
 
-        if(resetZoom) {
+        if(resetZoom && ver_graphviz._zoomSelection) {
             ver_graphviz.options({ zoomScaleExtent: [minZoomScaleExtent, maxZoomScaleExtent] })
                 .height(ver_svgHeight)
                 .transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration))

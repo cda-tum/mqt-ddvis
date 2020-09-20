@@ -11,48 +11,44 @@
     <link rel="stylesheet" href="./stylesheets/style.css"/>
     <link rel="stylesheet" href="./stylesheets/algo_area.css"/>
 
-
     <script
             src="https://code.jquery.com/jquery-3.4.1.min.js"
             integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
             crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
-            integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
-            crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
-            integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
-            crossorigin="anonymous"></script>
 
-    <script src="//d3js.org/d3.v5.min.js"></script>
-    <script src="https://unpkg.com/@hpcc-js/wasm/dist/index.min.js"></script>
-    <script src="https://unpkg.com/d3-graphviz@3.1.0/build/d3-graphviz.js"></script>
-
-    <script src="./javascripts/highlighting.js"></script>
-    <script src="./javascripts/algo_area.js"></script>
-    <script src="./javascripts/main.js"></script>
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+        let promise = Promise.resolve();  // Used to hold chain of typesetting calls
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 
     <!-- load the html of the three main tabs -->
     <script>
         $(() => {
-            $("#sim_sec").load("./views/simulation.html");
+            $("#sim_sec").load("./views/simulation.html", function () {
+                promise = promise.then(() => {return MathJax.typesetPromise();}).catch((err) => console.log('Typeset failed: ' + err.message))
+            });
         });
+
     </script>
     <script>
         $(() => {
-            $("#ver_sec").load("./views/verification.html");
+            $("#ver_sec").load("./views/verification.html", function () {
+                promise = promise.then(() => {return MathJax.typesetPromise();}).catch((err) => console.log('Typeset failed: ' + err.message))
+            });
         });
     </script>
-    <!--
-    <script>
-        $(() => {
-            $("#emulation").load("./views/emulation.html");
-        });
-    </script>
-    -->
-	
-    <title>QDD Visualizer</title>
+    <title>QDDViz</title>
 </head>
 <body>
 <!--
@@ -137,7 +133,7 @@
             <!-- initially open start_tab -->
             <button id="start_tab" class="tablinks active" onclick="openTab('start')">Welcome</button>
             <button id="sim_tab" class="tablinks" onclick="openTab('sim')">Simulation</button>
-            <button id="ver_tab" class="tablinks" onclick="openTab('ver')">Verification</button>
+            <button id="ver_tab" class="tablinks" onclick="openTab('ver')">Functionality/Verification</button>
             <!--<button id="emu_tab" class="tablinks" onclick="openTab(event, 'emulation')">Emulation</button>-->
 
 
@@ -147,7 +143,26 @@
         <div id="loader"></div> <!-- for displaying a loading animation -->
 
         <section id="start_sec" class="tabcontent" style="display: block">  <!-- initially open this tab -->
-            <h1>QDD Visualizer</h1>
+            <h1>QDDViz - A Tool for Visualizing Decision Diagrams for Quantum Computing </h1>
+            <h2>developed at the Johannes Kepler University Linz, Austria</h2>
+
+            <p>
+                With the emergence of more and more applications for quantum computing, also the development of corresponding methods for design automation is receiving increasing interest.
+            In this respect, Decision Diagrams (DDs) provide a promising basis for many design tasks such as simulation, synthesis, verification, and more.
+            However, users of the corresponding tools often do not have a corresponding background or an intuition about how these DD-based methods work and what their strengths and limits are.
+                In an effort to make decision diagrams for quantum computing more accessible, we present QDDVis---a tool which visualizes quantum decision diagrams and allows to explore their behavior when used in the design tasks mentioned above.
+            </p>
+
+            <p>QDDViz to allow users to interactively learn how decision diagrams can be used in quantum computing, e.g., to</p>
+            <ol>
+                <li>compactly represent quantum states and efficiently simulate quantum circuits,</li>
+                <li>compactly represent the functionality of quantum circuits,</li>
+                <li>verify the equivalence of two circuits in an efficient fashion.</li>
+            </ol>
+
+            In order to explore the simulation of quantum circuits with decision diagrams, go to the <b onclick="openTab('sim')">"Simulation"</b> tab.<br>
+            In order to explore the representation of quantum functionality or the equivalence of two circuits, go to the <b onclick="openTab('ver')">"Functionality/Verification"</b> tab.
+
         </section>
 
         <section id="sim_sec" class="tabcontent">
@@ -158,7 +173,27 @@
 
         <script src="./javascripts/init.js"></script>
 
+        <footer>
+            <p>Authors: Lukas Burgholzer, Michael Artner, Robert Wille</p>
+            <p>In case of questions, feel free to contact us at <a href="mailto:iic-quantum@jku.at">iic-quantum@jku.at</a></p>
+        </footer>
     </main>
+
+
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+        crossorigin="anonymous"></script>
+
+<script src="//d3js.org/d3.v5.min.js"></script>
+<script src="https://unpkg.com/@hpcc-js/wasm/dist/index.min.js"></script>
+<script src="https://unpkg.com/d3-graphviz@3.1.0/build/d3-graphviz.js"></script>
+
+<script src="./javascripts/highlighting.js"></script>
+<script src="./javascripts/algo_area.js"></script>
+<script src="./javascripts/main.js"></script>
 
 </body>
 </html>

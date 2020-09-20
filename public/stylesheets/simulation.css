@@ -22,6 +22,10 @@
     display: none;
 }
 
+.colorwheel {
+    width: 300px;
+}
+
 /*
 #color_map {
     display: block;

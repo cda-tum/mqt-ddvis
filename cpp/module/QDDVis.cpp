@@ -54,6 +54,7 @@ QDDVis::QDDVis(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVis>(info) 
 
     this->dd = std::make_unique<dd::Package>();
     this->qc = std::make_unique<qc::QuantumComputation>();
+	dd->setMode(dd::Vector);
 
     line.fill(qc::LINE_DEFAULT);
     this->iterator = this->qc->begin();

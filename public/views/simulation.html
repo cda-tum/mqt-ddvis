@@ -5,16 +5,6 @@
 
 <link rel="stylesheet" href="../stylesheets/simulation.css"/>
 <script src="../javascripts/simulation.js"></script>
-
-<!-- A short description of this tab -->
-<p>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore
-magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,
-no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed
-diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
-et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-</p>
-
-<!--   Accordion     -->
 <!--
 <button class="accordion" >Example algorithms</button>
 <div class="panel">
@@ -67,6 +57,69 @@ et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata san
 
     <!--<div id="color_map"></div>-->
 </div>
+
+<!-- A short description of this tab -->
+<h2>Simulation of Quantum Circuits using Decision Diagrams</h2>
+<p>In the following we briefly describe how to perform (classical) simulations of quantum circuits with the QDDViz tool.</p>
+<h3>Loading a quantum circuit</h3>
+<p>
+An algorithm can be loaded in the following ways:
+</p>
+<ul>
+    <li>Drag&Drop a circuit file in either <i>.qasm</i> or <i>.real</i> format into the <b>Algorithm</b> box.</li>
+    <li>Pick a pre-defined circuit file from the <b>Example Algorithms</b> list on the left.</li>
+    <li>Start writing your own circuit description using either the <i>.qasm</i> or <i>.real</i> format. Templates for empty circuits are available in the <b>Example Algorithms</b> list.</li>
+</ul>
+
+<h3>Controlling the simulation</h3>
+<p>
+    Once a valid circuit has been entered in the Algorithm box, the simulation can be controlled using the navigation buttons below it.
+</p>
+<ul>
+    <li>→/←: Go one step forward or backward. Can be used to step through the simulation.</li>
+    <li>↠/↞: Go straight to the end (or the next special operation; see below) or back to the beginning.</li>
+    <li>▶/||: Start/Pause a diashow where the simulation advances step-by-step in an automated fashion.</li>
+</ul>
+<h3>Special Operations</h3>
+<p>
+    <b>Barrier</b> statements (e.g., <i>barrier q;</i>) can be used as breakpoints when stepping forward with <b>↠</b>.
+</p>
+<p>
+    <b>Measurement</b> operations (e.g., <i>measure q[0] -> c[0];</i>) collapse the state of a qubit to one of its basis states.
+    Whenever a qubit is about to get measured and it has a non-zero probability of being in either $\ket{0}$ or $\ket{1}$ (i.e., it is in superposition), a pop-up dialog appears which displays the probabilities for obtaining $\ket{0}$ and $\ket{1}$, respectively.
+    Upon choosing one of the options, the decision diagram is irreversibly collapsed.
+    Measurements also act as breakpoints due to their non-unitary (and, thus, non-reversible) nature.
+    QDDViz supports <b>classically-controlled operations</b>, where a certain gate is only applied if some classical bits obtained from measurements are set.
+</p>
+<p>
+    <b>Reset</b> operations discard a qubit and initialize it to $\ket{0}$ as if it were a new qubit.
+    Mathematically this corresponds to taking the partial trace of the whole state and then setting the qubit to $\ket{0}$.
+    However, the partial trace maps pure states to mixed states and can thus in general not be represented by the same kind of decision diagram used for representing state vectors.
+    QDDViz supports resets in a probabilistic fashion (similar to measurements).
+    Whenever a reset operation is encountered where the considered qubit has a non-zero probability of being in either $\ket{0}$ or $\ket{1}$, a pop-up dialog appears which displays the probabilities for obtaining $\ket{0}$ and $\ket{1}$, respectively.
+    Upon choosing one of the options, the other decision diagram branch is discarded and the remaining branch is set as the $\ket{0}$ branch.
+    Resets also act as breakpoints due to their non-unitary (and, thus, non-reversible) nature.
+</p>
+<h3>Visualization Settings</h3>
+<p>
+    The settings pane on the left side offers several options for changing the look and feel of the QDDViz tool.
+</p>
+<ul>
+    <li>
+        <b>Colored</b>: When ticked (default), the phase of edge weights in the decision diagram is color-coded according to the following HLS color wheel.<br>
+        <img class="colorwheel" src="../assets/hls_colorwheel.svg" alt="HLS color wheel"><br>
+        When not ticked, edges whose weight is not equal to $1$ will be displayed dashed.
+    </li>
+    <li>
+        <b>Edge Labels</b>: When ticked, edge lables are explicitly annotated on the edges. Note that this frequently reduces the visual compactness of the visualization.
+    </li>
+    <li>
+        <b>Classic</b>: This option allows to toggle a more classic decision diagram node style, which is more similar to the way decision diagrams are frequently visualized in research papers.
+    </li>
+    <li>
+        <b>Step duration</b>: The minimum time for one transition when using the diashow feature. Note that the actual transition time might be longer in case of computationally expensive operations.
+    </li>
+</ul>
 
 <div id="irreversibleDialog">
 </div>
