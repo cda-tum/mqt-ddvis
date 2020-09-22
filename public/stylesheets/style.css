@@ -4,10 +4,14 @@
     box-sizing: border-box;
 }
 
-/* everything except SVG-texts have a set font-size */
+/* fix font family for everything besides svg text */
 :not(text) {
     font-family: 'Lucida Grande', 'Lucida Sans Unicode', 'Trebuchet MS', sans-serif;
-    font-size: 12px;
+}
+
+/* fix font family for svg text */
+svg text {
+    font-family: "Times New Roman", Times, serif;
 }
 
 /* Style the header and the footer */
@@ -16,6 +20,10 @@ header, footer {
     padding: 30px;
     text-align: center;
     color: #685972;
+}
+
+body {
+    font-size: 12px;
 }
 
 header {
