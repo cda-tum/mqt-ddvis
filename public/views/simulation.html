@@ -60,7 +60,10 @@
 
 <!-- A short description of this tab -->
 <h2>Simulation of Quantum Circuits using Decision Diagrams</h2>
-<p>In the following we briefly describe how to perform (classical) simulations of quantum circuits with the QDDViz tool.</p>
+<p>
+    In the following we briefly describe how to perform (classical) simulations of quantum circuits with the QDDVis tool.
+    Note that a detailed description of the method itself (including links to the corresponding papers) is available at <a href="https://iic.jku.at/eda/research/quantum_simulation">[this page]</a>.
+</p>
 <h3>Loading a quantum circuit</h3>
 <p>
 An algorithm can be loaded in the following ways:
@@ -89,20 +92,20 @@ An algorithm can be loaded in the following ways:
     Whenever a qubit is about to get measured and it has a non-zero probability of being in either $\ket{0}$ or $\ket{1}$ (i.e., it is in superposition), a pop-up dialog appears which displays the probabilities for obtaining $\ket{0}$ and $\ket{1}$, respectively.
     Upon choosing one of the options, the decision diagram is irreversibly collapsed.
     Measurements also act as breakpoints due to their non-unitary (and, thus, non-reversible) nature.
-    QDDViz supports <b>classically-controlled operations</b>, where a certain gate is only applied if some classical bits obtained from measurements are set.
+    QDDVis supports <b>classically-controlled operations</b>, where a certain gate is only applied if some classical bits obtained from measurements are set.
 </p>
 <p>
     <b>Reset</b> operations discard a qubit and initialize it to $\ket{0}$ as if it were a new qubit.
     Mathematically this corresponds to taking the partial trace of the whole state and then setting the qubit to $\ket{0}$.
     However, the partial trace maps pure states to mixed states and can thus in general not be represented by the same kind of decision diagram used for representing state vectors.
-    QDDViz supports resets in a probabilistic fashion (similar to measurements).
+    QDDVis supports resets in a probabilistic fashion (similar to measurements).
     Whenever a reset operation is encountered where the considered qubit has a non-zero probability of being in either $\ket{0}$ or $\ket{1}$, a pop-up dialog appears which displays the probabilities for obtaining $\ket{0}$ and $\ket{1}$, respectively.
     Upon choosing one of the options, the other decision diagram branch is discarded and the remaining branch is set as the $\ket{0}$ branch.
     Resets also act as breakpoints due to their non-unitary (and, thus, non-reversible) nature.
 </p>
 <h3>Visualization Settings</h3>
 <p>
-    The settings pane on the left side offers several options for changing the look and feel of the QDDViz tool.
+    The settings pane on the left side offers several options for changing the look and feel of the QDDVis tool.
 </p>
 <ul>
     <li>
