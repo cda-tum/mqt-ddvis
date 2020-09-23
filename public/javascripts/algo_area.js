@@ -199,7 +199,7 @@ class AlgoArea {
             this._loadParams.reset = reset;
             this._loadParams.dataKey = dataKey;
 
-            const call = $.post("/load", this._loadParams);
+            const call = $.post("load", this._loadParams);
             call.done((res) => {
                 algo = temp.algo;
                 if(temp.set) {

@@ -5,8 +5,9 @@
 }
 
 /* fix font family for everything besides svg text */
-:not(text) {
+body {
     font-family: 'Lucida Grande', 'Lucida Sans Unicode', 'Trebuchet MS', sans-serif;
+    font-size: 12px;
 }
 
 /* fix font family for svg text */
@@ -20,10 +21,6 @@ header, footer {
     padding: 30px;
     text-align: center;
     color: #685972;
-}
-
-body {
-    font-size: 12px;
 }
 
 header {

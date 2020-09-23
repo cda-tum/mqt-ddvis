@@ -28,7 +28,7 @@ const isFirefox = typeof InstallTrigger !== 'undefined';
 
 
 //register at the server as soon as main.js is loaded
-const mainCall =  $.post("/register", {  });
+const mainCall =  $.post("register", {  });
 let dataKey = "";   //save the dataKey for later needed access to the QDDVis-object
 mainCall.done((res) => {
     dataKey = res.key;
@@ -86,7 +86,7 @@ function onTabChange(newTab) {
     function setExportOptions(targetManager) {
         //set the checkboxes of the export options to their correct values
         const call = $.ajax({
-            url: '/getExportOptions?dataKey=' + dataKey + '&targetManager=' + targetManager,
+            url: 'getExportOptions?dataKey=' + dataKey + '&targetManager=' + targetManager,
             contentType: 'application/json',
             success: (res) => {
                 if(res) {
@@ -178,7 +178,7 @@ function exAlgoFilterFunction() {
 
 //init example algorithms of the dropdown
 const call = $.ajax({
-    url: '/exampleAlgos',
+    url: 'exampleAlgos',
     contentType: 'application/json',
     success: (res) => {
         if(res) {
@@ -258,7 +258,7 @@ function loadExampleAlgo(name) {
     if(curTab === START_TAB) return;
 
     const call = $.ajax({
-        url: '/exampleAlgo?name=' + name,
+        url: 'exampleAlgo?name=' + name,
         contentType: 'application/json',
         success: (res) => {
             if(res) {

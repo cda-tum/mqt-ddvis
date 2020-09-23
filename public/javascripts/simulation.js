@@ -185,7 +185,7 @@ function sim_gotoStart() {
     startLoadingAnimation();
 
     const call = $.ajax({
-        url: '/tostart?dataKey=' + dataKey,
+        url: 'tostart?dataKey=' + dataKey,
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {
@@ -215,7 +215,7 @@ function sim_goBack() {
     startLoadingAnimation();
 
     const call = $.ajax({
-        url: '/prev?dataKey=' + dataKey,
+        url: 'prev?dataKey=' + dataKey,
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {
@@ -273,7 +273,7 @@ function sim_diashow() {
             if(runDia) {
                 const startTime = performance.now();
                 const call = $.ajax({
-                    url: '/next?dataKey=' + dataKey,
+                    url: 'next?dataKey=' + dataKey,
                     contentType: 'application/json',
                     success: (res) => {
 
@@ -321,7 +321,7 @@ function sim_goForward() {
     startLoadingAnimation();
 
     const call = $.ajax({
-        url: '/next?dataKey=' + dataKey,// + '&targetManager=sim',
+        url: 'next?dataKey=' + dataKey,// + '&targetManager=sim',
         contentType: 'application/json',
         success: (res) => {
             let disableBackButton = res.data.conductIrreversibleOperation;
@@ -367,7 +367,7 @@ function sim_gotoEnd() {
     startLoadingAnimation();
 
     const call = $.ajax({
-        url: '/toend?dataKey=' + dataKey,
+        url: 'toend?dataKey=' + dataKey,
         contentType: 'application/json',
         success: (res) => {
             function stateChange(res) {
@@ -419,7 +419,7 @@ function sim_gotoLine() {
         line_to_go.val(line);
     }
     const call = $.ajax({
-        url: '/toline?line=' + line + '&dataKey=' + dataKey,
+        url: 'toline?line=' + line + '&dataKey=' + dataKey,
         contentType: 'application/json',
         success: (res) => {
             function stateChange(res) {
@@ -560,7 +560,7 @@ function _handleIrreversibleOperation(data, callback) {
 
 function _makeIrreversibleOperationCall(parameter, callback) {
     const call = $.ajax({
-        url: '/conductIrreversibleOperation?dataKey=' + dataKey,
+        url: 'conductIrreversibleOperation?dataKey=' + dataKey,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         data: {parameter: JSON.stringify(parameter)},
@@ -683,7 +683,7 @@ function sim_updateExportOptions(colored, edgeLabels, classic) {
 
     const call = jQuery.ajax({
         type: 'PUT',
-        url: '/updateExportOptions',
+        url: 'updateExportOptions',
         data: { colored: colored, edgeLabels: edgeLabels, classic: classic, updateDD: !algoArea.emptyAlgo, dataKey: dataKey },
         success: (res) => {
             if (res.dot) {

@@ -248,7 +248,7 @@ function ver_print(dd, callback, resetZoom=false) {
 
 function ver_onAlgoReset() {
     function reset(algo1) {
-        const call = $.post("/reset", { targetManager: "ver", algo1: algo1, dataKey: dataKey });
+        const call = $.post("reset", { targetManager: "ver", algo1: algo1, dataKey: dataKey });
         call.done((res) => {
             //console.log("unready worked");
         });
@@ -425,7 +425,7 @@ function ver_updateExportOptions(colored, edgeLabels, classic) {
     const updateDD = !ver1_algoArea.emptyAlgo || !ver2_algoArea.emptyAlgo;  //check if at least one algorithm is loaded
     const call = jQuery.ajax({
         type: 'PUT',
-        url: '/updateExportOptions',
+        url: 'updateExportOptions',
         data: { colored: colored, edgeLabels: edgeLabels, classic: classic,
             updateDD: updateDD, dataKey: dataKey, targetManager: "ver" },
         success: (res) => {
@@ -455,7 +455,7 @@ function ver_gotoStart(algo1, callback) {
     startLoadingAnimation();
 
     const call = $.ajax({
-        url: '/tostart?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
+        url: 'tostart?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {
@@ -484,7 +484,7 @@ function ver_goBack(algo1) {
     startLoadingAnimation();
 
     const call = $.ajax({
-        url: '/prev?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
+        url: 'prev?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {
@@ -531,7 +531,7 @@ function ver_diashow(algo1) {
         if(algo1 && ver1RunDia || !algo1 && ver2RunDia) {
             const startTime = performance.now();
             const call = $.ajax({
-                url: '/next?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
+                url: 'next?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
                 contentType: 'application/json',
                 success: (res) => {
                     if(res.dot) {
@@ -572,7 +572,7 @@ function ver_goForward(algo1) {
     startLoadingAnimation();
 
     const call = $.ajax({
-        url: '/next?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
+        url: 'next?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {   //we haven't reached the end yet
@@ -599,7 +599,7 @@ function ver_gotoEnd(algo1) {
     startLoadingAnimation();
 
     const call = $.ajax({
-        url: '/toend?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
+        url: 'toend?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {
