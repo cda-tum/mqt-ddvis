@@ -40,7 +40,6 @@ private:
     Napi::Value GetExportOptions(const Napi::CallbackInfo& info);
     Napi::Value IsReady(const Napi::CallbackInfo& info);
     void Unready(const Napi::CallbackInfo& info);
-    Napi::Value ConductIrreversibleOperation(const Napi::CallbackInfo& info);
 
     //fields
     std::unique_ptr<dd::Package> dd;
@@ -53,7 +52,6 @@ private:
     bool showClassic = false;
 
     std::unique_ptr<qc::QuantumComputation> qc1;
-    qc::permutationMap map1;
     std::vector<std::unique_ptr<qc::Operation>>::iterator iterator1{};  //operations of algo1
     unsigned int position1 = 0;  //current position of iterator1
 
@@ -62,9 +60,7 @@ private:
     bool atEnd1 = false;     //whether we're currently after the last operation of algo1
 
     std::unique_ptr<qc::QuantumComputation> qc2;
-    qc::permutationMap map2;
     std::vector<std::unique_ptr<qc::Operation>>::iterator iterator2{};  //operations of algo2
-    //permutationMap2
     unsigned int position2 = 0;  //current position of iterator2
 
     bool ready2 = false;     //true if algo2 is valid

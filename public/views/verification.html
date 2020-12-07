@@ -74,7 +74,7 @@
     <b>Barrier</b> statements (e.g., <i>barrier q;</i>) can be used as breakpoints when stepping forward with <b>↠</b>.
 </p>
 <p>
-    <b>Measurement</b>, <b>Reset</b>, and <b>classically-controlled</b> operations are currently not supported due to their non-unitary nature.
+    <b>Measurement</b>, <b>Reset</b>, and <b>classically-controlled</b> operations are currently not supported due to their non-unitary nature. Execution may proceed until the first non-unitary operation.
 </p>
 <p>
     When verifying two circuits, JKQ DDVis expects both circuits to have the <b>same number of qubits and the same variable order</b>. If you want to verify circuits using different numbers of ancillary and/or garbage qubits and/or different variable orderings, you can check out our fully-fledged equivalence checking tool <a href="https://github.com/iic-jku/qcec">QCEC</a>.

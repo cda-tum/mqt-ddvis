@@ -231,12 +231,13 @@ function ver_print(dd, callback, resetZoom=false) {
                 .height(ver_svgHeight)
                 .transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration))
                 .renderDot(dd).on("transitionStart", callback)
-                .resetZoom();
+                .resetZoom(d3.transition("smooth")
+                    .duration(animationDuration)
+                    .ease(d3.easeLinear));
         } else {
             ver_graphviz.options({ zoomScaleExtent: [minZoomScaleExtent, maxZoomScaleExtent] })
                 .height(ver_svgHeight)
                 .transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration))
-                .fit(true)
                 .renderDot(dd).on("transitionStart", callback);
         }
 
@@ -464,8 +465,10 @@ function ver_gotoStart(algo1, callback) {
                     else        ver2_algoArea.hlManager.initialHighlighting();
                     endLoadingAnimation();
                     ver_changeState(STATE_LOADED_START, algo1);
-                    if(callback) callback();
-                });
+                    if(callback) {
+                        callback();
+                    }
+                }, true);
             } else {
                 endLoadingAnimation();
                 ver_changeState(STATE_LOADED_START, algo1);
@@ -540,11 +543,18 @@ function ver_diashow(algo1) {
                             else        ver2_algoArea.hlManager.increaseHighlighting();
                             //calculate the duration of the API-call so the time between two steps is constant
                             const duration = performance.now() - startTime;
-                            //wait a bit so the current qdd can be shown to the user
-                            setTimeout(() => func(), Math.min(Math.abs(stepDuration - duration), stepDuration));
+                            if (res.data.nextIsIrreversible) {
+                                endDia();
+                                ver_changeState(STATE_LOADED_END, algo1)
+                            } else {
+                                //wait a bit so the current qdd can be shown to the user
+                                setTimeout(() => func(), Math.min(Math.abs(stepDuration - duration), stepDuration));
+                            }
                         });
 
-                    } else endDia();
+                    } else {
+                        endDia();
+                    }
                 }
             });
             call.fail((res) => {
@@ -575,13 +585,20 @@ function ver_goForward(algo1) {
         url: 'next?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
         contentType: 'application/json',
         success: (res) => {
-            if(res.dot) {   //we haven't reached the end yet
-                ver_print(res.dot, () => {
-                    if(algo1)   ver1_algoArea.hlManager.increaseHighlighting();
-                    else        ver2_algoArea.hlManager.increaseHighlighting();
 
-                    _ver_generalStateChange(algo1);
-                });
+            let disableGoingForward = res.data.nextIsIrreversible;
+            if(algo1)   ver1_algoArea.hlManager.increaseHighlighting();
+            else        ver2_algoArea.hlManager.increaseHighlighting();
+
+            function callback() {
+                _ver_generalStateChange(algo1);
+                if (disableGoingForward) {
+                    ver_changeState(STATE_LOADED_END, algo1);
+                }
+            }
+
+            if(res.dot) {   //we haven't reached the end yet
+                ver_print(res.dot, callback);
             }
         }
     });
@@ -602,16 +619,32 @@ function ver_gotoEnd(algo1) {
         url: 'toend?dataKey=' + dataKey + '&targetManager=ver&algo1=' + algo1,
         contentType: 'application/json',
         success: (res) => {
+            function stateChange(res, algo1) {
+                endLoadingAnimation();
+                if (res.data.nextIsIrreversible) {
+                    ver_changeState(STATE_LOADED_END, algo1);
+                } else if (res.data.barrier) {
+                    ver_changeState(STATE_LOADED, algo1);
+                } else {
+                    ver_changeState(STATE_LOADED_END, algo1);
+                }
+            }
+
             if(res.dot) {
                 ver_print(res.dot, () => {
-                    if(algo1)   ver1_algoArea.hlManager.highlightEverything();
-                    else        ver2_algoArea.hlManager.highlightEverything();
-                    endLoadingAnimation();
-                    ver_changeState(STATE_LOADED_END, algo1);
+                    // increase highlighting by the number of applied operations
+                    area = algo1? ver1_algoArea: ver2_algoArea;
+                    if (res.data.barrier) {
+                        area.hlManager.highlightToXOps(area.hlManager.highlightedLines + res.data.nops);
+                    } else if (res.data.nextIsIrreversible) {
+                        area.hlManager.highlightToXOps(area.hlManager.highlightedLines + res.data.nops);
+                    } else {
+                        area.hlManager.highlightEverything();
+                    }
+                    stateChange(res, algo1);
                 });
             } else {
-                endLoadingAnimation();
-                ver_changeState(STATE_LOADED_END, algo1);
+                stateChange(res, algo1);
             }
         }
     });

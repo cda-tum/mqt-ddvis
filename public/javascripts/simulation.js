@@ -193,7 +193,7 @@ function sim_gotoStart() {
                     algoArea.hlManager.initialHighlighting();
                     endLoadingAnimation();
                     changeState(STATE_LOADED_START);
-                });
+                }, true);
             } else {
                 endLoadingAnimation();
                 changeState(STATE_LOADED_START);
@@ -654,14 +654,8 @@ function print(dot, callback, resetZoom=false) {
             graphviz.options({ zoomScaleExtent: [minZoomScaleExtent, maxZoomScaleExtent] })
                 .height(svgHeight)
                 .transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration))
-                .fit(true)
                 .renderDot(dot).on("transitionStart", callback);
         }
-
-
-        //$('#color_map').html(
-        //    '<svg><rect width="20" height="20" fill="purple"></rect></svg>'
-        //);
 
     } else {
         qdd_div.html(qdd_text);
@@ -678,6 +672,9 @@ function print(dot, callback, resetZoom=false) {
  */
 function sim_updateExportOptions(colored, edgeLabels, classic) {
     const lastState = simState;
+    const disablePrev = document.getElementById("prev").disabled;
+    const disableToEnd = document.getElementById("toEnd").disabled;
+
     changeState(STATE_SIMULATING);
     startLoadingAnimation();
 
@@ -690,10 +687,14 @@ function sim_updateExportOptions(colored, edgeLabels, classic) {
                 print(res.dot, () => {
                     endLoadingAnimation();
                     changeState(lastState); //go back to the previous state
+                    document.getElementById("prev").disabled = disablePrev;
+                    document.getElementById("toEnd").disabled = disableToEnd;
                 });
             } else {
                 endLoadingAnimation();
                 changeState(lastState);
+                document.getElementById("prev").disabled = disablePrev;
+                document.getElementById("toEnd").disabled = disableToEnd;
             }
         }
     });
