@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "github.com/7Magic7Mike7/qdd_vis"
+    "url": "github.com/iic-jku/ddvis"
   },
   "keywords": [
     "quantum",
@@ -19,8 +19,17 @@
     "diagrams",
     "qdd"
   ],
-  "author": "Michael Artner",
-  "license": "ISC",
+  "author": {
+    "name": "Lukas Burgholzer",
+    "email": "lukas.burgholzer@jku.at",
+    "url": "https://burgholzer.me"
+  },
+  "contributors": [
+    "Michael Artner <michael.artner@hotmail.de"
+  ],
+  "bugs": "https://github.com/iic-jku/ddvis/issues",
+  "homepage": "https://iic.jku.at/eda/research/quantum_dd/tool",
+  "license": "MIT",
   "dependencies": {
     "@popperjs/core": "^2.1.1",
     "body-parser": "^1.19.0",

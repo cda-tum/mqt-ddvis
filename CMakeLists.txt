@@ -27,11 +27,11 @@ option(GIT_SUBMODULE "Check submodules during build" ON)
 find_package(Git QUIET)
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git" AND GIT_SUBMODULE)
 	message(STATUS "QFR update")
-	execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive --remote -- cpp/qfr
+	execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive -- cpp/qfr
 	                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	                RESULT_VARIABLE GIT_SUBMOD_RESULT)
 	if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-		message(FATAL_ERROR "git submodule update --init --recursive --remote -- cpp/qfr failed with ${GIT_SUBMOD_RESULT}.")
+		message(FATAL_ERROR "git submodule update --init --recursive -- cpp/qfr failed with ${GIT_SUBMOD_RESULT}.")
 	endif()
 endif()
 
@@ -70,7 +70,7 @@ if(ipo_supported)
 endif()
 
 # set compiler flags (this assumes gcc or clang)
-target_compile_options(${PROJECT_NAME} PRIVATE -Wall $<$<CONFIG:DEBUG>:-g3 -Og -Wextra -Wpedantic -pedantic> $<$<CONFIG:RELEASE>:-O3 -mtune=native -march=native -DNDEBUG -g0>)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall $<$<CONFIG:DEBUG>:-g3 -Og -Wextra -Wpedantic -pedantic> $<$<CONFIG:RELEASE>:-O3 -mtune=native -march=native -g0>)
 
 # Include N-API wrappers
 execute_process(COMMAND node -p "require('node-addon-api').include"
