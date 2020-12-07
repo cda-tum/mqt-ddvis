@@ -3,11 +3,3 @@ build
 public/data/*
 .idea
 cmake-build-*
-
-#QASMBench/large/*
-#!QASMBench/large/*.qasm
-#QASMBench/medium/*
-#!QASMBench/medium/*.qasm
-#QASMBench/small/*/*
-#!QASMBench/small/*/*.qasm
-QASMBench

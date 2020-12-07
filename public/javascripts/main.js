@@ -143,8 +143,8 @@ function onTabChange(newTab) {
     }
 
     if(oldTab === START_TAB && curTab !== START_TAB) {
-        settings_menu.style.width = "15%";
-        main_content.style.width = "85%";
+        settings_menu.style.width = "12%";
+        main_content.style.width = "88%";
 
     } else if(curTab === START_TAB && oldTab !== START_TAB) {
         settings_menu.style.width = "0";

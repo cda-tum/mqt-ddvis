@@ -1,12 +1,10 @@
 {
-  "name": "qdd_visualizer",
-  "version": "1.0.0",
-  "description": "Visualizes Quantum Algorithms as Quantum Decision Diagrams",
+  "name": "ddvis",
+  "version": "1.0.1",
+  "description": "JKQ DDVis - A JKQ Tool for Visualizing Decision Diagrams for Quantum Computing",
   "main": "server.js",
   "scripts": {
-    "start": "bash start.sh",
-    "run": "cmake-js compile && node ./bin/www",
-    "dev": "nodemon bin/www"
+    "run": "cmake-js compile && node ./bin/www"
   },
   "repository": {
     "type": "git",
@@ -25,30 +23,21 @@
     "url": "https://burgholzer.me"
   },
   "contributors": [
-    "Michael Artner <michael.artner@hotmail.de"
+    "Michael Artner <michael.artner@hotmail.de>"
   ],
   "bugs": "https://github.com/iic-jku/ddvis/issues",
   "homepage": "https://iic.jku.at/eda/research/quantum_dd/tool",
   "license": "MIT",
   "dependencies": {
-    "@popperjs/core": "^2.1.1",
     "body-parser": "^1.19.0",
-    "bootstrap": "^4.4.1",
     "cmake-js": "^6.1.0",
-    "complex.js": "^2.0.11",
-    "cookie-parser": "~1.4.4",
+    "cookie-parser": "^1.4.5",
     "d3-graphviz": "^3.1.0",
-    "debug": "~2.6.9",
     "express": "^4.17.1",
-    "gyp": "^0.5.0",
-    "http-errors": "~1.6.3",
-    "jquery": "^3.5.0",
-    "minimist": ">=1.2.2",
-    "morgan": "~1.9.1",
-    "node-addon-api": "^2.0.0",
-    "uglify-js": ">= 2.6.0"
-  },
-  "devDependencies": {
-    "nodemon": "^2.0.2"
+    "http-errors": "^1.8.0",
+    "jquery": "^3.5.1",
+    "morgan": "^1.10.0",
+    "node-addon-api": "^2.0.2",
+    "npm": "^6.14.9"
   }
 }

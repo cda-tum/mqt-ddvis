@@ -1,5 +1,5 @@
 
-const qddVis = require("./build/Release/QDD_Vis");
+const qddVis = require("./build/Release/DDVis");
 
 //const data = new Map(); //saves the QDDVis-objects needed for simulation
 
@@ -64,12 +64,7 @@ function _getTargetManager(req) {
     else if(req.query.targetManager)  managerId = req.query.targetManager;
     else if(req.body.targetManager)   managerId = req.body.targetManager;
 
-    //todo retrieve dataManager
-    const m = manager.get(managerId);
-    //console.log(managerId);
-    //console.log(m);
-
-    return m;
+    return manager.get(managerId);
 }
 
 /**Creates a key based on the requester's ip address and a random value
