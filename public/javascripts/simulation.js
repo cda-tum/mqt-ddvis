@@ -500,7 +500,7 @@ function _startDialog(dialog, title, text, pzero, pone) {
         autoOpen: true,
         modal: true,
         position: {my: "center", at: "center", of: "#algo_div"},
-        width: $(window).width() * 0.15,
+        width: $(algo_div).width() * 0.9,
         buttons: {
             'Option 0': {id: 'm0', text: '0', click: function() {
                     def.resolve("0");
@@ -519,8 +519,8 @@ function _startDialog(dialog, title, text, pzero, pone) {
         }
     });
     let buttonpane = dialog.next();
-    buttonpane.find('button:first').width(pzero * dialog.innerWidth() * 0.75);
-    buttonpane.find('button:last').width(pone * dialog.innerWidth() * 0.75);
+    buttonpane.find('button:first').width(Math.floor(pzero * dialog.innerWidth() * 0.6));
+    buttonpane.find('button:last').width(Math.floor(pone * dialog.innerWidth()) * 0.6);
     return def.promise();
 }
 
@@ -542,12 +542,12 @@ function _handleIrreversibleOperation(data, callback) {
     let text;
     if (typeof parameter.cbit !== 'undefined') {
         title = 'Measuring qubit q' + qubit;
-        text = "Decide the measurement outcome<br><div>p(0)=" + pzero.toFixed(2) +
-            "</div><div>p(1)=" + pone.toFixed(2) + "</div>";
+        text = "Decide the measurement outcome<br><div id='prob0'>p(0)=" + pzero.toFixed(2) +
+            "</div><div id='prob1'>p(1)=" + pone.toFixed(2) + "</div>";
     } else {
         title = 'Resetting qubit q' + qubit;
-        text = "Decide the reset outcome<br><div>p(0)=" + pzero.toFixed(2) +
-            "</div><div>p(1)=" + pone.toFixed(2) + "</div>";
+        text = "Decide the reset outcome<br><div id='prob0'>p(0)=" + pzero.toFixed(2) +
+            "</div><div id='prob1'>p(1)=" + pone.toFixed(2) + "</div>";
     }
 
     _startDialog(irreversibleDialog, title, text, pzero, pone).done(function(status) {

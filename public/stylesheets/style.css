@@ -237,12 +237,18 @@ svg {
 
 /* dropdown button related code adapted from https://www.w3schools.com/howto/howto_js_filter_dropdown.asp */
 .example-algo {
-    height: 30px;
+    height: fit-content;
     width: 100%;
+    background: #f9f9f9 linear-gradient(to bottom, #f9f9f9 5%, #e9e9e9 100%);
+    border-radius:6px;
+    /*border:1px solid #dcdcdc;*/
+    display:inline-block;
+    cursor:pointer;
 }
 
 .example-algo:hover {
-    background-color: #ddd;
+    /*background-color: #ddd;*/
+    background: #e9e9e9 linear-gradient(to bottom, #e9e9e9 5%, #f9f9f9 100%);
 }
 
 #ex_algo_headline {
@@ -264,14 +270,44 @@ svg {
 
 #ex_algo_ver_loading {
     width: 100%;
-    height: 60px;
+    height: auto;
     transition: height 1.5s;
+    padding-top: 20px;
+}
+
+#ex_algo_ver_loading input[type="radio"] {
+    opacity: 0;
+    position: fixed;
+    width: 0;
+}
+
+#ex_algo_ver_loading label {
+    display: inline-block;
+    alignment: center;
+    background-color: #fff;
+    padding: 5px 5px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    width: 48%;
+    font-size: 8pt;
+    text-align: center;
+}
+
+#ex_algo_ver_loading label:hover {
+    background-color: #666;
+}
+
+#ex_algo_ver_loading input[type="radio"]:checked + label {
+    background-color: #ddd;
+    border-color: #000;
 }
 
 #ex_algo_list {
     width: 100%;
-    height: 250px;
+    height: 280px;
     overflow-y: auto;
+    padding-top: 10px;
+    padding-bottom: 20px;
 }
 
 /* The search field when it gets focus/clicked on */

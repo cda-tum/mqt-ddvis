@@ -1,7 +1,7 @@
 
 /* Create four columns/boxes that float next to each other */
 #ver1_algo_div, #ver2_algo_div {
-    width: 25%;
+    width: 27.5%;
 }
 
 #ver1_algo_div {
@@ -13,7 +13,7 @@
 
 #ver_qdd_div {
     float: left;
-    width: 50%;
+    width: 45%;
 }
 
 /* Responsive layout - makes the four columns/boxes stack on top of each other instead of next to each other, on small screens */

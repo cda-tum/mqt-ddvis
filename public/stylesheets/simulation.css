@@ -22,21 +22,31 @@
     display: none;
 }
 
+.ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset {
+    float: none;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.ui-button:focus {
+    outline: none;
+}
+
+#prob0, #prob1 {
+    display: inline-block;
+    text-align: center;
+    margin: 0 20px 0 20px;
+}
+
+#m0, #m1 {
+    border-radius: 5px;
+    margin: 5px 10px 5px 10px;
+    text-align: center;
+    display: inline-block;
+    float: none;
+}
+
 .colorwheel {
     width: 300px;
 }
-
-/*
-#color_map {
-    display: block;
-    position: relative;
-    background: #3498db;
-    left: 10%;
-    top: 10%;
-    height: 5%;
-    width: 5%;
-
-    margin: 0;
-    padding: 0;
-}
-*/

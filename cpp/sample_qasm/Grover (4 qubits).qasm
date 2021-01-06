@@ -3,7 +3,7 @@ include "qelib1.inc";
 
 gate oracle q0, q1, q2, flag {
     // mark target state |111>
-    cccx q0, q1, q2, flag;
+    mcx q0, q1, q2, flag;
 }
 
 gate diffusion q0, q1, q2 {

@@ -73,21 +73,17 @@
             <h3 id="ex_algo_headline">Example Algorithms</h3>
             <input type="text" placeholder="Search..." id="ex_algo_search_text"
                    onkeyup="exAlgoFilterFunction()">
-            <div id="ex_algo_ver_loading">
-                <p title="Verification: whether you want to load the algorithm on the left or right side">
-                    Load Algorithm as</p>
-
-                <input checked="checked" id="radio_algo1" name="algo" type="radio" disabled="disabled">
-                <label title="Verification: load algorithm on the left side" for="radio_algo1" class="radio-algo">
-                    Algorithm 1</label>
-                <input id="radio_algo2" name="algo" type="radio" disabled="disabled">
-                <label title="Verification: load algorithm on the right side" for="radio_algo2" class="radio-algo">
-                    Algorithm 2</label>
-            </div>
-
             <div id="ex_algo_list">
                 <button class="example-algo" onclick="loadEmptyReal()">Empty Real</button>
                 <button class="example-algo" onclick="loadEmptyQasm()">Empty QASM</button>
+            </div>
+            <div id="ex_algo_ver_loading">
+                <p title="Verification: whether you want to load the algorithm on the left or right side">
+                    Load Algorithm as</p>
+                <input checked="checked" id="radio_algo1" name="algo" type="radio" disabled="disabled">
+                <label title="Verification: load algorithm on the left side" for="radio_algo1">Algorithm 1</label>
+                <input id="radio_algo2" name="algo" type="radio" disabled="disabled">
+                <label title="Verification: load algorithm on the right side" for="radio_algo2">Algorithm 2</label>
             </div>
         </div>
 
@@ -127,14 +123,14 @@
         <div id="loader"></div> <!-- for displaying a loading animation -->
 
         <section id="start_sec" class="tabcontent" style="display: block">  <!-- initially open this tab -->
-            <h1>JKQ DDVis - A JKQ Tool for Visualizing Decision Diagrams for Quantum Computing</h1>
+            <h1>DDVis - A JKQ Tool for Visualizing Decision Diagrams for Quantum Computing</h1>
             <h2>developed at the Johannes Kepler University Linz, Austria</h2>
 
             <p>
                 With the emergence of more and more applications for quantum computing, also the development of corresponding methods for design automation is receiving increasing interest.
             In this respect, Decision Diagrams (DDs) provide a promising basis for many design tasks such as simulation, synthesis, verification, and more.
             However, users of the corresponding tools often do not have a corresponding background or an intuition about how these DD-based methods work and what their strengths and limits are.
-                In an effort to make decision diagrams for quantum computing more accessible, we present JKQ DDVis---a JKQ tool which visualizes quantum decision diagrams and allows to explore their behavior when used in the design tasks mentioned above.
+                In an effort to make decision diagrams for quantum computing more accessible, we present DDVis---a JKQ tool which visualizes quantum decision diagrams and allows to explore their behavior when used in the design tasks mentioned above.
             </p>
 
             <p>JKQ DDVis allows users to interactively learn how decision diagrams can be used in quantum computing, e.g., to</p>

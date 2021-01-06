@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 
 # detailed description
 project(DDVis
-        VERSION 1.0.1
+        VERSION 1.1.0
         DESCRIPTION "JKQ DDVis - A JKQ Tool for Visualizing Decision Diagrams for Quantum Computing"
         LANGUAGES CXX)
 
@@ -27,11 +27,11 @@ option(GIT_SUBMODULE "Check submodules during build" ON)
 find_package(Git QUIET)
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git" AND GIT_SUBMODULE)
 	message(STATUS "QFR update")
-	execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive -- cpp/qfr
+	execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive --remote -- cpp/qfr
 	                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	                RESULT_VARIABLE GIT_SUBMOD_RESULT)
 	if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-		message(FATAL_ERROR "git submodule update --init --recursive -- cpp/qfr failed with ${GIT_SUBMOD_RESULT}.")
+		message(FATAL_ERROR "git submodule update --init --recursive --remote -- cpp/qfr failed with ${GIT_SUBMOD_RESULT}.")
 	endif()
 endif()
 

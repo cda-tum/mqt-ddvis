@@ -18,7 +18,8 @@
     /*padding: 10px; works very nice in Opera, because the scrollbar ignores padding, but looks very bad in firefox,
     where scrolling doesn't ignore padding (at least for textareas, the divs for linenumbering and highlighting seem to ignore padding*/
     padding-top: 0;
-    letter-spacing: 1px;
+    padding-bottom: 0;
+    /*letter-spacing: 1px;*/
 }
 
 .backdrop, .highlights {
@@ -55,16 +56,17 @@
 }
 
 .q_algo {
-    /*width: 190%;*/
+    width: 100%;
     height: 100%;
-    padding: 0;
+    padding-left: 25px;
+    padding-right: 10px;
     display: block;
     position: absolute;
     z-index: 3;
-    margin: 0 0 0 20px;     /* set initial margin-left for the template algorithms */
     overflow: auto;
     resize: none;
     white-space: pre;
+    word-wrap: normal;
 
     border: none;
     outline: none;

@@ -452,6 +452,13 @@ function ver_updateExportOptions(colored, edgeLabels, classic) {
  * @param callback needed if we go back to the start because the algorithm was reset
  */
 function ver_gotoStart(algo1, callback) {
+    if (document.getElementById(algo1? 'ver1_toStart': 'ver2_toStart').disabled) {
+        if (callback) {
+            callback();
+        }
+        return;
+    }
+
     ver_changeState(STATE_SIMULATING, algo1);
     startLoadingAnimation();
 

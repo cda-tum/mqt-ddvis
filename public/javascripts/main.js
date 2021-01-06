@@ -73,7 +73,7 @@ function openTab(tabId) {
     tab_button.className += " active";
 
     onTabChange(tabId);
-    updateAllAlgoAreaSizes();
+    // updateAllAlgoAreaSizes();
     //this would be a more efficient approach, but since we just have a couple of algoAreas it shouldn't matter
     //if(tabId === "simulation") {
     //    algoAreas.get("sim").updateSizes();
@@ -479,15 +479,15 @@ function registerAlgoArea(idPrefix, algoArea) {
     algoAreas.set(idPrefix, algoArea);
 }
 
-/**All AlgoArea-instances need to update their size if the window size changes.
- *
- */
-function updateAllAlgoAreaSizes() {
-    for(const area of algoAreas.values()) area.updateSizes();
-}
-window.addEventListener('resize', (event) => {
-    updateAllAlgoAreaSizes();
-});
+// /**All AlgoArea-instances need to update their size if the window size changes.
+//  *
+//  */
+// function updateAllAlgoAreaSizes() {
+//     for(const area of algoAreas.values()) area.updateSizes();
+// }
+// window.addEventListener('resize', (event) => {
+//     updateAllAlgoAreaSizes();
+// });
 
 function resetAlgorithm() {
     if(curTab === START_TAB) return;
@@ -496,8 +496,8 @@ function resetAlgorithm() {
         algoAreas.get(SIM_ID_PREFIX).resetAlgorithm(true);
 
     } else if(curTab === VER_TAB) {
-        algoAreas.get(VER1_ID_PREFIX).resetAlgorithm(true);
-        algoAreas.get(VER2_ID_PREFIX).resetAlgorithm(true);
+        algoAreas.get(VER1_ID_PREFIX).resetAlgorithm(false);
+        algoAreas.get(VER2_ID_PREFIX).resetAlgorithm(false);
         ver_onAlgoReset();  //call it after both algorithms were reset (hence applyCallback is false)
     }
 }

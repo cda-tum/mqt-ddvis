@@ -1,61 +1,13 @@
-
-<!-- IDs should be unique among all views! (if they are not, they will all get the same styling and script-behaviour) -->
-
-
-
 <link rel="stylesheet" href="../stylesheets/simulation.css"/>
 <script src="../javascripts/simulation.js"></script>
-<!--
-<button class="accordion" >Example algorithms</button>
-<div class="panel">
-    <button id="ex_real" class="example-algo" onclick="loadReal()">Empty Real</button>
-    <button id="ex_qasm" class="example-algo" onclick="loadQASM()">Empty QASM</button>
-    <button id="ex_deutsch" class="example-algo" onclick="loadDeutsch()">Deutsch</button>
-    <button id="ex_alu" class="example-algo" onclick="loadAlu()">Alu</button>
-</div>
--->
-<!--
-<button class="accordion" >Advanced settings</button>
-<div class="panel">
-    <label for="stepDuration" title="Duration of a step during the diashow">Step duration in ms: </label>
-    <input type="number" id="stepDuration" min="0" value="1000" step="100" onchange="validateStepDuration()"
-           title="Duration of a step during the diashow" style="margin-right: 150px"/>
-
-    <label for="cb_colored" class="checkbox" title="Enable/disable color coding of edge weights">Colored</label>
-    <input type="checkbox" id="cb_colored" title="Enable/disable color coding of edge weights" onchange="updateExportOptions()" checked/>
-    <label for="cb_edge_labels" class="checkbox" title="Show/hide edge weights as edge labels">Edge Labels</label>
-    <input type="checkbox" id="cb_edge_labels" title="Show/hide edge weights as edge labels" onchange="updateExportOptions()"/>
-    <label for="cb_classic" class="checkbox" title="Enable/disable classic decision diagram look">Classic</label>
-    <input type="checkbox" id="cb_classic" title="Enable/disable classic decision diagram look" onchange="updateExportOptions()"/>
-</div>
--->
 
 <div id="algo_div" class="algo-div">
     <h3>Algorithm</h3>
-    <!--  Adds a button where you can choose a local file for uploading (alternative to drag&drop)
-    <form>
-      <div class="form-group">
-        <label for="exampleFormControlFile1">Example file input</label>
-        <input type="file" class="form-control-file" id="exampleFormControlFile1">
-      </div>
-    </form>
-    -->
-    <!--
-    <div id="drop_zone" class=".container" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
-        <div id="line_numbers" class="backdrop"></div>
-        <div id="backdrop" class="backdrop">
-            <div id="highlighting" class="highlights"></div>
-        </div>
-        <textarea id="q_algo" type="text" onfocusout="loadAlgorithm()" placeholder="Enter Algorithm or drop .qasm-/.real-File here."
-                  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
-    </div>
-    -->
+    <div id="irreversibleDialog"></div>
 </div>
 
 <div id="qdd_div" class="svg-div">
     <h3 id="qdd_text">Quantum Decision Diagram</h3>
-
-    <!--<div id="color_map"></div>-->
 </div>
 
 <!-- A short description of this tab -->
@@ -123,6 +75,3 @@ An algorithm can be loaded in the following ways:
         <b>Step duration</b>: The minimum time for one transition when using the diashow feature. Note that the actual transition time might be longer in case of computationally expensive operations.
     </li>
 </ul>
-
-<div id="irreversibleDialog">
-</div>

@@ -207,7 +207,7 @@ class AlgoArea {
                     //also set the highlights because the lines might have changed
                     this._hlManager.text = algo;
                     this._hlManager._updateDiv();
-                    this._updateHeights();
+                    // this._updateHeights();
                 }
 
                 this._oldAlgo = algo;   //update this value so we can properly edit the algorithm
@@ -377,11 +377,11 @@ class AlgoArea {
      */
     updateSizes() {
         const dzInnerWidth = this._drop_zone.innerWidth();
-        const marginLeft = parseFloat(this._q_algo.css('margin-left')); //value is depended on lineNumbering
-        const width = dzInnerWidth - marginLeft;
-        this._q_algo.css('width', width);
+        const marginLeft = parseFloat(this._q_algo.css('padding-left')); //value is depended on lineNumbering
+        // const width = dzInnerWidth - marginLeft;
+        // this._q_algo.css('width', width);
 
-        this._updateHeights();
+        // this._updateHeights();
     }
 
     /**Convenience function that updates the heights of line_numbers and highlighting because only q_algo can have a
@@ -392,8 +392,8 @@ class AlgoArea {
     _updateHeights() {
         const clientHeight = document.getElementById(this._idPrefix + "_q_algo").clientHeight;
         //set the height of line_numbers to the height of q_algo without scrollbar, so no offset can occur
-        this._line_numbers.css('height', clientHeight);
-        this._highlighting.css('height', clientHeight);
+        // this._line_numbers.css('height', clientHeight);
+        // this._highlighting.css('height', clientHeight);
     }
 
     /**Sets the line numbering based on the current algorithm.
@@ -447,11 +447,10 @@ class AlgoArea {
     _setQAlgoMarginLeft(digits = 1) {
         if(digits < 1) digits = 1;  //set at least the default margin
         const margin = paddingLeftOffset + paddingLeftPerDigit * digits;
-        this._q_algo.css('margin-left', margin);    //need to set margin because padding is ignored when scrolling
+        this._q_algo.css('padding-left', margin);    //need to set margin because padding is ignored when scrolling
                                                     //(at least in some browsers)
-
-        const width = this._drop_zone.innerWidth() - margin;
-        this._q_algo.css('width', width);
+        // const width = this._drop_zone.innerWidth() - margin;
+        // this._q_algo.css('width', width);
     }
 
     /**Loads the algorithm inside the dropped file if it is either .qasm or .real.
@@ -585,7 +584,7 @@ class AlgoArea {
 
         this._oldAlgo = this._q_algo.val();  //changes are legal so they are "saved"
         this._setLineNumbers();
-        this._updateHeights();  //call here because the vertical scrollbar might have changed
+        // this._updateHeights();  //call here because the vertical scrollbar might have changed
     }
 
     /**Selects the line in q_algo where the cursor was before the focus left q_algo (saved in lastCursorPos).
