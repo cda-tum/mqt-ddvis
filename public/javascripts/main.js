@@ -156,12 +156,6 @@ function onTabChange(newTab) {
 
 // ################ EXAMPLE ALGOS ###########################################
 
-/* When the user clicks on the button,
-toggle between hiding and showing the dropdown content */
-function exAlgoDropDown() {
-    document.getElementById("ex_algo_dropdown").classList.toggle("show");
-}
-
 function exAlgoFilterFunction() {
     const input = document.getElementById("ex_algo_search_text");
     const filter = input.value.toUpperCase();
@@ -182,7 +176,22 @@ const call = $.ajax({
     contentType: 'application/json',
     success: (res) => {
         if(res) {
-            const ex_algo_dd = ex_algo_list;//document.getElementById('ex_algo_dropdown');
+            const ex_algo_dd = ex_algo_list;
+            res = res.sort(function(ex1, ex2) {
+                let regex1 = ex1.match(/(\d+) [Qq]ubits?/);
+                let regex2 = ex2.match(/(\d+) [Qq]ubits?/);
+                if (regex1 != null && regex2 != null) {
+                    let nq1 = regex1[1];
+                    let nq2 = regex2[1];
+                    return nq1 - nq2;
+                } else if (regex2 == null) {
+                    return -1;
+                } else if (regex1 == null) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            });
             res.forEach(name => {
                 const button = document.createElement("button");
                 button.innerText = name;

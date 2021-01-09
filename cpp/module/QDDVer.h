@@ -48,7 +48,7 @@ private:
 
     //options for the DD export
     bool showColors = true;
-    bool showEdgeLabels = false;
+    bool showEdgeLabels = true;
     bool showClassic = false;
 
     std::unique_ptr<qc::QuantumComputation> qc1;
