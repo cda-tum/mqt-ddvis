@@ -1,6 +1,7 @@
 <link rel="stylesheet" href="../stylesheets/simulation.css"/>
 <script src="../javascripts/simulation.js"></script>
 
+<div style="width: 100%">
 <div id="algo_div" class="algo-div">
     <h3>Algorithm</h3>
     <div id="irreversibleDialog"></div>
@@ -10,6 +11,15 @@
     <h3 id="qdd_text">Quantum Decision Diagram</h3>
 </div>
 
+<div id="amplitudes_div" class="svg-div">
+    <h3 id="amp_text">State Vector</h3>
+    <div id="amp_descr">The display of amplitudes is only available for circuits using less than 10 qubits. Adjust your circuit to view them.</div>
+    <svg id="amplitudes_svg"></svg>
+    <div id="ampTooltip"></div>
+</div>
+<br style="clear: left;" />
+</div>
+<div style="margin-top: 20px">
 <!-- A short description of this tab -->
 <h2>Simulation of Quantum Circuits using Decision Diagrams</h2>
 <p>
@@ -75,3 +85,4 @@ An algorithm can be loaded in the following ways:
         <b>Step duration</b>: The minimum time for one transition when using the diashow feature. Note that the actual transition time might be longer in case of computationally expensive operations.
     </li>
 </ul>
+</div>

@@ -17,11 +17,24 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
     private:
         static Napi::FunctionReference constructor;
 
+        static constexpr unsigned short MAX_QUBITS_FOR_AMPLITUDES = 9;
         //"private" methods
         void stepForward();
         void stepBack();
         std::pair<fp, fp> getProbabilities(unsigned short qubitIdx);
         void measureQubit(unsigned short qubitIdx, bool measureOne, fp pzero, fp pone);
+		template<size_t N>
+		static void nextPath(std::bitset<N>& path) {
+			for (size_t i=0; i<N; ++i) {
+				if (path[i] == 0) {
+					path[i] = 1;
+					break;
+				}
+				path[i] = 0;
+			}
+		}
+        dd::ComplexValue getStateVectorAmplitude(dd::Edge e, const std::bitset<dd::MAXN>& path) const;
+        void calculateAmplitudes(Napi::Float32Array& amplitudes);
 
         //exported ("public") methods       - return type must be Napi::Value or void!
         Napi::Value Load(const Napi::CallbackInfo& info);

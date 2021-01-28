@@ -6,20 +6,56 @@
 }
 
 #qdd_div {
-    float: right;   /* not sure if this is even needed*/
-    width: 70%;
+    float: left;   /* not sure if this is even needed*/
+    width: 55%;
+}
+
+#amplitudes_div {
+    float: left;
+    width: 15%;
+}
+
+#amplitudes_svg {
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    height: 95%;
 }
 
 /* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
 @media (max-width: 600px) {
-    #algo_div, #qdd_div {
+    #algo_div, #qdd_div, #amplitudes_div {
         width: 100%;
-        /*height: auto;*/
     }
 }
 
 #irreversibleDialog {
     display: none;
+}
+
+#amp_descr {
+    position: absolute;
+    border: 2px solid black;
+    visibility: hidden;
+}
+
+#ampTooltip {
+    position: absolute;
+    z-index: 10;
+    visibility: hidden;
+    text-align: left;
+    border: solid 1px black;
+    border-radius: 0.5em;
+    background-color: rgba(255, 255, 255, 0.75);
+}
+
+#ampTooltipAmp {
+    position: relative;
+    float: top;
+}
+#ampTooltipPhase {
+    position: relative;
+    float: bottom;
 }
 
 .ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset {

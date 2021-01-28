@@ -4,6 +4,7 @@
 const algo_div = $('#algo_div');
 const qdd_div = $('#qdd_div');
 const qdd_text = $('#qdd_text');
+const amp_text = $('#amp_text');
 
 const irreversibleDialog = $("#irreversibleDialog");
 
@@ -12,6 +13,8 @@ const graphviz = d3.select("#qdd_div").graphviz({
     fit: true           //automatically zooms to fill the height (or width, but usually the graphs more high then wide)
 }).tweenPaths(true).tweenShapes(true);
 
+const amp_svg = d3.select("#amplitudes_svg");
+const amp_descr = d3.select("#amp_descr");
 
 //################### STATE MANAGEMENT ##################################################################################################################
 
@@ -189,7 +192,7 @@ function sim_gotoStart() {
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {
-                print(res.dot, () => {
+                print(res, () => {
                     algoArea.hlManager.initialHighlighting();
                     endLoadingAnimation();
                     changeState(STATE_LOADED_START);
@@ -219,7 +222,7 @@ function sim_goBack() {
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {
-                print(res.dot, () => {
+                print(res, () => {
                     algoArea.hlManager.decreaseHighlighting();
 
                     endLoadingAnimation();
@@ -289,12 +292,12 @@ function sim_diashow() {
                             conductedIrreversibleOperation = true;
                             _handleIrreversibleOperation(res.data, function (result) {
                                 // only conduct callback, when last operation finished
-                                if (!result.finished && result.dot) print(result.dot, null);
-                                else if (result.dot) print(result.dot, diaCallback());
+                                if (!result.finished && result.dot) print(result, null);
+                                else if (result.dot) print(result, diaCallback());
                             });
                         } else if(res.dot) {   //we haven't reached the end yet
                             conductedIrreversibleOperation = false;
-                            print(res.dot, diaCallback());
+                            print(res, diaCallback());
                         } else {
                             endDia(conductedIrreversibleOperation);
                         }
@@ -343,11 +346,11 @@ function sim_goForward() {
             if (res.data.conductIrreversibleOperation) {
                 _handleIrreversibleOperation(res.data, function (result) {
                     // only conduct callback, when last operation finished
-                    if (!result.finished && result.dot) print(result.dot, null);
-                    else if (result.dot) print(result.dot, callback);
+                    if (!result.finished && result.dot) print(result, null);
+                    else if (result.dot) print(result, callback);
                 });
             } else if(res.dot) {   //we haven't reached the end yet
-                print(res.dot, callback);
+                print(res, callback);
             }
         }
     });
@@ -380,7 +383,7 @@ function sim_gotoEnd() {
             }
 
             if(res.dot) {
-                print(res.dot, () => {
+                print(res, () => {
                     // increase highlighting by the number of applied operations
                     if (res.data.barrier) {
                         algoArea.hlManager.highlightToXOps(algoArea.hlManager.highlightedLines + res.data.nops);
@@ -434,7 +437,7 @@ function sim_gotoLine() {
             }
 
             if(res.dot) {
-                print(res.dot, () => {
+                print(res, () => {
                     if (res.data.noGoingBack) {
                         if (res.data.reset) algoArea.hlManager.highlightToXOps(res.data.nops);
                         else algoArea.hlManager.highlightToXOps(algoArea.hlManager.highlightedLines - res.data.nops);
@@ -624,13 +627,13 @@ const maxZoomScaleExtent = 100;     //defines the farthest a user can zoom into 
 let svgHeight = 0;  //can't be initialized beforehand
 /**Visualizes the given DD as d3 graph with a transition animation.
  *
- * @param dot a string representing a DD in the .dot-format
+ * @param dd (.dot) a string representing a DD in the .dot-format
  *          if not given, the graph will be reset (no DD visualized)
  * @param callback function that is executed when rendering finishes
  * @param resetZoom whether the DD should be recentered with fitting zoom or not
  */
-function print(dot, callback, resetZoom=false) {
-    if(dot) {
+function print(dd, callback, resetZoom=false) {
+    if(dd.dot) {
         //document.getElementById('color_map').style.display = 'block';
         if(svgHeight === 0) {
             //subtract the whole height of the qdd-text from the height of qdd-div to get the space that is available for the graph
@@ -646,7 +649,7 @@ function print(dot, callback, resetZoom=false) {
             graphviz.options({ zoomScaleExtent: [minZoomScaleExtent, maxZoomScaleExtent] })
                 .height(svgHeight)
                 .transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration))
-                .renderDot(dot).on("transitionStart", callback)
+                .renderDot(dd.dot).on("transitionStart", callback)
                 .resetZoom(d3.transition("smooth")
                     .duration(animationDuration)
                     .ease(d3.easeLinear));
@@ -654,13 +657,194 @@ function print(dot, callback, resetZoom=false) {
             graphviz.options({ zoomScaleExtent: [minZoomScaleExtent, maxZoomScaleExtent] })
                 .height(svgHeight)
                 .transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration))
-                .renderDot(dot).on("transitionStart", callback);
+                .renderDot(dd.dot).on("transitionStart", callback);
         }
-
+        plotAmplitudes(dd.amplitudes)
     } else {
         qdd_div.html(qdd_text);
-        //document.getElementById('color_map').style.display = 'none';
+        amp_svg.style("visibility", "hidden");
+        amp_descr.style("visibility", "hidden");
         if(callback) callback();
+    }
+}
+
+const amp_plot = amp_svg.append('g');
+const amp_yaxis = amp_plot.append('g').attr("class", "axis axis--y");
+const amp_xaxis = amp_plot.append('g').attr("class", "axis axis--x");
+const amp_xlabel = amp_plot.append('text');
+const amp_tooltip = d3.select("#ampTooltip");
+
+function getlowestfraction(x0) {
+    var eps = 1.0E-6;
+    var h, h1, h2, k, k1, k2, a, x;
+
+    x = x0;
+    a = Math.floor(x);
+    h1 = 1;
+    k1 = 0;
+    h = a;
+    k = 1;
+
+    while (x-a > eps*k*k) {
+        x = 1/(x-a);
+        a = Math.floor(x);
+        h2 = h1; h1 = h;
+        k2 = k1; k1 = k;
+        h = h2 + a*h1;
+        k = k2 + a*k1;
+    }
+
+    return [h, k];
+}
+
+function formatAmplitude(num) {
+    return num.toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 3,
+    });
+}
+
+function formatPhase(num) {
+    // set tolerance for detecting fraction
+    const maxDenominator = 128;
+    // transform to range [0, 2pi)
+    var transform = (num+2*Math.PI) % (2*Math.PI);
+    var numbypi = transform / Math.PI;
+    const [numerator, denominator] = getlowestfraction(numbypi);
+    if (numerator && denominator <= maxDenominator) {
+        let val = '\u03C0'
+        if (denominator === 1) {
+            if (numerator === 2) return '0'; // this should only happen in edge cases
+            return val;
+        } else if (numerator !== 1) {
+            val = numerator + val;
+        }
+        val += '/' + denominator;
+        return val;
+    } else {
+        return transform.toLocaleString('en-US', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 3,
+        });
+    }
+}
+
+let current_namps = 0;
+function plotAmplitudes(amplitudes) {
+    if (amplitudes) {
+        amp_svg.style("visibility", "visible");
+        amp_descr.style("visibility", "hidden");
+
+        const amps = new Float32Array(JSON.parse(amplitudes));
+        const namps = amps.length/2;
+
+        if (namps === 0) {
+            amp_svg.style("visibility", "hidden");
+            amp_descr.style("visibility", "visible");
+        }
+
+        var magnitudes = new Float32Array(namps);
+        var phases = new Float32Array(namps);
+        for (var i = 0; i <= namps-1; i++) {
+            magnitudes[i] = Math.sqrt(amps[2*i]*amps[2*i] + amps[2*i+1]*amps[2*i+1]);
+            phases[i] = Math.atan2(amps[2*i+1], amps[2*i]);
+        }
+
+        let xScale = d3.scaleLinear();
+        let yScale = d3.scaleBand();
+
+        let binary_labels = [];
+        for (var j = 0; j <= namps-1; j++) {
+            binary_labels.push(j.toString(2).padStart(Math.log2(namps), "0"));
+        }
+
+        yScale.domain(binary_labels).rangeRound([100, 0]);
+
+        // draw fake axis
+        var yAxis = amp_plot.append("g")
+            .attr("class", "axis axis--y")
+            .call(d3.axisLeft(yScale));
+        // determine max width of text label
+        var mW = 0;
+        yAxis.selectAll(".tick>text").each(function(d) {
+            var w = this.getBBox().width;
+            if (w > mW) mW = w;
+        });
+        // remove fake yaxis
+        yAxis.remove();
+
+        // draw plot normally
+        var textspace = parseInt(amp_text.css('height')) + parseInt(amp_text.css('margin-top')) + parseInt(amp_text.css('margin-bottom'));
+        var margin = {
+                top: 20,
+                right: 20,
+                bottom: 20,
+                left: mW + 10 // max with + padding fudge
+            },
+            width = amp_svg.node().getBoundingClientRect().width - margin.left - margin.right,
+            height = amp_svg.node().getBoundingClientRect().height - margin.top - margin.bottom - textspace;
+
+        amp_plot.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        yScale.range([height, 0]).paddingInner(0.05);
+
+        xScale.domain([0.0, 1.0]).rangeRound([0, width]);
+
+        const tickWidth = 20;
+        amp_xaxis
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(xScale).ticks(Math.min(width/tickWidth, 11)));
+        // text label for the x axis
+        amp_xlabel
+            .attr("transform",
+                "translate(" + (width/2) + " ," +
+                (height + margin.top + 20) + ")")
+            .style("text-anchor", "middle")
+            .text("Amplitude");
+
+        amp_yaxis
+            .transition().ease(d3.easeLinear).duration(500)
+            .call(d3.axisLeft(yScale));
+
+        if (namps !== current_namps) {
+            // number of amplitudes has changed -> redraw
+            // clear any previous rectangles
+            amp_plot.selectAll("rect").remove();
+            amp_plot.selectAll()
+                .data(magnitudes)
+                .enter()
+                .append('rect')
+                .attr('y', (d, i) => yScale(i.toString(2).padStart(Math.log2(namps), "0")))
+                .attr('width', (s) => xScale(s))
+                .attr('height', yScale.bandwidth())
+                .attr('fill', (d, i) => "hsl(" + phases[i] / (2*Math.PI) * 360 + ",50%,50%)");
+
+            current_namps = namps;
+        } else {
+            amp_plot.selectAll('rect')
+                .data(magnitudes)
+                .transition().ease(d3.easeLinear)
+                .attr('width', (s) => xScale(s))
+                .attr('fill', (d, i) => "hsl(" + phases[i] / (2*Math.PI) * 360 + ",50%,50%)");
+        }
+
+        amp_plot.selectAll("rect")
+            .on("mouseover", function(d, i){
+                amp_tooltip.html('State: ' + i.toString(2).padStart(Math.log2(namps), "0") +
+                    '<div id="ampTooltipAmp">Amplitude: <b>' + formatAmplitude(d) + '</b></div>' +
+                    '<div id="ampTooltipPhase">Phase angle: <b>' + formatPhase(phases[i]) + '</b></div>');
+                return amp_tooltip.style("visibility", "visible");
+            })
+            .on("mousemove", function(){return amp_tooltip.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+10)+"px");})
+            .on("mouseout", function(){return amp_tooltip.style("visibility", "hidden");});
+
+        amp_plot.selectAll("rect")
+            .on('mouseenter', function () {
+                d3.select(this).attr('opacity', 0.5)
+            })
+            .on('mouseleave', function () {
+                d3.select(this).attr('opacity', 1)
+            })
     }
 }
 
@@ -684,7 +868,7 @@ function sim_updateExportOptions(colored, edgeLabels, classic) {
         data: { colored: colored, edgeLabels: edgeLabels, classic: classic, updateDD: !algoArea.emptyAlgo, dataKey: dataKey },
         success: (res) => {
             if (res.dot) {
-                print(res.dot, () => {
+                print(res, () => {
                     endLoadingAnimation();
                     changeState(lastState); //go back to the previous state
                     document.getElementById("prev").disabled = disablePrev;
@@ -708,7 +892,7 @@ function sim_updateExportOptions(colored, edgeLabels, classic) {
 }
 
 function onAlgoReset() {
-    print(null, () => {
+    print({dot: null, amplitudes: {}}, () => {
         changeState(STATE_NOTHING_LOADED);
     });    //reset dd
 }

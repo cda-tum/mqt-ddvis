@@ -215,11 +215,11 @@ router.get('/conductIrreversibleOperation', (req, res) => {
     if(vis) {
         let data = JSON.parse(req.query.parameter);
         const ret = vis.conductIrreversibleOperation(data);
-
+        const dd_ret = vis.getDD();
         if (!ret.finished) {
-            res.status(200).json({dot: vis.getDD(), finished: ret.finished, parameter: ret.parameter});
+            res.status(200).json({dot: dd_ret.dot, amplitudes: JSON.stringify(Array.from(dd_ret.amplitudes)), finished: ret.finished, parameter: ret.parameter});
         } else {
-            res.status(200).json({dot: vis.getDD(), finished: ret.finished});
+            res.status(200).json({dot: dd_ret.dot, amplitudes: JSON.stringify(Array.from(dd_ret.amplitudes)), finished: ret.finished});
         }
     } else {
         res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
@@ -343,6 +343,6 @@ module.exports = router;
  * @private
  */
 function _sendDD(res, dd, data) {
-    if(data || data === 0) res.status(200).json({ dot: dd, data: data });
-    else res.status(200).json({ dot: dd });
+    if(data || data === 0) res.status(200).json({ dot: dd.dot, amplitudes: JSON.stringify(Array.from(dd.amplitudes)), data: data });
+    else res.status(200).json({ dot: dd.dot, amplitudes: JSON.stringify(Array.from(dd.amplitudes)) });
 }

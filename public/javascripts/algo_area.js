@@ -220,7 +220,7 @@ class AlgoArea {
 
                 this._numOfOperations = res.data.numOfOperations;   //save how many operations the new algorithm has
                 this._setLineNumbers();             //set the line numbers because we have a new algorithm
-                this._print(res.dot, () => {
+                this._print(res, () => {
                     if(this._numOfOperations === 0) this._changeState(STATE_LOADED_EMPTY);
                     else {
                         if(opNum <= 0) this._changeState(STATE_LOADED_START);

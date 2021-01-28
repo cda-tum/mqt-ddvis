@@ -228,6 +228,16 @@ void QDDVis::measureQubit(unsigned short qubitIdx, bool measureOne, fp pzero, fp
 	sim = e;
 }
 
+void QDDVis::calculateAmplitudes(Napi::Float32Array& amplitudes) {
+	std::bitset<dd::MAXN> path{};
+	for(unsigned long long i = 0; i < 1ull << qc->getNqubits(); ++i) {
+		auto result = getStateVectorAmplitude(sim, path);
+		amplitudes[2*i] = static_cast<float>(result.r);
+		amplitudes[2*i+1] = static_cast<float>(result.i);
+		nextPath(path);
+	}
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**Parameters: String algorithm, unsigned int formatCode, unsigned int num of operations to step forward, bool whether the
@@ -306,7 +316,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         if(process) {
             if(sim.p != nullptr) {
                 dd->decRef(sim);
-                std::cout << "dereffed old sim (process)" << std::endl;
+//                std::cout << "dereffed old sim (process)" << std::endl;
             }
             sim = dd->makeZeroState(qc->getNqubits());
             dd->incRef(sim);
@@ -334,7 +344,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     } else {    //sim needs to be initialized in some cases
         if(sim.p != nullptr) {
             dd->decRef(sim);
-            std::cout << "dereffed old sim" << std::endl;
+//            std::cout << "dereffed old sim" << std::endl;
         }
         sim = dd->makeZeroState(qc->getNqubits());
         dd->incRef(sim);
@@ -709,6 +719,7 @@ Napi::Value QDDVis::ToLine(const Napi::CallbackInfo &info) {
  */
 Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
+	Napi::Object state = Napi::Object::New(env);
     if(!ready) {
         Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
         return Napi::String::New(env, "-1");
@@ -716,11 +727,16 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
 
     std::stringstream ss{};
     try {
-        //std::cout << "GetDD() called with colored=" << this->showColors << ", edgeLabels=" << this->showEdgeLabels << ", classic=" << this->showClassic << std::endl;
         dd::toDot(sim, ss, true, this->showColors, this->showEdgeLabels, this->showClassic);
-        //std::cout << "Flags afer toDot: " << this->showColors << ", " << this->showEdgeLabels << ", " << this->showClassic << std::endl;
         std::string str = ss.str();
-        return Napi::String::New(env, str);
+        state.Set("dot", Napi::String::New(env, str));
+	    state.Set("amplitudes", Napi::Float32Array::New(env, 0));
+	    if (qc->getNqubits() <= MAX_QUBITS_FOR_AMPLITUDES) {
+	    	auto amplitudes = Napi::Float32Array::New(env, 1ull<<(qc->getNqubits()+1));
+		    calculateAmplitudes(amplitudes);
+		    state.Set("amplitudes", amplitudes);
+	    }
+        return state;
 
     } catch(std::exception& e) {
         std::cout << "Exception while getting the DD: " << e.what() << std::endl;
@@ -898,4 +914,20 @@ Napi::Value QDDVis::ConductIrreversibleOperation(const Napi::CallbackInfo& info)
 	state.Set("parameter", parameter);
 
 	return state;
+}
+
+dd::ComplexValue QDDVis::getStateVectorAmplitude(dd::Edge e, const std::bitset<dd::MAXN>& path) const {
+	if(dd::Package::isTerminal(e)) {
+		return {dd::ComplexNumbers::val(e.w.r), dd::ComplexNumbers::val(e.w.i)};
+	}
+
+	auto c = dd->cn.getTempCachedComplex(1, 0);
+	do {
+		dd::ComplexNumbers::mul(c, c, e.w);
+		unsigned short choice = path[e.p->v];
+		e = e.p->e[2*choice];
+	} while(!dd::Package::isTerminal(e));
+	dd::ComplexNumbers::mul(c, c, e.w);
+
+	return {dd::ComplexNumbers::val(c.r), dd::ComplexNumbers::val(c.i)};
 }

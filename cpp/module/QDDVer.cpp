@@ -790,7 +790,8 @@ Napi::Value QDDVer::ToLine(const Napi::CallbackInfo &info) {
  */
 Napi::Value QDDVer::GetDD(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
-    if(!ready1 && !ready2) {
+	Napi::Object state = Napi::Object::New(env);
+	if(!ready1 && !ready2) {
         Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
         return Napi::String::New(env, "-1");
     }
@@ -799,7 +800,9 @@ Napi::Value QDDVer::GetDD(const Napi::CallbackInfo& info) {
     try {
         dd::toDot(sim, ss, false, this->showColors, this->showEdgeLabels, this->showClassic);
         std::string str = ss.str();
-        return Napi::String::New(env, str);
+	    state.Set("dot", Napi::String::New(env, str));
+	    state.Set("amplitudes", Napi::Float32Array::New(env, 0));
+	    return state;
 
     } catch(std::exception& e) {
         std::cout << "Exception while getting the DD: " << e.what() << std::endl;

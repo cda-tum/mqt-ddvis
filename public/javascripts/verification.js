@@ -215,7 +215,7 @@ function ver2_aacs(state) {
 
 let ver_svgHeight = 0;
 function ver_print(dd, callback, resetZoom=false) {
-    if(dd) {
+    if(dd && dd.dot) {
         if(ver_svgHeight === 0) {
             //subtract the whole height of the qdd-text from the height of qdd-div to get the space that is available for the graph
             ver_svgHeight = parseInt(ver_qdd_div.css('height')) - (
@@ -230,7 +230,7 @@ function ver_print(dd, callback, resetZoom=false) {
             ver_graphviz.options({ zoomScaleExtent: [minZoomScaleExtent, maxZoomScaleExtent] })
                 .height(ver_svgHeight)
                 .transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration))
-                .renderDot(dd).on("transitionStart", callback)
+                .renderDot(dd.dot).on("transitionStart", callback)
                 .resetZoom(d3.transition("smooth")
                     .duration(animationDuration)
                     .ease(d3.easeLinear));
@@ -238,7 +238,7 @@ function ver_print(dd, callback, resetZoom=false) {
             ver_graphviz.options({ zoomScaleExtent: [minZoomScaleExtent, maxZoomScaleExtent] })
                 .height(ver_svgHeight)
                 .transition(() => d3.transition().ease(d3.easeLinear).duration(animationDuration))
-                .renderDot(dd).on("transitionStart", callback);
+                .renderDot(dd.dot).on("transitionStart", callback);
         }
 
     } else {
@@ -430,7 +430,7 @@ function ver_updateExportOptions(colored, edgeLabels, classic) {
         data: { colored: colored, edgeLabels: edgeLabels, classic: classic,
             updateDD: updateDD, dataKey: dataKey, targetManager: "ver" },
         success: (res) => {
-            if (res.dot) ver_print(res.dot, callback);
+            if (res.dot) ver_print(res, callback);
             else callback();
         }
     });
@@ -467,7 +467,7 @@ function ver_gotoStart(algo1, callback) {
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {
-                ver_print(res.dot, () => {
+                ver_print(res, () => {
                     if(algo1)   ver1_algoArea.hlManager.initialHighlighting();
                     else        ver2_algoArea.hlManager.initialHighlighting();
                     endLoadingAnimation();
@@ -498,7 +498,7 @@ function ver_goBack(algo1) {
         contentType: 'application/json',
         success: (res) => {
             if(res.dot) {
-                ver_print(res.dot, () => {
+                ver_print(res, () => {
                     if(algo1)   ver1_algoArea.hlManager.decreaseHighlighting();
                     else        ver2_algoArea.hlManager.decreaseHighlighting();
 
@@ -545,7 +545,7 @@ function ver_diashow(algo1) {
                 contentType: 'application/json',
                 success: (res) => {
                     if(res.dot) {
-                        ver_print(res.dot, () => {
+                        ver_print(res, () => {
                             if(algo1)   ver1_algoArea.hlManager.increaseHighlighting();
                             else        ver2_algoArea.hlManager.increaseHighlighting();
                             //calculate the duration of the API-call so the time between two steps is constant
@@ -605,7 +605,7 @@ function ver_goForward(algo1) {
             }
 
             if(res.dot) {   //we haven't reached the end yet
-                ver_print(res.dot, callback);
+                ver_print(res, callback);
             }
         }
     });
@@ -638,7 +638,7 @@ function ver_gotoEnd(algo1) {
             }
 
             if(res.dot) {
-                ver_print(res.dot, () => {
+                ver_print(res, () => {
                     // increase highlighting by the number of applied operations
                     area = algo1? ver1_algoArea: ver2_algoArea;
                     if (res.data.barrier) {
