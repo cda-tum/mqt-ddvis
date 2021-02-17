@@ -798,7 +798,7 @@ Napi::Value QDDVis::IsReady(const Napi::CallbackInfo& info) {
     return Napi::Boolean::New(env, this->ready);
 }
 
-void QDDVis::Unready(const Napi::CallbackInfo& info) {
+void QDDVis::Unready([[maybe_unused]] const Napi::CallbackInfo& info) {
     this->ready = false;
 }
 

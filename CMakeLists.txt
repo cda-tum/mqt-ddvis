@@ -1,43 +1,29 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.15...3.19)
 
 # detailed description
 project(DDVis
-        VERSION 1.2.1
+        VERSION 1.2.2
         DESCRIPTION "DDVis - A JKQ Tool for Visualizing Decision Diagrams for Quantum Computing"
         LANGUAGES CXX)
 
 # useful in IDEs
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-# options for setting the default build type
+# build type settings
 set(default_build_type "Release")
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 	message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
-	set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
-	    STRING "Choose the type of build." FORCE)
-	# Set the possible values of build type for cmake-gui
-	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
-	             "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+	set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE STRING "Choose the type of build." FORCE)
+	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-# if "-DGIT_SUBMODULE=OFF" is passed to CMake during configuration, the update step is skipped
-option(GIT_SUBMODULE "Check submodules during build" ON)
-
-# correctly initialize qfr submodule
-find_package(Git QUIET)
-if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git" AND GIT_SUBMODULE)
-	message(STATUS "QFR update")
-	execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive --remote -- cpp/qfr
-	                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	                RESULT_VARIABLE GIT_SUBMOD_RESULT)
-	if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-		message(FATAL_ERROR "git submodule update --init --recursive --remote -- cpp/qfr failed with ${GIT_SUBMOD_RESULT}.")
+macro(check_submodule_present MODULENAME)
+	if(NOT EXISTS "${PROJECT_SOURCE_DIR}/cpp/${MODULENAME}/CMakeLists.txt")
+		message(FATAL_ERROR "${MODULENAME} submodule not cloned properly. Please run `git submodule update --init --recursive` from the main project directory")
 	endif()
-endif()
+endmacro()
 
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/cpp/qfr/CMakeLists.txt")
-	message(FATAL_ERROR "${MODULENAME} failed to download! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
-endif()
+check_submodule_present(qfr)
 
 # create executable
 add_library(${PROJECT_NAME} SHARED
@@ -48,16 +34,18 @@ add_library(${PROJECT_NAME} SHARED
 		cpp/module/QDDVer.cpp)
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 
-# always use modern CMake "target_..." commands
-target_include_directories(${PROJECT_NAME} PUBLIC cpp/module) # include directories
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_14) # c++ standard
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF) # disable use of standard extensions
+# include directories
+target_include_directories(${PROJECT_NAME} PUBLIC cpp/module)
+
+# set required C++ standard and disable compiler specific extensions
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+set_target_properties(${PROJECT_NAME} PROPERTIES CMAKE_CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
+
+# enable PIC generation
+set(GENERATE_POSITION_INDEPENDENT_CODE ON)
 
 # add submodule directory. this automatically adds the appropriate targets and include files
 add_subdirectory(cpp/qfr)
-
-# set -fPIC flag for qfr
-target_compile_options(qfr PUBLIC -fPIC)
 
 # link the qfr library. this automatically links the DDPackage library and forwards the include paths
 target_link_libraries(${PROJECT_NAME} PRIVATE JKQ::qfr)
@@ -70,7 +58,7 @@ if(ipo_supported)
 endif()
 
 # set compiler flags (this assumes gcc or clang)
-target_compile_options(${PROJECT_NAME} PRIVATE -Wall $<$<CONFIG:DEBUG>:-g3 -Og -Wextra -Wpedantic -pedantic> $<$<CONFIG:RELEASE>:-O3 -mtune=native -march=native -g0>)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra $<$<CONFIG:DEBUG>:-Og> -mtune=native -march=native)
 
 # Include N-API wrappers
 execute_process(COMMAND node -p "require('node-addon-api').include"
