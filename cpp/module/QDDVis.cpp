@@ -1,17 +1,10 @@
-
-#include <iostream>
-#include <string>
-#include <memory>
-
-#include "operations/StandardOperation.hpp"
-#include "QuantumComputation.hpp"
-#include "algorithms/GoogleRandomCircuitSampling.hpp"
-#include "DDexport.h"
-#include "DDpackage.h"
+/*
+ * This file is part of JKQ DDVis library which is released under the MIT license.
+ * See file README.md or go to http://iic.jku.at/eda/research/quantum/ for more information.
+ */
 
 #include "QDDVis.h"
-
-Napi::FunctionReference QDDVis::constructor;
+#include "dd/Export.hpp"
 
 Napi::Object QDDVis::Init(Napi::Env env, Napi::Object exports) {
     Napi::HandleScope scope(env);
@@ -52,11 +45,9 @@ QDDVis::QDDVis(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVis>(info) 
     Napi::Env env = info.Env();
     Napi::HandleScope scope(env);
 
-    this->dd = std::make_unique<dd::Package>();
+    this->dd = std::make_unique<dd::Package>(1);
     this->qc = std::make_unique<qc::QuantumComputation>();
-	dd->setMode(dd::Vector);
 
-    line.fill(qc::LINE_DEFAULT);
     this->iterator = this->qc->begin();
     this->position = 0;
 }
@@ -67,24 +58,24 @@ QDDVis::QDDVis(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVis>(info) 
  */
 void QDDVis::stepForward() {
     if(atEnd) return;   //no further steps possible
-	dd::Edge currDD{};
+	qc::MatrixDD currDD{};
     if ((*iterator)->isClassicControlledOperation()) {
-    	auto startIndex = (unsigned short)((*iterator)->getParameter().at(0));
-	    auto length = (unsigned short)((*iterator)->getParameter().at(1));
-	    auto expectedValue = (unsigned long)((*iterator)->getParameter().at(2));
+    	auto startIndex = static_cast<dd::Qubit>((*iterator)->getParameter().at(0));
+	    auto length = static_cast<dd::QubitCount>((*iterator)->getParameter().at(1));
+	    auto expectedValue = static_cast<std::size_t>((*iterator)->getParameter().at(2));
 
-	    unsigned long value = 0;
-	    for (int i = 0; i < length; ++i) {
+	    std::size_t value = 0;
+	    for (dd::QubitCount i = 0; i < length; ++i) {
 		    value |= (measurements[startIndex+i] << i);
 	    }
 
 	    if (value == expectedValue) {
-		    currDD = (*iterator)->getDD(dd, line);    //retrieve the "new" current operation
+		    currDD = (*iterator)->getDD(dd);    //retrieve the "new" current operation
 	    } else {
-	    	currDD = dd->makeIdent(0, qc->getNqubits()-1);
+	    	currDD = dd->makeIdent(qc->getNqubits());
 	    }
     } else {
-	    currDD = (*iterator)->getDD(dd, line);    //retrieve the "new" current operation
+	    currDD = (*iterator)->getDD(dd);    //retrieve the "new" current operation
     }
 
     auto temp = dd->multiply(currDD, sim);         //process the current operation by multiplying it with the previous simulation-state
@@ -116,24 +107,24 @@ void QDDVis::stepBack() {
     iterator--; //set iterator back to the desired operation
     position--;
 
-	dd::Edge currDD{};
+	qc::MatrixDD currDD{};
 	if ((*iterator)->isClassicControlledOperation()) {
-		auto startIndex = (unsigned short)((*iterator)->getParameter().at(0));
-		auto length = (unsigned short)((*iterator)->getParameter().at(1));
-		auto expectedValue = (unsigned long)((*iterator)->getParameter().at(2));
+		auto startIndex = static_cast<dd::Qubit>((*iterator)->getParameter().at(0));
+		auto length = static_cast<dd::QubitCount>((*iterator)->getParameter().at(1));
+		auto expectedValue = static_cast<std::size_t>((*iterator)->getParameter().at(2));
 
-		unsigned long value = 0;
-		for (int i = 0; i < length; ++i) {
+		std::size_t value = 0;
+		for (dd::QubitCount i = 0; i < length; ++i) {
 			value |= (measurements[startIndex+i] << i);
 		}
 
 		if (value == expectedValue) {
-			currDD = (*iterator)->getInverseDD(dd, line); // get the inverse of the current operation
+			currDD = (*iterator)->getInverseDD(dd); // get the inverse of the current operation
 		} else {
-			currDD = dd->makeIdent(0, qc->getNqubits()-1);
+			currDD = dd->makeIdent(qc->getNqubits());
 		}
 	} else {
-		currDD = (*iterator)->getInverseDD(dd, line); // get the inverse of the current operation
+		currDD = (*iterator)->getInverseDD(dd); // get the inverse of the current operation
 	}
 
     auto temp = dd->multiply(currDD, sim);   //"remove" the current operation by multiplying with its inverse
@@ -143,22 +134,22 @@ void QDDVis::stepBack() {
     dd->garbageCollect();
 }
 
-std::pair<fp, fp> QDDVis::getProbabilities(unsigned short qubitIdx) {
-	std::map<dd::NodePtr, fp> probsMone;
-	std::set<dd::NodePtr> visited_nodes2;
-	std::queue<dd::NodePtr> q;
+std::pair<dd::fp, dd::fp> QDDVis::getProbabilities(dd::Qubit qubitIdx) const {
+	std::map<dd::Package::vNode*, dd::fp> probsMone;
+	std::set<dd::Package::vNode*> visited_nodes2;
+	std::queue<dd::Package::vNode*> q;
 
-	probsMone[sim.p] = CN::mag2(sim.w);
+	probsMone[sim.p] = dd::ComplexNumbers::mag2(sim.w);
 	visited_nodes2.insert(sim.p);
 	q.push(sim.p);
 
 	while(q.front()->v != qubitIdx) {
-		dd::NodePtr ptr = q.front();
+		auto ptr = q.front();
 		q.pop();
-		fp prob = probsMone[ptr];
+		auto prob = probsMone[ptr];
 
-		if(!CN::equalsZero(ptr->e[0].w)) {
-			const fp tmp1 = prob * CN::mag2(ptr->e[0].w);
+		if(!ptr->e[0].w.approximatelyZero()) {
+			const auto tmp1 = prob * dd::ComplexNumbers::mag2(ptr->e[0].w);
 
 			if(visited_nodes2.find(ptr->e[0].p) != visited_nodes2.end()) {
 				probsMone[ptr->e[0].p] = probsMone[ptr->e[0].p] + tmp1;
@@ -169,72 +160,64 @@ std::pair<fp, fp> QDDVis::getProbabilities(unsigned short qubitIdx) {
 			}
 		}
 
-		if(!CN::equalsZero(ptr->e[2].w)) {
-			const fp tmp1 = prob * CN::mag2(ptr->e[2].w);
+		if(!ptr->e[1].w.approximatelyZero()) {
+			const auto tmp1 = prob * dd::ComplexNumbers::mag2(ptr->e[1].w);
 
-			if(visited_nodes2.find(ptr->e[2].p) != visited_nodes2.end()) {
-				probsMone[ptr->e[2].p] = probsMone[ptr->e[2].p] + tmp1;
+			if(visited_nodes2.find(ptr->e[1].p) != visited_nodes2.end()) {
+				probsMone[ptr->e[1].p] = probsMone[ptr->e[1].p] + tmp1;
 			} else {
-				probsMone[ptr->e[2].p] = tmp1;
-				visited_nodes2.insert(ptr->e[2].p);
-				q.push(ptr->e[2].p);
+				probsMone[ptr->e[1].p] = tmp1;
+				visited_nodes2.insert(ptr->e[1].p);
+				q.push(ptr->e[1].p);
 			}
 		}
 	}
 
-	fp pzero{0}, pone{0};
+	dd::fp pzero{0}, pone{0};
 	while(!q.empty()) {
-		dd::NodePtr ptr = q.front();
+		auto ptr = q.front();
 		q.pop();
 
-		if(!CN::equalsZero(ptr->e[0].w)) {
-			pzero += probsMone[ptr] * CN::mag2(ptr->e[0].w);
+		if(!ptr->e[0].w.approximatelyZero()) {
+			pzero += probsMone[ptr] * dd::ComplexNumbers::mag2(ptr->e[0].w);
 		}
 
-		if(!CN::equalsZero(ptr->e[2].w)) {
-			pone += probsMone[ptr] * CN::mag2(ptr->e[2].w);
+		if(!ptr->e[1].w.approximatelyZero()) {
+			pone += probsMone[ptr] * dd::ComplexNumbers::mag2(ptr->e[1].w);
 		}
 	}
 
 	return {pzero, pone};
 }
 
-void QDDVis::measureQubit(unsigned short qubitIdx, bool measureOne, fp pzero, fp pone) {
-	dd::Matrix2x2 measure_m{
-			{{0,0}, {0,0}},
-			{{0,0}, {0,0}}
-	};
+void QDDVis::measureQubit(dd::Qubit qubitIdx, bool measureOne, dd::fp pzero, dd::fp pone) {
+	dd::GateMatrix measure_m{{{0,0}, {0,0},{0,0}, {0,0}}};
 
-	fp norm_factor;
+	dd::fp norm_factor{};
 
 	if(!measureOne) {
-		measure_m[0][0] = {1,0};
+		measure_m[0] = {1,0};
 		norm_factor = pzero;
 	} else {
-		measure_m[1][1] = {1, 0};
+		measure_m[3] = {1, 0};
 		norm_factor = pone;
 	}
-	line.fill(-1);
-	line[qubitIdx] = 2;
-	dd::Edge m_gate = dd->makeGateDD(measure_m, qc->getNqubits(), line.data());
-	line[qubitIdx] = -1;
+	dd::Edge m_gate = dd->makeGateDD(measure_m, qc->getNqubits(), qubitIdx);
 	dd::Edge e = dd->multiply(m_gate, sim);
 	dd->decRef(sim);
 
-	dd::Complex c = dd->cn.getCachedComplex(std::sqrt(1.0L/norm_factor), 0);
-	CN::mul(c, e.w, c);
+	auto c = dd->cn.getCached(std::sqrt(1.0/norm_factor), 0);
+	dd::ComplexNumbers::mul(c, e.w, c);
 	e.w = dd->cn.lookup(c);
 	dd->incRef(e);
 	sim = e;
 }
 
 void QDDVis::calculateAmplitudes(Napi::Float32Array& amplitudes) {
-	std::bitset<dd::MAXN> path{};
-	for(unsigned long long i = 0; i < 1ull << qc->getNqubits(); ++i) {
-		auto result = getStateVectorAmplitude(sim, path);
+	for(std::size_t i = 0; i < 1ull << qc->getNqubits(); ++i) {
+		auto result = dd->getValueByPath(sim, i);
 		amplitudes[2*i] = static_cast<float>(result.r);
 		amplitudes[2*i+1] = static_cast<float>(result.i);
-		nextPath(path);
 	}
 }
 
@@ -277,7 +260,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     }
 
     //the first parameter (algorithm)
-    Napi::String arg = info[0].As<Napi::String>();
+    auto arg = info[0].As<Napi::String>();
     const std::string algo = arg.Utf8Value();
     std::stringstream ss{algo};
 
@@ -304,8 +287,11 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     atEnd = false;
     iterator = qc->begin();
     position = 0;
+    // resize the DD package so that it can hold as many variables
+    dd->resize(qc->getNqubits());
+    measurements.resize(qc->getNqubits());
 
-	state.Set("numOfOperations", Napi::Number::New(env, qc->getNops()));
+	state.Set("numOfOperations", Napi::Number::New(env, static_cast<double>(qc->getNops())));
 
     //the third parameter (how many operations to apply immediately)
     unsigned int opNum = (unsigned int)info[2].As<Napi::Number>();    //at this point opNum may be bigger than the number of operations the algorithm has!
@@ -316,7 +302,6 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         if(process) {
             if(sim.p != nullptr) {
                 dd->decRef(sim);
-//                std::cout << "dereffed old sim (process)" << std::endl;
             }
             sim = dd->makeZeroState(qc->getNqubits());
             dd->incRef(sim);
@@ -344,7 +329,6 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     } else {    //sim needs to be initialized in some cases
         if(sim.p != nullptr) {
             dd->decRef(sim);
-//            std::cout << "dereffed old sim" << std::endl;
         }
         sim = dd->makeZeroState(qc->getNqubits());
         dd->incRef(sim);
@@ -380,7 +364,7 @@ Napi::Value QDDVis::ToStart(const Napi::CallbackInfo& info) {
             // would already have returned
             iterator = qc->begin();
             position = 0;
-            measurements.reset();
+            std::fill(measurements.begin(), measurements.end(), false);
 
             return Napi::Boolean::New(env, true);   //something changed
 
@@ -484,15 +468,14 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
 		    auto totalResets = qubits.size();
 		    auto qubitToReset = qubits.front();
 		    auto qubitsReset = 0;
-		    fp pzero, pone;
-		    std::tie(pzero, pone) = getProbabilities(qubitToReset);
+		    auto [pzero, pone] = getProbabilities(qubitToReset);
 
 		    Napi::Object reset = Napi::Object::New(env);
 		    reset.Set("qubit", Napi::Number::New(env, qubitToReset));
 		    reset.Set("pzero", Napi::Number::New(env, pzero));
 		    reset.Set("pone", Napi::Number::New(env, pone));
 		    reset.Set("count", Napi::Number::New(env, qubitsReset));
-		    reset.Set("total", Napi::Number::New(env, totalResets));
+		    reset.Set("total", Napi::Number::New(env, static_cast<double>(totalResets)));
 		    state.Set("parameter", reset);
 		    state.Set("conductIrreversibleOperation", Napi::Boolean::New(env, true));
 
@@ -503,22 +486,21 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
 		    }
 	    } else if ((*iterator)->getType() == qc::Measure) {
 
-			auto qubits = (*iterator)->getControls();
-			auto cbits = (*iterator)->getTargets();
+			auto qubits = (*iterator)->getTargets();
+			auto cbits = dynamic_cast<qc::NonUnitaryOperation*>(iterator->get())->getClassics();
 			auto totalMeasurements = qubits.size();
-			auto qubitToMeasure = qubits.front().qubit;
+			auto qubitToMeasure = qubits.front();
 			auto cbitToStore = cbits.front();
 			auto qubitsMeasured = 0;
-			fp pzero, pone;
-			std::tie(pzero, pone) = getProbabilities(qubitToMeasure);
+			auto [pzero, pone] = getProbabilities(qubitToMeasure);
 
 		    Napi::Object measurement = Napi::Object::New(env);
 		    measurement.Set("qubit", Napi::Number::New(env, qubitToMeasure));
 		    measurement.Set("pzero", Napi::Number::New(env, pzero));
 		    measurement.Set("pone", Napi::Number::New(env, pone));
-		    measurement.Set("cbit", Napi::Number::New(env, cbitToStore));
+		    measurement.Set("cbit", Napi::Number::New(env, static_cast<double>(cbitToStore)));
 		    measurement.Set("count", Napi::Number::New(env, qubitsMeasured));
-		    measurement.Set("total", Napi::Number::New(env, totalMeasurements));
+		    measurement.Set("total", Napi::Number::New(env, static_cast<double>(totalMeasurements)));
 		    state.Set("parameter", measurement);
 		    state.Set("conductIrreversibleOperation", Napi::Boolean::New(env, true));
 
@@ -587,7 +569,7 @@ Napi::Value QDDVis::ToEnd(const Napi::CallbackInfo& info) {
 			        stepForward(); //process the next operation
 		        }
 	        }
-	        state.Set("nops", Napi::Number::New(env, nops));
+	        state.Set("nops", Napi::Number::New(env, static_cast<double>(nops)));
 	        return state;
         } catch(std::exception& e) {
             std::cout << "Exception while going to the end!" << std::endl;
@@ -657,7 +639,7 @@ Napi::Value QDDVis::ToLine(const Napi::CallbackInfo &info) {
 		        atEnd = false;
 		        iterator = qc->begin();
 		        position = 0;
-		        measurements.reset();
+		        std::fill(measurements.begin(), measurements.end(), false);
 		        if ((*iterator)->getType() == qc::Measure || (*iterator)->getType() == qc::Reset) {
 			        state.Set("nextIsIrreversible", Napi::Boolean::New(env, true));
 		        }
@@ -689,7 +671,7 @@ Napi::Value QDDVis::ToLine(const Napi::CallbackInfo &info) {
 		    state.Set("changed", Napi::Boolean::New(env, true));
 		    state.Set("noGoingBack", Napi::Boolean::New(env, false));
 	    }
-	    state.Set("nops", Napi::Number::New(env, nops));
+	    state.Set("nops", Napi::Number::New(env, static_cast<double>(nops)));
 
         atInitial = false;
         atEnd = false;
@@ -727,7 +709,7 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
 
     std::stringstream ss{};
     try {
-        dd::toDot(sim, ss, true, this->showColors, this->showEdgeLabels, this->showClassic);
+        dd::toDot(sim, ss, this->showColors, this->showEdgeLabels, this->showClassic);
         std::string str = ss.str();
         state.Set("dot", Napi::String::New(env, str));
 	    state.Set("amplitudes", Napi::Float32Array::New(env, 0));
@@ -849,7 +831,7 @@ Napi::Value QDDVis::ConductIrreversibleOperation(const Napi::CallbackInfo& info)
 		Napi::TypeError::New(env, "total: Number expected!").ThrowAsJavaScriptException();
 	}
 
-	auto qubit = obj.Get("qubit").As<Napi::Number>().Int64Value();
+	auto qubit = static_cast<dd::Qubit>(obj.Get("qubit").As<Napi::Number>().Int64Value());
 	auto pzero = obj.Get("pzero").As<Napi::Number>().DoubleValue();
 	auto pone = obj.Get("pone").As<Napi::Number>().DoubleValue();
 	auto classicalValueToMeasure = obj.Get("classicalValueToMeasure").As<Napi::String>().Utf8Value();
@@ -875,7 +857,7 @@ Napi::Value QDDVis::ConductIrreversibleOperation(const Napi::CallbackInfo& info)
 		} else if (classicalValueToMeasure == "1") {
 			measureQubit(qubit, true, pzero, pone);
 			//apply x operation to reset to |0>
-			auto tmp = dd->multiply(qc::StandardOperation(qc->getNqubits(), qubit, qc::X).getDD(dd, line), sim);
+			auto tmp = dd->multiply(qc::StandardOperation(qc->getNqubits(), qubit, qc::X).getDD(dd), sim);
 			dd->incRef(tmp);
 			dd->decRef(sim);
 			sim = tmp;
@@ -890,10 +872,10 @@ Napi::Value QDDVis::ConductIrreversibleOperation(const Napi::CallbackInfo& info)
 		if (classicalValueToMeasure != "none") {
 			bool measureOne = (classicalValueToMeasure == "1");
 			measureQubit(qubit, measureOne, pzero, pone);
-			measurements.set(cbit, measureOne);
+			measurements[cbit] = measureOne;
 		}
 		cbit++;
-		parameter.Set("cbit", Napi::Number::New(env, cbit));
+		parameter.Set("cbit", Napi::Number::New(env, static_cast<double>(cbit)));
 	}
 
 	count++;
@@ -909,25 +891,9 @@ Napi::Value QDDVis::ConductIrreversibleOperation(const Napi::CallbackInfo& info)
 	parameter.Set("qubit", Napi::Number::New(env, qubit));
 	parameter.Set("pzero", Napi::Number::New(env, pzero));
 	parameter.Set("pone", Napi::Number::New(env, pone));
-	parameter.Set("count", Napi::Number::New(env, count));
-	parameter.Set("total", Napi::Number::New(env, total));
+	parameter.Set("count", Napi::Number::New(env, static_cast<double>(count)));
+	parameter.Set("total", Napi::Number::New(env, static_cast<double>(total)));
 	state.Set("parameter", parameter);
 
 	return state;
-}
-
-dd::ComplexValue QDDVis::getStateVectorAmplitude(dd::Edge e, const std::bitset<dd::MAXN>& path) const {
-	if(dd::Package::isTerminal(e)) {
-		return {dd::ComplexNumbers::val(e.w.r), dd::ComplexNumbers::val(e.w.i)};
-	}
-
-	auto c = dd->cn.getTempCachedComplex(1, 0);
-	do {
-		dd::ComplexNumbers::mul(c, c, e.w);
-		unsigned short choice = path[e.p->v];
-		e = e.p->e[2*choice];
-	} while(!dd::Package::isTerminal(e));
-	dd::ComplexNumbers::mul(c, c, e.w);
-
-	return {dd::ComplexNumbers::val(c.r), dd::ComplexNumbers::val(c.i)};
 }

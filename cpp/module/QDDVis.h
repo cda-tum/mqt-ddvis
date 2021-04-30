@@ -1,13 +1,19 @@
+/*
+ * This file is part of JKQ DDVis library which is released under the MIT license.
+ * See file README.md or go to http://iic.jku.at/eda/research/quantum/ for more information.
+ */
+
 #ifndef QDDVIS_H
 #define QDDVIS_H
 
 #include <napi.h>
 #include <string>
+#include <iostream>
+#include <string>
+#include <memory>
+#include <queue>
 
-#include "operations/Operation.hpp"
 #include "QuantumComputation.hpp"
-#include "DDcomplex.h"
-#include "DDpackage.h"
 
 class QDDVis : public Napi::ObjectWrap<QDDVis> {
     public:
@@ -15,25 +21,14 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
         explicit QDDVis(const Napi::CallbackInfo& info);
 
     private:
-        static Napi::FunctionReference constructor;
+        static inline Napi::FunctionReference constructor;
 
         static constexpr unsigned short MAX_QUBITS_FOR_AMPLITUDES = 9;
         //"private" methods
         void stepForward();
         void stepBack();
-        std::pair<fp, fp> getProbabilities(unsigned short qubitIdx);
-        void measureQubit(unsigned short qubitIdx, bool measureOne, fp pzero, fp pone);
-		template<size_t N>
-		static void nextPath(std::bitset<N>& path) {
-			for (size_t i=0; i<N; ++i) {
-				if (path[i] == 0) {
-					path[i] = 1;
-					break;
-				}
-				path[i] = 0;
-			}
-		}
-        dd::ComplexValue getStateVectorAmplitude(dd::Edge e, const std::bitset<dd::MAXN>& path) const;
+        [[nodiscard]] std::pair<dd::fp, dd::fp> getProbabilities(dd::Qubit qubitIdx) const;
+        void measureQubit(dd::Qubit qubitIdx, bool measureOne, dd::fp pzero, dd::fp pone);
         void calculateAmplitudes(Napi::Float32Array& amplitudes);
 
         //exported ("public") methods       - return type must be Napi::Value or void!
@@ -53,13 +48,12 @@ class QDDVis : public Napi::ObjectWrap<QDDVis> {
         //fields
         std::unique_ptr<dd::Package> dd;
         std::unique_ptr<qc::QuantumComputation> qc;
-        dd::Edge sim{};
+        qc::VectorDD sim{};
 
         std::vector<std::unique_ptr<qc::Operation>>::iterator iterator{};
         unsigned int position = 0;  //current position of the iterator
 
-        std::array<short, qc::MAX_QUBITS> line {};
-        std::bitset<qc::MAX_QUBITS> measurements{};
+        std::vector<bool> measurements{};
         bool ready = false;     //true if a valid algorithm is imported, false otherwise
         bool atInitial = true; //whether we currently visualize the initial state or not
         bool atEnd = false; // whether we currently visualize the end of the given circuit

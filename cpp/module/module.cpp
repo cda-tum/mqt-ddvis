@@ -1,3 +1,7 @@
+/*
+ * This file is part of JKQ DDVis library which is released under the MIT license.
+ * See file README.md or go to http://iic.jku.at/eda/research/quantum/ for more information.
+ */
 
 #include <napi.h>
 #include "QDDVis.h"
@@ -7,7 +11,6 @@ Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     exports = QDDVis::Init(env, exports);
     exports = QDDVer::Init(env, exports);
     return exports;
-  //return QDDVis::Init(env, exports);
 }
 
 NODE_API_MODULE(addon, InitAll)

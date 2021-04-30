@@ -1,21 +1,10 @@
-//
-// Created by michael on 03.07.20.
-//
-
-
-#include <iostream>
-#include <string>
-#include <memory>
-
-#include "operations/StandardOperation.hpp"
-#include "QuantumComputation.hpp"
-#include "algorithms/GoogleRandomCircuitSampling.hpp"
-#include "DDexport.h"
-#include "DDpackage.h"
+/*
+ * This file is part of JKQ DDVis library which is released under the MIT license.
+ * See file README.md or go to http://iic.jku.at/eda/research/quantum/ for more information.
+ */
 
 #include "QDDVer.h"
-
-Napi::FunctionReference QDDVer::constructor;
+#include "dd/Export.hpp"
 
 Napi::Object QDDVer::Init(Napi::Env env, Napi::Object exports) {
     Napi::HandleScope scope(env);
@@ -55,9 +44,7 @@ QDDVer::QDDVer(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVer>(info) 
     Napi::Env env = info.Env();
     Napi::HandleScope scope(env);
 
-    this->dd = std::make_unique<dd::Package>();
-    this->dd->setMode(dd::Matrix);
-    this->line.fill(qc::LINE_DEFAULT);
+    this->dd = std::make_unique<dd::Package>(1);
 
     this->qc1 = std::make_unique<qc::QuantumComputation>();
     this->iterator1 = this->qc1->begin();
@@ -76,7 +63,7 @@ QDDVer::QDDVer(const Napi::CallbackInfo& info) : Napi::ObjectWrap<QDDVer>(info) 
 void QDDVer::stepForward(bool algo1) {
     if(algo1) {
         if(atEnd1) return;   //no further steps possible
-        const dd::Edge currDD = (*iterator1)->getDD(dd, line);    //retrieve the "new" current operation
+        const auto currDD = (*iterator1)->getDD(dd);    //retrieve the "new" current operation
 
         auto temp = dd->multiply(currDD, sim);         //process the current operation by multiplying it with the previous simulation-state
         dd->incRef(temp);
@@ -91,7 +78,7 @@ void QDDVer::stepForward(bool algo1) {
 
     } else {
         if(atEnd2) return;   //no further steps possible
-        const dd::Edge currDD = (*iterator2)->getInverseDD(dd, line);    //retrieve the inverse of the "new" current operation
+        const auto currDD = (*iterator2)->getInverseDD(dd);    //retrieve the inverse of the "new" current operation
 
         auto temp = dd->multiply(sim, currDD);         //process the current operation by multiplying it with the previous simulation-state
         dd->incRef(temp);
@@ -125,7 +112,7 @@ void QDDVer::stepBack(bool algo1) {
         iterator1--; //set iterator back to the desired operation
         position1--;
 
-        const dd::Edge currDD = (*iterator1)->getInverseDD(dd, line); // get the inverse of the current operation
+        const auto currDD = (*iterator1)->getInverseDD(dd); // get the inverse of the current operation
 
         auto temp = dd->multiply(currDD, sim);   //"remove" the current operation by multiplying with its inverse
         dd->incRef(temp);
@@ -144,7 +131,7 @@ void QDDVer::stepBack(bool algo1) {
         iterator2--; //set iterator back to the desired operation
         position2--;
 
-        const dd::Edge currDD = (*iterator2)->getDD(dd, line); // get the current operation
+        const auto currDD = (*iterator2)->getDD(dd); // get the current operation
 
         auto temp = dd->multiply(sim, currDD);   //"remove" the current operation by multiplying with its inverse
         dd->incRef(temp);
@@ -302,23 +289,23 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
     }
 
     //the first parameter (algorithm)
-    Napi::String arg = info[0].As<Napi::String>();
+    auto arg = info[0].As<Napi::String>();
     const std::string algo = arg.Utf8Value();
     std::stringstream ss{algo};
 
     //the third parameter (how many operations to apply immediately)
-    unsigned int opNum = (unsigned int)info[2].As<Napi::Number>();
+    unsigned int opNum = static_cast<unsigned int>(info[2].As<Napi::Number>());
     //at this point opNum might be bigger than the number of operations the algorithm has!
 
     //the fourth parameter tells us to process iterated operations or not
-    const bool process = (bool)info[3].As<Napi::Boolean>();
+    const bool process = static_cast<bool>(info[3].As<Napi::Boolean>());
 
     //the fifth parameter (algo1)
-    bool algo1 = (bool)info[4].As<Napi::Boolean>();
+    bool algo1 = static_cast<bool>(info[4].As<Napi::Boolean>());
 
     try {
         //second parameter describes the format of the algorithm
-        const unsigned int formatCode = (unsigned int)info[1].As<Napi::Number>();
+        const unsigned int formatCode = static_cast<unsigned int>(info[1].As<Napi::Number>());
         qc::Format format;
         if(formatCode == 1)         format = qc::OpenQASM;
         else if(formatCode == 2)    format = qc::Real;
@@ -329,7 +316,6 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
 
         if(algo1)   {
             qc1->import(ss, format);
-
             //check if the number of qubits is the same for both algorithms
             if(ready2 && qc1->getNqubits() != qc2->getNqubits()) {
                 //algo2 is already loaded (because ready2 is true), so we reset algo1
@@ -340,7 +326,6 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
                 Napi::Error::New(env, msg.str()).ThrowAsJavaScriptException();
                 return state;
             }
-
         } else {
             qc2->import(ss, format);
 
@@ -355,7 +340,8 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
                 return state;
             }
         }
-
+        // resize the DD package so that it can manage the current circuit size
+        dd->resize(qc1->getNqubits());
     } catch(std::exception& e) {
         std::cout << "Exception while loading the algorithm: " << e.what() << std::endl;
         std::string err(e.what());
@@ -423,8 +409,8 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
         }
     }
 
-    if(algo1)   state.Set("numOfOperations", Napi::Number::New(env, qc1->getNops()));
-    else        state.Set("numOfOperations", Napi::Number::New(env, qc2->getNops()));
+    if(algo1)   state.Set("numOfOperations", Napi::Number::New(env, static_cast<double>(qc1->getNops())));
+    else        state.Set("numOfOperations", Napi::Number::New(env, static_cast<double>(qc2->getNops())));
     return state;
 }
 
@@ -653,12 +639,9 @@ Napi::Value QDDVer::ToEnd(const Napi::CallbackInfo& info) {
         if(!ready1) {
             Napi::Error::New(env, "No algorithm loaded as algo1!").ThrowAsJavaScriptException();
             return state;
-        } else if (qc1->empty()) {
+        } else if (qc1->empty() || atEnd1) {
             return state;
-        } else if(atEnd1) {
-            return state; //nothing changed
         }
-
         atInitial1 = false;  //now we are definitely not at the beginning (if there were no operation, so atInitial
         // and atEnd could be true at the same time, if(qc-empty) would already have returned
 
@@ -666,12 +649,9 @@ Napi::Value QDDVer::ToEnd(const Napi::CallbackInfo& info) {
         if(!ready2) {
             Napi::Error::New(env, "No algorithm loaded as algo2!").ThrowAsJavaScriptException();
             return state;
-        } else if (qc2->empty()) {
+        } else if (qc2->empty() || atEnd2) {
             return state;
-        } else if(atEnd2) {
-            return state; //nothing changed
         }
-
         atInitial2 = false;  //now we are definitely not at the beginning (if there were no operation, so atInitial
                             // and atEnd could be true at the same time, if(qc-empty) would already have returned
     }
@@ -695,7 +675,7 @@ Napi::Value QDDVer::ToEnd(const Napi::CallbackInfo& info) {
 			    stepForward(algo1); //process the next operation
 		    }
 	    }
-	    state.Set("nops", Napi::Number::New(env, nops));
+	    state.Set("nops", Napi::Number::New(env, static_cast<double>(nops)));
         return state;
 
     } catch(std::exception& e) {
@@ -798,7 +778,7 @@ Napi::Value QDDVer::GetDD(const Napi::CallbackInfo& info) {
 
     std::stringstream ss{};
     try {
-        dd::toDot(sim, ss, false, this->showColors, this->showEdgeLabels, this->showClassic);
+        dd::toDot(sim, ss, this->showColors, this->showEdgeLabels, this->showClassic);
         std::string str = ss.str();
 	    state.Set("dot", Napi::String::New(env, str));
 	    state.Set("amplitudes", Napi::Float32Array::New(env, 0));

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15...3.19)
 
 # detailed description
 project(DDVis
-        VERSION 1.2.2
+        VERSION 1.3.0
         DESCRIPTION "DDVis - A JKQ Tool for Visualizing Decision Diagrams for Quantum Computing"
         LANGUAGES CXX)
 
