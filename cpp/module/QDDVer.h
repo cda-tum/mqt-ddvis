@@ -1,17 +1,18 @@
-//
-// Created by michael on 03.07.20.
-//
+/*
+ * This file is part of JKQ DDVis library which is released under the MIT license.
+ * See file README.md or go to http://iic.jku.at/eda/research/quantum/ for more information.
+ */
 
 #ifndef QDD_VIS_QDDVER_H
 #define QDD_VIS_QDDVER_H
 
 #include <napi.h>
 #include <string>
+#include <iostream>
+#include <string>
+#include <memory>
 
-#include "operations/Operation.hpp"
 #include "QuantumComputation.hpp"
-#include "DDcomplex.h"
-#include "DDpackage.h"
 
 class QDDVer : public Napi::ObjectWrap<QDDVer> {
 public:
@@ -19,14 +20,12 @@ public:
     explicit QDDVer(const Napi::CallbackInfo& info);
 
 private:
-    static Napi::FunctionReference constructor;
+    static inline Napi::FunctionReference constructor;
 
     //"private" methods
     void stepForward(bool algo1);   //whether it is applied on algo1 or algo2
     void stepBack(bool algo1);      //whether it is applied on algo1 or algo2
     void stepToStart(bool algo1);   //whether it is applied on algo1 or algo2
-    //std::pair<fp, fp> getProbabilities(unsigned short qubitIdx);
-    //void measureQubit(unsigned short qubitIdx, bool measureOne, fp pzero, fp pone);
 
     //exported ("public") methods       - return type must be Napi::Value or void!
     Napi::Value GetDD(const Napi::CallbackInfo& info);  //isVector: false
@@ -43,8 +42,7 @@ private:
 
     //fields
     std::unique_ptr<dd::Package> dd;
-    dd::Edge sim{};
-    std::array<short, qc::MAX_QUBITS> line {};
+    qc::MatrixDD sim{};
 
     //options for the DD export
     bool showColors = true;
@@ -66,9 +64,6 @@ private:
     bool ready2 = false;     //true if algo2 is valid
     bool atInitial2 = true; //whether we're currently before the first operation of algo2
     bool atEnd2 = false;    //whether we're currently after the last operation of algo2
-
-
-
 };
 
 #endif //QDD_VIS_QDDVER_H
