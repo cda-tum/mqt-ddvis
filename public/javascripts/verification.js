@@ -409,8 +409,9 @@ function ver_loadExAlgo(algo, format, algo1) {
  * @param colored whether the edges should be colored based on their weight or be black and dotted/thick
  * @param edgeLabels whether the weights should be displayed as labels on the edges or not
  * @param classic whether a node should be a rounded-rectangle or a classical circle
+ * @param polar whether complex numbers should be formatted using polar coordinates
  */
-function ver_updateExportOptions(colored, edgeLabels, classic) {
+function ver_updateExportOptions(colored, edgeLabels, classic, polar) {
     const lastState1 = ver1State;
     const lastState2 = ver2State;
     ver_changeState(STATE_SIMULATING, true);
@@ -427,8 +428,10 @@ function ver_updateExportOptions(colored, edgeLabels, classic) {
     const call = jQuery.ajax({
         type: 'PUT',
         url: 'updateExportOptions',
-        data: { colored: colored, edgeLabels: edgeLabels, classic: classic,
-            updateDD: updateDD, dataKey: dataKey, targetManager: "ver" },
+        data: {
+            colored: colored, edgeLabels: edgeLabels, classic: classic, polar: polar,
+            updateDD: updateDD, dataKey: dataKey, targetManager: "ver"
+        },
         success: (res) => {
             if (res.dot) ver_print(res, callback);
             else callback();

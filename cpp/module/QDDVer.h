@@ -44,9 +44,10 @@ private:
     qc::MatrixDD                 sim{};
 
     //options for the DD export
-    bool showColors     = true;
-    bool showEdgeLabels = true;
-    bool showClassic    = false;
+    bool showColors          = true;
+    bool showEdgeLabels      = true;
+    bool showClassic         = false;
+    bool usePolarCoordinates = true;
 
     std::unique_ptr<qc::QuantumComputation>               qc1;
     std::vector<std::unique_ptr<qc::Operation>>::iterator iterator1{};   //operations of algo1

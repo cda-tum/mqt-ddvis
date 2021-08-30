@@ -790,7 +790,7 @@ Napi::Value QDDVer::GetDD(const Napi::CallbackInfo& info) {
 
     std::stringstream ss{};
     try {
-        dd::toDot(sim, ss, this->showColors, this->showEdgeLabels, this->showClassic);
+        dd::toDot(sim, ss, this->showColors, this->showEdgeLabels, this->showClassic, false, this->usePolarCoordinates);
         std::string str = ss.str();
         state.Set("dot", Napi::String::New(env, str));
         state.Set("amplitudes", Napi::Float32Array::New(env, 0));
@@ -798,7 +798,7 @@ Napi::Value QDDVer::GetDD(const Napi::CallbackInfo& info) {
 
     } catch (std::exception& e) {
         std::cout << "Exception while getting the DD: " << e.what() << std::endl;
-        std::cout << "The values of the Flags are: " << this->showColors << ", " << this->showEdgeLabels << ", " << this->showClassic << std::endl;
+        std::cout << "The values of the Flags are: " << this->showColors << ", " << this->showEdgeLabels << ", " << this->showClassic << ", " << this->usePolarCoordinates << std::endl;
         std::string err = "Invalid getDD()-call! "; // + e.what();
         Napi::Error::New(env, err).ThrowAsJavaScriptException();
         return Napi::String::New(env, "-1");
@@ -813,8 +813,8 @@ Napi::Value QDDVer::GetDD(const Napi::CallbackInfo& info) {
 void QDDVer::UpdateExportOptions(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
     //check if the correct parameters have been passed
-    if (info.Length() != 3) {
-        Napi::RangeError::New(env, "Need 3 (bool, bool, bool) arguments!").ThrowAsJavaScriptException();
+    if (info.Length() != 4) {
+        Napi::RangeError::New(env, "Need 4 (bool, bool, bool, bool) arguments!").ThrowAsJavaScriptException();
         return;
     }
     if (!info[0].IsBoolean()) { //colored
@@ -829,10 +829,15 @@ void QDDVer::UpdateExportOptions(const Napi::CallbackInfo& info) {
         Napi::TypeError::New(env, "arg3: Boolean expected!").ThrowAsJavaScriptException();
         return;
     }
+    if (!info[3].IsBoolean()) { //classic
+        Napi::TypeError::New(env, "arg4: Boolean expected!").ThrowAsJavaScriptException();
+        return;
+    }
 
-    this->showColors     = (bool)info[0].As<Napi::Boolean>();
-    this->showEdgeLabels = (bool)info[1].As<Napi::Boolean>();
-    this->showClassic    = (bool)info[2].As<Napi::Boolean>();
+    this->showColors          = (bool)info[0].As<Napi::Boolean>();
+    this->showEdgeLabels      = (bool)info[1].As<Napi::Boolean>();
+    this->showClassic         = (bool)info[2].As<Napi::Boolean>();
+    this->usePolarCoordinates = (bool)info[3].As<Napi::Boolean>();
 }
 
 Napi::Value QDDVer::GetExportOptions(const Napi::CallbackInfo& info) {
@@ -842,6 +847,7 @@ Napi::Value QDDVer::GetExportOptions(const Napi::CallbackInfo& info) {
     state.Set("colored", this->showColors);
     state.Set("edgeLabels", this->showEdgeLabels);
     state.Set("classic", this->showClassic);
+    state.Set("polar", this->usePolarCoordinates);
     return state;
 }
 

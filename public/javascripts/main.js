@@ -93,7 +93,7 @@ function onTabChange(newTab) {
                     cb_colored.checked = res.colored ? 'checked' : '';
                     cb_edge_labels.checked = res.edgeLabels ? 'checked' : '';
                     cb_classic.checked = res.classic ? 'checked' : '';
-
+                    cb_polar.checked = res.polar ? 'checked' : '';
                 } else {
                     //endLoadingAnimation();
                     //changeState(STATE_LOADED_START);
@@ -114,8 +114,8 @@ function onTabChange(newTab) {
                     reset_btn.textContent = "Reset Algorithm";
                     reset_btn.style.display = "block";
 
-                    enableElementsWithID([ "cb_colored", "cb_edge_labels", "cb_classic" ]);
-                    disableElementsWithID([ "radio_algo1", "radio_algo2" ]);
+            enableElementsWithID(["cb_colored", "cb_edge_labels", "cb_classic", "cb_polar"]);
+            disableElementsWithID(["radio_algo1", "radio_algo2"]);
                     setExportOptions("sim");
                     break;
 
@@ -127,7 +127,7 @@ function onTabChange(newTab) {
 
                     enableElementsWithID([
                         "radio_algo1", "radio_algo2",
-                        "cb_colored", "cb_edge_labels", "cb_classic"
+                        "cb_colored", "cb_edge_labels", "cb_classic", "cb_polar"
                     ]);
                     setExportOptions("ver");
                     break;
@@ -138,7 +138,7 @@ function onTabChange(newTab) {
 
                     disableElementsWithID([
                         "radio_algo1", "radio_algo2",
-                        "cb_colored", "cb_edge_labels", "cb_classic"
+                        "cb_colored", "cb_edge_labels", "cb_classic", "cb_polar"
                     ]);
     }
 
@@ -326,13 +326,14 @@ function updateExportOptions() {
     const colored = cb_colored.checked;
     const edgeLabels = cb_edge_labels.checked;
     const classic = cb_classic.checked;
+    const polar = cb_polar.checked;
     //console.log(colored + ", " + edgeLabels + ", " + classic);
 
     if(curTab === SIM_TAB) {
-        sim_updateExportOptions(colored, edgeLabels, classic);
+        sim_updateExportOptions(colored, edgeLabels, classic, polar);
 
     } else if(curTab === VER_TAB) {
-        ver_updateExportOptions(colored, edgeLabels, classic);
+        ver_updateExportOptions(colored, edgeLabels, classic, polar);
     }
 }
 
@@ -348,7 +349,7 @@ const STATE_LOADED_EMPTY = 6;       //can't navigate
 
 const _generalElements = [
     "sim_tab", "ver_tab",
-    "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic"
+    "stepDuration", "cb_colored", "cb_edge_labels", "cb_classic", "cb_polar"
 ];
 function generalChangeState(state) {
     switch (state) {
@@ -364,7 +365,7 @@ function generalChangeState(state) {
             for(let i = 0; i < ea_enable.length; i++) ea_enable[i].disabled = false;
 
             enableElementsWithID(_generalElements);
-            if(curTab === START_TAB) disableElementsWithID([ "cb_colored", "cb_edge_labels", "cb_classic" ]);
+            if (curTab === START_TAB) disableElementsWithID(["cb_colored", "cb_edge_labels", "cb_classic", "cb_polar"]);
             break;
 
         case STATE_SIMULATING:

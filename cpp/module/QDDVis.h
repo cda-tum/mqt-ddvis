@@ -58,9 +58,10 @@ private:
     bool              atEnd     = false; // whether we currently visualize the end of the given circuit
 
     //options for the DD export
-    bool showColors     = true;
-    bool showEdgeLabels = true;
-    bool showClassic    = false;
+    bool showColors          = true;
+    bool showEdgeLabels      = true;
+    bool showClassic         = false;
+    bool usePolarCoordinates = true;
 };
 
 #endif
