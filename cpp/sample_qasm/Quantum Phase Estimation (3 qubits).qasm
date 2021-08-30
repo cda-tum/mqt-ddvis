@@ -38,6 +38,4 @@ cp(-pi/2) q[2], q[1];
 h q[2];
 
 // measure result
-measure q[2] -> c[2];
-measure q[1] -> c[1];
-measure q[0] -> c[0];
+measure q -> c;
