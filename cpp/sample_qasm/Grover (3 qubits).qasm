@@ -8,11 +8,10 @@ creg c[2];
 // initialization
 h q;
 x flag;
-h flag;
 barrier q;
 
 // oracle: mark target state |11>
-ccx q[0], q[1], flag;
+ccz q[0], q[1], flag;
 barrier q;
 
 // diffusion

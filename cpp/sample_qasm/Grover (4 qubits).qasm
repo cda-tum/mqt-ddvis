@@ -3,7 +3,7 @@ include "qelib1.inc";
 
 gate oracle q0, q1, q2, flag {
     // mark target state |111>
-    mcx q0, q1, q2, flag;
+    mcphase(pi) q0, q1, q2, flag;
 }
 
 gate diffusion q0, q1, q2 {
@@ -23,7 +23,6 @@ creg c[3];
 // initialization
 h q;
 x flag;
-h flag;
 barrier q;
 
 oracle q[0], q[1], q[2], flag;
