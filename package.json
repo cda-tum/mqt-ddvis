@@ -4,7 +4,9 @@
   "description": "JKQ DDVis - A JKQ Tool for Visualizing Decision Diagrams for Quantum Computing",
   "main": "server.js",
   "scripts": {
-    "run": "cmake-js compile && node ./bin/www"
+    "build": "cmake-js compile --config Release --CDCMAKE_BUILD_PARALLEL_LEVEL=4",
+    "prerun": "npm run build",
+    "run": "node ./bin/www"
   },
   "repository": {
     "type": "git",
