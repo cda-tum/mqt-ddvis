@@ -3,9 +3,10 @@
  * See file README.md or go to http://iic.jku.at/eda/research/quantum/ for more information.
  */
 
-#include <napi.h>
-#include "QDDVis.h"
 #include "QDDVer.h"
+#include "QDDVis.h"
+
+#include <napi.h>
 
 Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     exports = QDDVis::Init(env, exports);

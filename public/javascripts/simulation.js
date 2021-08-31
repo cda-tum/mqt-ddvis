@@ -706,7 +706,7 @@ function formatAmplitude(num) {
 
 function formatPhase(num) {
     // set tolerance for detecting fraction
-    const maxDenominator = 128;
+    const maxDenominator = 1024;
     // transform to range [0, 2pi)
     var transform = (num+2*Math.PI) % (2*Math.PI);
     var numbypi = transform / Math.PI;
@@ -853,8 +853,9 @@ function plotAmplitudes(amplitudes) {
  * @param colored whether the edges should be colored based on their weight or be black and dotted/thick
  * @param edgeLabels whether the weights should be displayed as labels on the edges or not
  * @param classic whether a node should be a rounded-rectangle or a classical circle
+ * @param polar whether complex numbers should be formatted using polar coordinates
  */
-function sim_updateExportOptions(colored, edgeLabels, classic) {
+function sim_updateExportOptions(colored, edgeLabels, classic, polar) {
     const lastState = simState;
     const disablePrev = document.getElementById("prev").disabled;
     const disableToEnd = document.getElementById("toEnd").disabled;
@@ -865,7 +866,7 @@ function sim_updateExportOptions(colored, edgeLabels, classic) {
     const call = jQuery.ajax({
         type: 'PUT',
         url: 'updateExportOptions',
-        data: { colored: colored, edgeLabels: edgeLabels, classic: classic, updateDD: !algoArea.emptyAlgo, dataKey: dataKey },
+        data: {colored: colored, edgeLabels: edgeLabels, classic: classic, polar: polar, updateDD: !algoArea.emptyAlgo, dataKey: dataKey},
         success: (res) => {
             if (res.dot) {
                 print(res, () => {

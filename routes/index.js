@@ -113,9 +113,10 @@ router.put('/updateExportOptions', (req, res) => {
         const showColored = req.body.colored === "true";
         const showEdgeLabels = req.body.edgeLabels === "true";
         const showClassic = req.body.classic === "true";
+        const usePolarCoordinates = req.body.polar === "true";
         const updateDD = req.body.updateDD === "true";
 
-        vis.updateExportOptions(showColored, showEdgeLabels, showClassic);
+        vis.updateExportOptions(showColored, showEdgeLabels, showClassic, usePolarCoordinates);
 
         if(vis.isReady() && updateDD) _sendDD(res, vis.getDD());
         else res.status(200).end(); //end the call without sending data
