@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.15...3.19)
 # detailed description
 project(DDVis
         VERSION 1.4.0
-        DESCRIPTION "DDVis - A JKQ Tool for Visualizing Decision Diagrams for Quantum Computing"
+        DESCRIPTION "MQT DDVis - A Tool for Visualizing Decision Diagrams for Quantum Computing"
         LANGUAGES CXX)
 
 # useful in IDEs
@@ -48,7 +48,7 @@ set(GENERATE_POSITION_INDEPENDENT_CODE ON)
 add_subdirectory(cpp/qfr)
 
 # link the qfr library. this automatically links the DDPackage library and forwards the include paths
-target_link_libraries(${PROJECT_NAME} PRIVATE JKQ::qfr)
+target_link_libraries(${PROJECT_NAME} PRIVATE MQT::qfr)
 
 # check if interprocedural optimization (LTO) is supported
 include(CheckIPOSupported)

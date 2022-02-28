@@ -19,7 +19,7 @@
 <!-- A short description of this tab -->
 <h2>Representation of Quantum Functionality and Verification of Quantum Circuits using Decision Diagrams</h2>
 <p>
-    In the following we briefly describe how to construct a decision diagram representation of the functionality of a quantum circuit and how to check the equivalence of two circuits with the JKQ DDVis tool.
+    In the following we briefly describe how to construct a decision diagram representation of the functionality of a quantum circuit and how to check the equivalence of two circuits with the MQT DDVis tool.
     Note that a detailed description of the method itself (including links to the corresponding papers) is available at <a href="https://iic.jku.at/eda/research/quantum_verification">[this page]</a>.
 </p>
 <p>
@@ -64,7 +64,7 @@
 <p>
     Once a valid circuit has been entered in each of the Algorithm boxes, their equivalence can be checked by successively applying operations from both circuits (using the corresponding →/↠ controls) and checking whether the final result resembles the identity.
 </p>
-<h3>Special operations and restrictions of JKQ DDVis</h3>
+<h3>Special operations and restrictions of MQT DDVis</h3>
 <p>
     <b>Barrier</b> statements (e.g., <i>barrier q;</i>) can be used as breakpoints when stepping forward with <b>↠</b>.
 </p>
@@ -72,16 +72,16 @@
     <b>Measurement</b>, <b>Reset</b>, and <b>classically-controlled</b> operations are currently not supported due to their non-unitary nature. Execution may proceed until the first non-unitary operation.
 </p>
 <p>
-    When verifying two circuits, JKQ DDVis expects both circuits to have the <b>same number of qubits and the same variable order</b>. If you want to verify circuits using different numbers of ancillary and/or garbage qubits and/or different variable orderings, you can check out our fully-fledged equivalence checking tool <a href="https://github.com/iic-jku/qcec">QCEC</a>.
+    When verifying two circuits, MQT DDVis expects both circuits to have the <b>same number of qubits and the same variable order</b>. If you want to verify circuits using different numbers of ancillary and/or garbage qubits and/or different variable orderings, you can check out our fully-fledged equivalence checking tool <a href="https://github.com/iic-jku/qcec">QCEC</a>.
 </p>
 <!--<p>-->
-<!--    Per default, the "most-significant" qubit is always the topmost node in the resulting decision diagram. JKQ DDVis offers support for changing the variable order of circuits provided in the OpenQASM format via a comment line of the form-->
+<!--    Per default, the "most-significant" qubit is always the topmost node in the resulting decision diagram. MQT DDVis offers support for changing the variable order of circuits provided in the OpenQASM format via a comment line of the form-->
 <!--    $//\;i\;Q_j\;Q_k\;\dots\;Q_l$-->
 <!--    indicating that DD qubit $q_0$ is mapped to circuit qubit $Q_j$, $q_1$ to $Q_k$, etc.-->
 <!--</p>-->
 <h3>Visualization Settings</h3>
 <p>
-    The settings pane on the left side offers several options for changing the look and feel of the JKQ DDVis tool.
+    The settings pane on the left side offers several options for changing the look and feel of the MQT DDVis tool.
 </p>
 <ul>
     <li>

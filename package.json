@@ -1,7 +1,7 @@
 {
   "name": "ddvis",
   "version": "1.4.0",
-  "description": "JKQ DDVis - A JKQ Tool for Visualizing Decision Diagrams for Quantum Computing",
+  "description": "MQT DDVis - A Tool for Visualizing Decision Diagrams for Quantum Computing",
   "main": "server.js",
   "scripts": {
     "build": "cmake-js compile --config Release --CDCMAKE_BUILD_PARALLEL_LEVEL=4",
