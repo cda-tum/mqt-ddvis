@@ -1,5 +1,5 @@
 [submodule "cpp/qfr"]
 	path = cpp/qfr
-	url = https://github.com/iic-jku/qfr.git
-	branch = master
+	url = https://github.com/cda-tum/qfr.git
 	shallow = true
+	branch = main

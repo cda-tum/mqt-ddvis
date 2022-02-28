@@ -1,11 +1,10 @@
-[![JKQ: DDVis](https://img.shields.io/badge/JKQ-DDVis-blue)](https://iic.jku.at/eda/research/quantum_dd/tool/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![toolset: JKQ](https://img.shields.io/badge/toolset-JKQ-blue)](https://github.com/iic-jku/jkq)
 
-# JKQ DDVis
-An installation-free web-tool by the [Institute for Integrated Circuits](http://iic.jku.at/eda/) at the [Johannes Kepler University Linz](https://jku.at) which visualizes quantum decision diagrams and allows to explore their behavior when used in design tasks such as simulation, synthesis, or verification. The tool is hosted online at [https://iic.jku.at/eda/research/quantum_dd/tool/](https://iic.jku.at/eda/research/quantum_dd/tool/).
+# MQT DDVis
+An installation-free web-tool by the [Institute for Integrated Circuits](http://iic.jku.at/eda/) at the [Johannes Kepler University Linz](https://jku.at) which visualizes quantum decision diagrams and allows to explore their behavior when used in design tasks such as simulation, synthesis, or verification. 
+The tool is hosted online at [https://iic.jku.at/eda/research/quantum_dd/tool/](https://iic.jku.at/eda/research/quantum_dd/tool/).
 
-JKQ DDVis allows users to interactively learn how decision diagrams can be used in quantum computing, e.g., to
+MQT DDVis allows users to interactively learn how decision diagrams can be used in quantum computing, e.g., to
 
 - compactly represent quantum states and efficiently simulate quantum circuits,
 - compactly represent the functionality of quantum circuits,
@@ -17,7 +16,7 @@ To run DDVis locally, you will require a C++ compiler, CMake, Node.js, and NPM (
 The following commands will build the app and start it. Open your browser at `localhost:3000` to access the user interface.
 
 ```
-$ git clone --recurse-submodules git@github.com:iic-jku/ddvis.git  
+$ git clone --recurse-submodules git@github.com:cda-tum/ddvis.git  
 $ cd ddvis
 ddvis $ npm install
 ddvis $ npm run-script run
@@ -30,6 +29,6 @@ ddvis $ npm run-script run
 ## Contact
 
 
-If you are interested in our research on either topic, visit [https://iic.jku.at/eda/research/quantum/](https://iic.jku.at/eda/research/quantum/) and check out our open-source [JKQ quantum toolset](https://github.com/iic-jku/jkq). 
+If you are interested in our research on either topic, visit [https://iic.jku.at/eda/research/quantum/](https://iic.jku.at/eda/research/quantum/). 
 
-If you have any questions, feel free to contact us via [iic-quantum@jku.at](mailto:iic-quantum@jku.at) or by creating an issue on [GitHub](https://github.com/iic-jku/ddvis/issues).
+If you have any questions, feel free to contact us via [iic-quantum@jku.at](mailto:iic-quantum@jku.at) or by creating an issue on [GitHub](https://github.com/cda-tum/ddvis/issues).
