@@ -1,4 +1,5 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![CI](https://img.shields.io/github/workflow/status/cda-tum/ddvis/CI?style=flat-square&logo=github)](https://github.com/cda-tum/ddvis/actions/workflows/ci.yml)
 
 # MQT DDVis
 An installation-free web-tool by the [Institute for Integrated Circuits](http://iic.jku.at/eda/) at the [Johannes Kepler University Linz](https://jku.at) which visualizes quantum decision diagrams and allows to explore their behavior when used in design tasks such as simulation, synthesis, or verification. 
@@ -24,7 +25,7 @@ ddvis $ npm run-script run
 > node ./bin/www
 ```
 
-(Tested under Ubuntu 20.04.)
+(Tested under Ubuntu 20.04 with npm installed via `sudo snap install node`.)
 
 ## Contact
 
