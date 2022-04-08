@@ -41,7 +41,7 @@ private:
 
     //fields
     std::unique_ptr<dd::Package<>> dd;
-    qc::MatrixDD                 sim{};
+    qc::MatrixDD                   sim{};
 
     //options for the DD export
     bool showColors          = true;

@@ -60,7 +60,7 @@ QDDVer::QDDVer(const Napi::CallbackInfo& info):
  */
 void QDDVer::stepForward(bool algo1) {
     if (algo1) {
-        if (atEnd1) return;                          //no further steps possible
+        if (atEnd1) return;                                  //no further steps possible
         const auto currDD = dd::getDD(iterator1->get(), dd); //retrieve the "new" current operation
 
         auto temp = dd->multiply(currDD, sim); //process the current operation by multiplying it with the previous simulation-state
@@ -75,7 +75,7 @@ void QDDVer::stepForward(bool algo1) {
         if (iterator1 == qc1->end()) atEnd1 = true;
 
     } else {
-        if (atEnd2) return;                                 //no further steps possible
+        if (atEnd2) return;                                         //no further steps possible
         const auto currDD = dd::getInverseDD(iterator2->get(), dd); //retrieve the inverse of the "new" current operation
 
         auto temp = dd->multiply(sim, currDD); //process the current operation by multiplying it with the previous simulation-state

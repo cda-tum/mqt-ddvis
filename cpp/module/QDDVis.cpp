@@ -808,8 +808,8 @@ Napi::Value QDDVis::ConductIrreversibleOperation(const Napi::CallbackInfo& info)
         } else if (classicalValueToMeasure == "1") {
             measureQubit(qubit, true, pzero, pone);
             //apply x operation to reset to |0>
-            const auto x = qc::StandardOperation(qc->getNqubits(), qubit, qc::X);
-            auto tmp = dd->multiply(dd::getDD(&x, dd), sim);
+            const auto x   = qc::StandardOperation(qc->getNqubits(), qubit, qc::X);
+            auto       tmp = dd->multiply(dd::getDD(&x, dd), sim);
             dd->incRef(tmp);
             dd->decRef(sim);
             sim = tmp;

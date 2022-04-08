@@ -24,10 +24,10 @@ private:
 
     static constexpr unsigned short MAX_QUBITS_FOR_AMPLITUDES = 9;
     //"private" methods
-    void                                    stepForward();
-    void                                    stepBack();
-    void                                    measureQubit(dd::Qubit qubitIdx, bool measureOne, dd::fp pzero, dd::fp pone);
-    void                                    calculateAmplitudes(Napi::Float32Array& amplitudes);
+    void stepForward();
+    void stepBack();
+    void measureQubit(dd::Qubit qubitIdx, bool measureOne, dd::fp pzero, dd::fp pone);
+    void calculateAmplitudes(Napi::Float32Array& amplitudes);
 
     //exported ("public") methods       - return type must be Napi::Value or void!
     Napi::Value Load(const Napi::CallbackInfo& info);
@@ -44,7 +44,7 @@ private:
     Napi::Value ConductIrreversibleOperation(const Napi::CallbackInfo& info);
 
     //fields
-    std::unique_ptr<dd::Package<>>            dd;
+    std::unique_ptr<dd::Package<>>          dd;
     std::unique_ptr<qc::QuantumComputation> qc;
     qc::VectorDD                            sim{};
 
