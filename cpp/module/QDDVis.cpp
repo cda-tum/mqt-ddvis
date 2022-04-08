@@ -133,62 +133,6 @@ void QDDVis::stepBack() {
     dd->garbageCollect();
 }
 
-std::pair<dd::fp, dd::fp> QDDVis::getProbabilities(dd::Qubit qubitIdx) const {
-    std::map<dd::Package::vNode*, dd::fp> probsMone;
-    std::set<dd::Package::vNode*>         visited_nodes2;
-    std::queue<dd::Package::vNode*>       q;
-
-    probsMone[sim.p] = dd::ComplexNumbers::mag2(sim.w);
-    visited_nodes2.insert(sim.p);
-    q.push(sim.p);
-
-    while (q.front()->v != qubitIdx) {
-        auto ptr = q.front();
-        q.pop();
-        auto prob = probsMone[ptr];
-
-        if (!ptr->e[0].w.approximatelyZero()) {
-            const auto tmp1 = prob * dd::ComplexNumbers::mag2(ptr->e[0].w);
-
-            if (visited_nodes2.find(ptr->e[0].p) != visited_nodes2.end()) {
-                probsMone[ptr->e[0].p] = probsMone[ptr->e[0].p] + tmp1;
-            } else {
-                probsMone[ptr->e[0].p] = tmp1;
-                visited_nodes2.insert(ptr->e[0].p);
-                q.push(ptr->e[0].p);
-            }
-        }
-
-        if (!ptr->e[1].w.approximatelyZero()) {
-            const auto tmp1 = prob * dd::ComplexNumbers::mag2(ptr->e[1].w);
-
-            if (visited_nodes2.find(ptr->e[1].p) != visited_nodes2.end()) {
-                probsMone[ptr->e[1].p] = probsMone[ptr->e[1].p] + tmp1;
-            } else {
-                probsMone[ptr->e[1].p] = tmp1;
-                visited_nodes2.insert(ptr->e[1].p);
-                q.push(ptr->e[1].p);
-            }
-        }
-    }
-
-    dd::fp pzero{0}, pone{0};
-    while (!q.empty()) {
-        auto ptr = q.front();
-        q.pop();
-
-        if (!ptr->e[0].w.approximatelyZero()) {
-            pzero += probsMone[ptr] * dd::ComplexNumbers::mag2(ptr->e[0].w);
-        }
-
-        if (!ptr->e[1].w.approximatelyZero()) {
-            pone += probsMone[ptr] * dd::ComplexNumbers::mag2(ptr->e[1].w);
-        }
-    }
-
-    return {pzero, pone};
-}
-
 void QDDVis::measureQubit(dd::Qubit qubitIdx, bool measureOne, dd::fp pzero, dd::fp pone) {
     dd::GateMatrix measure_m{{{0, 0}, {0, 0}, {0, 0}, {0, 0}}};
 
@@ -469,7 +413,7 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
             auto totalResets   = qubits.size();
             auto qubitToReset  = qubits.front();
             auto qubitsReset   = 0;
-            auto [pzero, pone] = getProbabilities(qubitToReset);
+            auto [pzero, pone] = dd->determineMeasurementProbabilities(sim, qubitToReset, true);
 
             Napi::Object reset = Napi::Object::New(env);
             reset.Set("qubit", Napi::Number::New(env, qubitToReset));
@@ -492,7 +436,7 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
             auto qubitToMeasure    = qubits.front();
             auto cbitToStore       = cbits.front();
             auto qubitsMeasured    = 0;
-            auto [pzero, pone]     = getProbabilities(qubitToMeasure);
+            auto [pzero, pone]     = dd->determineMeasurementProbabilities(sim, qubitToMeasure, true);
 
             Napi::Object measurement = Napi::Object::New(env);
             measurement.Set("qubit", Napi::Number::New(env, qubitToMeasure));
@@ -894,7 +838,7 @@ Napi::Value QDDVis::ConductIrreversibleOperation(const Napi::CallbackInfo& info)
 
     // next qubit
     qubit++;
-    std::tie(pzero, pone) = getProbabilities(qubit);
+    std::tie(pzero, pone) = dd->determineMeasurementProbabilities(sim, qubit, true);
 
     parameter.Set("qubit", Napi::Number::New(env, qubit));
     parameter.Set("pzero", Napi::Number::New(env, pzero));

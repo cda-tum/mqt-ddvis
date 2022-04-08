@@ -26,7 +26,6 @@ private:
     //"private" methods
     void                                    stepForward();
     void                                    stepBack();
-    [[nodiscard]] std::pair<dd::fp, dd::fp> getProbabilities(dd::Qubit qubitIdx) const;
     void                                    measureQubit(dd::Qubit qubitIdx, bool measureOne, dd::fp pzero, dd::fp pone);
     void                                    calculateAmplitudes(Napi::Float32Array& amplitudes);
 
