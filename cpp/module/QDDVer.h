@@ -40,8 +40,8 @@ private:
     void        Unready(const Napi::CallbackInfo& info);
 
     //fields
-    std::unique_ptr<dd::Package> dd;
-    qc::MatrixDD                 sim{};
+    std::unique_ptr<dd::Package<>> dd;
+    qc::MatrixDD                   sim{};
 
     //options for the DD export
     bool showColors          = true;

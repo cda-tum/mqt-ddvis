@@ -42,7 +42,7 @@ QDDVer::QDDVer(const Napi::CallbackInfo& info):
     Napi::Env         env = info.Env();
     Napi::HandleScope scope(env);
 
-    this->dd = std::make_unique<dd::Package>(1);
+    this->dd = std::make_unique<dd::Package<>>(1);
 
     this->qc1       = std::make_unique<qc::QuantumComputation>();
     this->iterator1 = this->qc1->begin();
@@ -60,8 +60,8 @@ QDDVer::QDDVer(const Napi::CallbackInfo& info):
  */
 void QDDVer::stepForward(bool algo1) {
     if (algo1) {
-        if (atEnd1) return;                          //no further steps possible
-        const auto currDD = (*iterator1)->getDD(dd); //retrieve the "new" current operation
+        if (atEnd1) return;                                  //no further steps possible
+        const auto currDD = dd::getDD(iterator1->get(), dd); //retrieve the "new" current operation
 
         auto temp = dd->multiply(currDD, sim); //process the current operation by multiplying it with the previous simulation-state
         dd->incRef(temp);
@@ -75,8 +75,8 @@ void QDDVer::stepForward(bool algo1) {
         if (iterator1 == qc1->end()) atEnd1 = true;
 
     } else {
-        if (atEnd2) return;                                 //no further steps possible
-        const auto currDD = (*iterator2)->getInverseDD(dd); //retrieve the inverse of the "new" current operation
+        if (atEnd2) return;                                         //no further steps possible
+        const auto currDD = dd::getInverseDD(iterator2->get(), dd); //retrieve the inverse of the "new" current operation
 
         auto temp = dd->multiply(sim, currDD); //process the current operation by multiplying it with the previous simulation-state
         dd->incRef(temp);
@@ -110,7 +110,7 @@ void QDDVer::stepBack(bool algo1) {
         iterator1--; //set iterator back to the desired operation
         position1--;
 
-        const auto currDD = (*iterator1)->getInverseDD(dd); // get the inverse of the current operation
+        const auto currDD = dd::getInverseDD(iterator1->get(), dd); // get the inverse of the current operation
 
         auto temp = dd->multiply(currDD, sim); //"remove" the current operation by multiplying with its inverse
         dd->incRef(temp);
@@ -129,7 +129,7 @@ void QDDVer::stepBack(bool algo1) {
         iterator2--; //set iterator back to the desired operation
         position2--;
 
-        const auto currDD = (*iterator2)->getDD(dd); // get the current operation
+        const auto currDD = dd::getDD(iterator2->get(), dd); // get the current operation
 
         auto temp = dd->multiply(sim, currDD); //"remove" the current operation by multiplying with its inverse
         dd->incRef(temp);
@@ -156,97 +156,6 @@ void QDDVer::stepToStart(bool algo1) {
         //now atInitial is true, exactly as it should be
     }
 }
-
-/*
-std::pair<fp, fp> QDDVer::getProbabilities(unsigned short qubitIdx) {
-    std::map<dd::NodePtr, fp> probsMone;
-    std::set<dd::NodePtr> visited_nodes2;
-    std::queue<dd::NodePtr> q;
-
-    probsMone[sim.p] = CN::mag2(sim.w);
-    visited_nodes2.insert(sim.p);
-    q.push(sim.p);
-
-    while(q.front()->v != qubitIdx) {
-        dd::NodePtr ptr = q.front();
-        q.pop();
-        fp prob = probsMone[ptr];
-
-        if(!CN::equalsZero(ptr->e[0].w)) {
-            const fp tmp1 = prob * CN::mag2(ptr->e[0].w);
-
-            if(visited_nodes2.find(ptr->e[0].p) != visited_nodes2.end()) {
-                probsMone[ptr->e[0].p] = probsMone[ptr->e[0].p] + tmp1;
-            } else {
-                probsMone[ptr->e[0].p] = tmp1;
-                visited_nodes2.insert(ptr->e[0].p);
-                q.push(ptr->e[0].p);
-            }
-        }
-
-        if(!CN::equalsZero(ptr->e[2].w)) {
-            const fp tmp1 = prob * CN::mag2(ptr->e[2].w);
-
-            if(visited_nodes2.find(ptr->e[2].p) != visited_nodes2.end()) {
-                probsMone[ptr->e[2].p] = probsMone[ptr->e[2].p] + tmp1;
-            } else {
-                probsMone[ptr->e[2].p] = tmp1;
-                visited_nodes2.insert(ptr->e[2].p);
-                q.push(ptr->e[2].p);
-            }
-        }
-    }
-
-    fp pzero{0}, pone{0};
-    while(!q.empty()) {
-        dd::NodePtr ptr = q.front();
-        q.pop();
-
-        if(!CN::equalsZero(ptr->e[0].w)) {
-            pzero += probsMone[ptr] * CN::mag2(ptr->e[0].w);
-        }
-
-        if(!CN::equalsZero(ptr->e[2].w)) {
-            pone += probsMone[ptr] * CN::mag2(ptr->e[2].w);
-        }
-    }
-
-    return {pzero, pone};
-}
-*/
-
-/*
-void QDDVer::measureQubit(unsigned short qubitIdx, bool measureOne, fp pzero, fp pone) {
-    dd::Matrix2x2 measure_m{
-            {{0,0}, {0,0}},
-            {{0,0}, {0,0}}
-    };
-
-    fp norm_factor;
-
-    if(!measureOne) {
-        measure_m[0][0] = {1,0};
-        norm_factor = pzero;
-    } else {
-        measure_m[1][1] = {1, 0};
-        norm_factor = pone;
-    }
-    line.fill(-1);
-    line[qubitIdx] = 2;
-    dd::Edge m_gate = dd->makeGateDD(measure_m, qc1->getNqubits(), line.data());
-    line[qubitIdx] = -1;
-    dd::Edge e = dd->multiply(m_gate, sim);
-    dd->decRef(sim);
-
-    dd::Complex c = dd->cn.getCachedComplex(std::sqrt(1.0L/norm_factor), 0);
-    CN::mul(c, e.w, c);
-    e.w = dd->cn.lookup(c);
-    dd->incRef(e);
-    sim = e;
-}
-*/
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**Parameters: String algorithm, unsigned int formatCode, unsigned int num of operations to step forward, bool whether the
  * operations should be processed or just the iterator needs to be advanced, whether we load algo1 or algo2
@@ -353,9 +262,9 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
     if (sim.p == nullptr || (algo1 && !ready2) || (!algo1 && !ready1)) {
         //sim = dd->makeZeroState(qc->getNqubits());
         if (algo1)
-            sim = qc1->createInitialMatrix(dd);
+            sim = dd->createInitialMatrix(qc1->getNqubits(), qc1->ancillary);
         else
-            sim = qc2->createInitialMatrix(dd);
+            sim = dd->createInitialMatrix(qc2->getNqubits(), qc2->ancillary);
         dd->incRef(sim);
 
     } else { //reset the previously loaded algorithm if process is true
