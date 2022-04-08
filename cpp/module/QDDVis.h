@@ -45,7 +45,7 @@ private:
     Napi::Value ConductIrreversibleOperation(const Napi::CallbackInfo& info);
 
     //fields
-    std::unique_ptr<dd::Package>            dd;
+    std::unique_ptr<dd::Package<>>            dd;
     std::unique_ptr<qc::QuantumComputation> qc;
     qc::VectorDD                            sim{};
 

@@ -40,7 +40,7 @@ private:
     void        Unready(const Napi::CallbackInfo& info);
 
     //fields
-    std::unique_ptr<dd::Package> dd;
+    std::unique_ptr<dd::Package<>> dd;
     qc::MatrixDD                 sim{};
 
     //options for the DD export

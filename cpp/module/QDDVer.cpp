@@ -42,7 +42,7 @@ QDDVer::QDDVer(const Napi::CallbackInfo& info):
     Napi::Env         env = info.Env();
     Napi::HandleScope scope(env);
 
-    this->dd = std::make_unique<dd::Package>(1);
+    this->dd = std::make_unique<dd::Package<>>(1);
 
     this->qc1       = std::make_unique<qc::QuantumComputation>();
     this->iterator1 = this->qc1->begin();
@@ -61,7 +61,7 @@ QDDVer::QDDVer(const Napi::CallbackInfo& info):
 void QDDVer::stepForward(bool algo1) {
     if (algo1) {
         if (atEnd1) return;                          //no further steps possible
-        const auto currDD = (*iterator1)->getDD(dd); //retrieve the "new" current operation
+        const auto currDD = dd::getDD(iterator1->get(), dd); //retrieve the "new" current operation
 
         auto temp = dd->multiply(currDD, sim); //process the current operation by multiplying it with the previous simulation-state
         dd->incRef(temp);
@@ -76,7 +76,7 @@ void QDDVer::stepForward(bool algo1) {
 
     } else {
         if (atEnd2) return;                                 //no further steps possible
-        const auto currDD = (*iterator2)->getInverseDD(dd); //retrieve the inverse of the "new" current operation
+        const auto currDD = dd::getInverseDD(iterator2->get(), dd); //retrieve the inverse of the "new" current operation
 
         auto temp = dd->multiply(sim, currDD); //process the current operation by multiplying it with the previous simulation-state
         dd->incRef(temp);
@@ -110,7 +110,7 @@ void QDDVer::stepBack(bool algo1) {
         iterator1--; //set iterator back to the desired operation
         position1--;
 
-        const auto currDD = (*iterator1)->getInverseDD(dd); // get the inverse of the current operation
+        const auto currDD = dd::getInverseDD(iterator1->get(), dd); // get the inverse of the current operation
 
         auto temp = dd->multiply(currDD, sim); //"remove" the current operation by multiplying with its inverse
         dd->incRef(temp);
@@ -129,7 +129,7 @@ void QDDVer::stepBack(bool algo1) {
         iterator2--; //set iterator back to the desired operation
         position2--;
 
-        const auto currDD = (*iterator2)->getDD(dd); // get the current operation
+        const auto currDD = dd::getDD(iterator2->get(), dd); // get the current operation
 
         auto temp = dd->multiply(sim, currDD); //"remove" the current operation by multiplying with its inverse
         dd->incRef(temp);
@@ -353,9 +353,9 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
     if (sim.p == nullptr || (algo1 && !ready2) || (!algo1 && !ready1)) {
         //sim = dd->makeZeroState(qc->getNqubits());
         if (algo1)
-            sim = qc1->createInitialMatrix(dd);
+            sim = dd->createInitialMatrix(qc1->getNqubits(), qc1->ancillary);
         else
-            sim = qc2->createInitialMatrix(dd);
+            sim = dd->createInitialMatrix(qc2->getNqubits(), qc2->ancillary);
         dd->incRef(sim);
 
     } else { //reset the previously loaded algorithm if process is true

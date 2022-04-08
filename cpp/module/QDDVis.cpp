@@ -6,6 +6,7 @@
 #include "QDDVis.h"
 
 #include "dd/Export.hpp"
+#include "dd/Operations.hpp"
 
 Napi::Object QDDVis::Init(Napi::Env env, Napi::Object exports) {
     Napi::HandleScope scope(env);
@@ -43,7 +44,7 @@ QDDVis::QDDVis(const Napi::CallbackInfo& info):
     Napi::Env         env = info.Env();
     Napi::HandleScope scope(env);
 
-    this->dd = std::make_unique<dd::Package>(1);
+    this->dd = std::make_unique<dd::Package<>>(1);
     this->qc = std::make_unique<qc::QuantumComputation>();
 
     this->iterator = this->qc->begin();
@@ -68,12 +69,12 @@ void QDDVis::stepForward() {
         }
 
         if (value == expectedValue) {
-            currDD = (*iterator)->getDD(dd); //retrieve the "new" current operation
+            currDD = dd::getDD(iterator->get(), dd); //retrieve the "new" current operation
         } else {
             currDD = dd->makeIdent(qc->getNqubits());
         }
     } else {
-        currDD = (*iterator)->getDD(dd); //retrieve the "new" current operation
+        currDD = dd::getDD(iterator->get(), dd); //retrieve the "new" current operation
     }
 
     auto temp = dd->multiply(currDD, sim); //process the current operation by multiplying it with the previous simulation-state
@@ -117,12 +118,12 @@ void QDDVis::stepBack() {
         }
 
         if (value == expectedValue) {
-            currDD = (*iterator)->getInverseDD(dd); // get the inverse of the current operation
+            currDD = dd::getInverseDD(iterator->get(), dd); // get the inverse of the current operation
         } else {
             currDD = dd->makeIdent(qc->getNqubits());
         }
     } else {
-        currDD = (*iterator)->getInverseDD(dd); // get the inverse of the current operation
+        currDD = dd::getInverseDD(iterator->get(), dd); // get the inverse of the current operation
     }
 
     auto temp = dd->multiply(currDD, sim); //"remove" the current operation by multiplying with its inverse
@@ -863,7 +864,8 @@ Napi::Value QDDVis::ConductIrreversibleOperation(const Napi::CallbackInfo& info)
         } else if (classicalValueToMeasure == "1") {
             measureQubit(qubit, true, pzero, pone);
             //apply x operation to reset to |0>
-            auto tmp = dd->multiply(qc::StandardOperation(qc->getNqubits(), qubit, qc::X).getDD(dd), sim);
+            const auto x = qc::StandardOperation(qc->getNqubits(), qubit, qc::X);
+            auto tmp = dd->multiply(dd::getDD(&x, dd), sim);
             dd->incRef(tmp);
             dd->decRef(sim);
             sim = tmp;
