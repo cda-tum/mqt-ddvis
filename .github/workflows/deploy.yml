@@ -11,7 +11,7 @@ env:
   CDA_HOST_NAME: tueicda-cda.srv.mwn.de
   CDA_USER_NAME: web-user
   CDA_TARGET_DIR: /var/www/cda/app/ddvis/
-  GIT_DIR: .git/
+  CDA_GIT_DIR: .git/
 
 jobs:
   deploy:
