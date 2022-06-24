@@ -9,6 +9,7 @@ updates:
       interval: "weekly"
       day: "friday"
       time: "06:00"
+      timezone: "Europe/Vienna"
     assignees:
       - "burgholzer"
       - "hillmich"
@@ -22,6 +23,7 @@ updates:
       interval: "weekly"
       day: "friday"
       time: "06:00"
+      timezone: "Europe/Vienna"
     assignees:
       - "burgholzer"
       - "hillmich"
@@ -35,6 +37,7 @@ updates:
       interval: 'weekly'
       day: "friday"
       time: "06:00"
+      timezone: "Europe/Vienna"
     assignees:
       - "burgholzer"
       - "hillmich"
