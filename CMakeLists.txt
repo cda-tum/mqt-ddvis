@@ -1,8 +1,10 @@
-cmake_minimum_required(VERSION 3.15...3.22)
+cmake_minimum_required(VERSION 3.15...3.24)
+cmake_policy(SET CMP0091 NEW)
+cmake_policy(SET CMP0042 NEW)
 
 # detailed description
 project(DDVis
-        VERSION 1.5.0
+        VERSION 1.5.1
         DESCRIPTION "MQT DDVis - A Tool for Visualizing Decision Diagrams for Quantum Computing"
         LANGUAGES CXX)
 
@@ -60,13 +62,10 @@ endif()
 # set compiler flags (this assumes gcc or clang)
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra $<$<CONFIG:DEBUG>:-Og> -mtune=native -march=native)
 
-# Include N-API wrappers
-execute_process(COMMAND node -p "require('node-addon-api').include"
-                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                OUTPUT_VARIABLE NODE_ADDON_API_DIR
-                )
-string(REPLACE "\n" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
-string(REPLACE "\"" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ${NODE_ADDON_API_DIR} ${NODE_ADDON_API_DIR}/src)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_JS_INC})
 target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB})
+
+if(MSVC AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)
+	# Generate node.lib
+	execute_process(COMMAND ${CMAKE_AR} /def:${CMAKE_JS_NODELIB_DEF} /out:${CMAKE_JS_NODELIB_TARGET} ${CMAKE_STATIC_LINKER_FLAGS})
+endif()
