@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - fix-deploy
 
 env:
   DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
