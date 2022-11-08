@@ -28,6 +28,8 @@ jobs:
         echo "${DEPLOY_KEY}" > ~/.ssh/my_rsync_key
         echo "IdentityFile ~/.ssh/my_rsync_key" >> ~/.ssh/config
         chmod -R 700 ~/.ssh
+        ls -ahlF ~/.ssh
+
     - name: rsync deployment
       working-directory: ${{ github.workspace }}
       run: |
