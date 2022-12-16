@@ -1,5 +1,5 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![CI](https://img.shields.io/github/workflow/status/cda-tum/ddvis/CI?style=flat-square&logo=github&label=c%2B%2B)](https://github.com/cda-tum/ddvis/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/cda-tum/ddvis/ci.yml?branch=main&style=flat-square&logo=github&label=c%2B%2B)](https://github.com/cda-tum/ddvis/actions/workflows/ci.yml)
 
 # MQT DDVis
 An installation-free web-tool developed by the Chair for Design Automation at the [Technical University of Munich](https://www.tum.de/) which visualizes quantum decision diagrams and allows to explore their behavior when used in design tasks such as simulation, synthesis, or verification. 
