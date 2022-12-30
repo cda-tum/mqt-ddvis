@@ -211,9 +211,9 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         //second parameter describes the format of the algorithm
         const unsigned int formatCode = (unsigned int)info[1].As<Napi::Number>();
         if (formatCode == 1)
-            qc->import(ss, qc::OpenQASM);
+            qc->import(ss, qc::Format::OpenQASM);
         else if (formatCode == 2)
-            qc->import(ss, qc::Real);
+            qc->import(ss, qc::Format::Real);
         else {
             Napi::Error::New(env, "Invalid format-code!").ThrowAsJavaScriptException();
             return state;
