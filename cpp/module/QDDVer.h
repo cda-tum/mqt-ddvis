@@ -7,8 +7,8 @@
 #define QDD_VIS_QDDVER_H
 
 #include "QuantumComputation.hpp"
-#include "dd/Package.hpp"
 #include "dd/Operations.hpp"
+#include "dd/Package.hpp"
 
 #include <iostream>
 #include <memory>

@@ -215,9 +215,9 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
         const unsigned int formatCode = static_cast<unsigned int>(info[1].As<Napi::Number>());
         qc::Format         format;
         if (formatCode == 1)
-            format = qc::OpenQASM;
+            format = qc::Format::OpenQASM;
         else if (formatCode == 2)
-            format = qc::Real;
+            format = qc::Format::Real;
         else {
             Napi::Error::New(env, "Invalid format-code!").ThrowAsJavaScriptException();
             return state;
