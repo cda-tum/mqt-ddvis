@@ -50,7 +50,7 @@ set(GENERATE_POSITION_INDEPENDENT_CODE ON)
 add_subdirectory(cpp/qfr)
 
 # link the qfr library. this automatically links the DDPackage library and forwards the include paths
-target_link_libraries(${PROJECT_NAME} PRIVATE MQT::qfr)
+target_link_libraries(${PROJECT_NAME} PRIVATE MQT::qfr_dd)
 
 # check if interprocedural optimization (LTO) is supported
 include(CheckIPOSupported)
