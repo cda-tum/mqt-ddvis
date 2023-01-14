@@ -1,105 +1,174 @@
-<link rel="stylesheet" href="./stylesheets/verification.css"/>
+<link rel="stylesheet" href="./stylesheets/verification.css" />
 <script src="./javascripts/verification.js"></script>
 <div style="width: 100%">
-<div id="ver1_algo_div" class="algo-div">
+  <div id="ver1_algo_div" class="algo-div">
     <h3>Algorithm 1</h3>
-</div>
+  </div>
 
-<div id="ver_qdd_div" class="svg-div">
+  <div id="ver_qdd_div" class="svg-div">
     <h3 id="ver_qdd_text">Quantum Decision Diagram</h3>
-</div>
+  </div>
 
-
-<div id="ver2_algo_div" class="algo-div">
+  <div id="ver2_algo_div" class="algo-div">
     <h3>Algorithm 2</h3>
-</div>
-    <br style="clear: left;" />
+  </div>
+  <br style="clear: left" />
 </div>
 <div style="margin-top: 20px">
-<!-- A short description of this tab -->
-<h2>Representation of Quantum Functionality and Verification of Quantum Circuits using Decision Diagrams</h2>
-<p>
-    In the following we briefly describe how to construct a decision diagram representation of the functionality of a quantum circuit and how to check the equivalence of two circuits with the MQT DDVis tool.
-    Note that a detailed description of the method itself (including links to the corresponding papers) is available at <a href="https://www.cda.cit.tum.de/research/quantum_verification/">our webpage on equivalence checking of quantum circuits</a>.
-</p>
-<p>
-    The <b>Algorithm 1</b> box can be used to construct a decision diagram representation of a quantum circuit's functionality, i.e., its unitary matrix, through successive multiplication of the individual gate decision diagrams.
-</p>
-<p>
-    The <b>Algorithm 2</b> box can be used to construct a representation of the inverse functionality of a circuit. To this end, instead of multiplying new gates from the left, (inverted) gates are multiplied from the right.
-</p>
-<p>
-    Both boxes can be used simultaneously to verify the equivalence of two circuits. Given two circuits $G=g_0\dots g_{m-1}$ and $G'=g'_0\dots g'_{m'-1}$ it holds that both circuits are equivalence iff $G^{\prime -1} \cdot G = \mathbb{I}$. This can also be understood in the following way:
-    \[
-    G^{\prime -1} \cdot G =  {(g^{\prime -1}_{m^\prime-1}\dots g^{\prime -1}_0) \cdot (g_0\dots g_{m-1})} \\
-    \equiv {(U_{m-1}\cdots U_0)\cdot(U_0^{\prime \dagger} \cdots U_{m^\prime -1}^{\prime \dagger})} \\
-     = {U_{m-1}\cdots U_0\cdot \mathbb{I} \cdot U_0^{\prime \dagger} \cdots U_{m^\prime-1}^{\prime \dagger}} \\
-    \colon = G \rightarrow \mathbb{I} \leftarrow G'
-    \]
-    Thus, by starting with the identity and then successively applying either gates of $G$ "from the left" or (inverted) gates of $G'$ "from the right" until all gates of both circuits have been applied, allows to conclude the equivalence of both circuits based on whether the final result represents the identity.
-    The closer the intermediate decision diagrams can be kept to the identity, the more efficient the whole procedure becomes.
-    Designing strategies (i.e., when to apply gates from $G$ or from $G'$) for specific application scenarios is part of active research.
-    For details see <a href="https://www.cda.cit.tum.de/research/quantum_verification/">our research on equivalence checking of quantum circuits</a>.
-</p>
-<h3>Loading a quantum circuit</h3>
-<p>
-    An algorithm can be loaded in the following ways:
-</p>
-<ul>
-    <li>Drag&Drop a circuit file in either <i>.qasm</i> or <i>.real</i> format into one of the <b>Algorithm</b> boxes.</li>
-    <li>Pick a pre-defined circuit file from the <b>Example Algorithms</b> list on the left and choose whether to load it as Algorithm 1 (default) or Algorithm 2.</li>
-    <li>Start writing your own circuit description using either the <i>.qasm</i> or <i>.real</i> format. Templates for empty circuits are available in the <b>Example Algorithms</b> list.</li>
-</ul>
+  <!-- A short description of this tab -->
+  <h2>
+    Representation of Quantum Functionality and Verification of Quantum Circuits
+    using Decision Diagrams
+  </h2>
+  <p>
+    In the following we briefly describe how to construct a decision diagram
+    representation of the functionality of a quantum circuit and how to check
+    the equivalence of two circuits with the MQT DDVis tool. Note that a
+    detailed description of the method itself (including links to the
+    corresponding papers) is available at
+    <a href="https://www.cda.cit.tum.de/research/quantum_verification/"
+      >our webpage on equivalence checking of quantum circuits</a
+    >.
+  </p>
+  <p>
+    The <b>Algorithm 1</b> box can be used to construct a decision diagram
+    representation of a quantum circuit's functionality, i.e., its unitary
+    matrix, through successive multiplication of the individual gate decision
+    diagrams.
+  </p>
+  <p>
+    The <b>Algorithm 2</b> box can be used to construct a representation of the
+    inverse functionality of a circuit. To this end, instead of multiplying new
+    gates from the left, (inverted) gates are multiplied from the right.
+  </p>
+  <p>
+    Both boxes can be used simultaneously to verify the equivalence of two
+    circuits. Given two circuits $G=g_0\dots g_{m-1}$ and $G'=g'_0\dots
+    g'_{m'-1}$ it holds that both circuits are equivalence iff $G^{\prime -1}
+    \cdot G = \mathbb{I}$. This can also be understood in the following way: \[
+    G^{\prime -1} \cdot G = {(g^{\prime -1}_{m^\prime-1}\dots g^{\prime -1}_0)
+    \cdot (g_0\dots g_{m-1})} \\ \equiv {(U_{m-1}\cdots U_0)\cdot(U_0^{\prime
+    \dagger} \cdots U_{m^\prime -1}^{\prime \dagger})} \\ = {U_{m-1}\cdots
+    U_0\cdot \mathbb{I} \cdot U_0^{\prime \dagger} \cdots U_{m^\prime-1}^{\prime
+    \dagger}} \\ \colon = G \rightarrow \mathbb{I} \leftarrow G' \] Thus, by
+    starting with the identity and then successively applying either gates of
+    $G$ "from the left" or (inverted) gates of $G'$ "from the right" until all
+    gates of both circuits have been applied, allows to conclude the equivalence
+    of both circuits based on whether the final result represents the identity.
+    The closer the intermediate decision diagrams can be kept to the identity,
+    the more efficient the whole procedure becomes. Designing strategies (i.e.,
+    when to apply gates from $G$ or from $G'$) for specific application
+    scenarios is part of active research. For details see
+    <a href="https://www.cda.cit.tum.de/research/quantum_verification/"
+      >our research on equivalence checking of quantum circuits</a
+    >.
+  </p>
+  <h3>Loading a quantum circuit</h3>
+  <p>An algorithm can be loaded in the following ways:</p>
+  <ul>
+    <li>
+      Drag&Drop a circuit file in either <i>.qasm</i> or <i>.real</i> format
+      into one of the <b>Algorithm</b> boxes.
+    </li>
+    <li>
+      Pick a pre-defined circuit file from the <b>Example Algorithms</b> list on
+      the left and choose whether to load it as Algorithm 1 (default) or
+      Algorithm 2.
+    </li>
+    <li>
+      Start writing your own circuit description using either the
+      <i>.qasm</i> or <i>.real</i> format. Templates for empty circuits are
+      available in the <b>Example Algorithms</b> list.
+    </li>
+  </ul>
 
-<h3>Constructing a representation of a circuit's functionality</h3>
-<p>
-    Once a valid circuit has been entered in the Algorithm 1 (Algorithm 2) box, the construction of its (inverse) functionality as a decision diagram can be controlled using the navigation buttons below it.
-</p>
-<ul>
-    <li>→/←: Go one step forward or backward. Can be used to step through the construction.</li>
-    <li>↠/↞: Go straight to the end (or the next special operation; see below) or back to the beginning.</li>
-    <li>▶/||: Start/Pause a diashow where the construction advances step-by-step in an automated fashion.</li>
-</ul>
-<h3>Checking the equivalence of two circuits</h3>
-<p>
-    Once a valid circuit has been entered in each of the Algorithm boxes, their equivalence can be checked by successively applying operations from both circuits (using the corresponding →/↠ controls) and checking whether the final result resembles the identity.
-</p>
-<h3>Special operations and restrictions of MQT DDVis</h3>
-<p>
-    <b>Barrier</b> statements (e.g., <i>barrier q;</i>) can be used as breakpoints when stepping forward with <b>↠</b>.
-</p>
-<p>
-    <b>Measurement</b>, <b>Reset</b>, and <b>classically-controlled</b> operations are currently not supported due to their non-unitary nature. Execution may proceed until the first non-unitary operation.
-</p>
-<p>
-    When verifying two circuits, MQT DDVis expects both circuits to have the <b>same number of qubits and the same variable order</b>. If you want to verify circuits using different numbers of ancillary and/or garbage qubits and/or different variable orderings, you can check out our fully-fledged equivalence checking tool <a href="https://github.com/cda-tum/qcec">QCEC</a>.
-</p>
-<!--<p>-->
-<!--    Per default, the "most-significant" qubit is always the topmost node in the resulting decision diagram. MQT DDVis offers support for changing the variable order of circuits provided in the OpenQASM format via a comment line of the form-->
-<!--    $//\;i\;Q_j\;Q_k\;\dots\;Q_l$-->
-<!--    indicating that DD qubit $q_0$ is mapped to circuit qubit $Q_j$, $q_1$ to $Q_k$, etc.-->
-<!--</p>-->
-<h3>Visualization Settings</h3>
-<p>
-    The settings pane on the left side offers several options for changing the look and feel of the MQT DDVis tool.
-</p>
-<ul>
+  <h3>Constructing a representation of a circuit's functionality</h3>
+  <p>
+    Once a valid circuit has been entered in the Algorithm 1 (Algorithm 2) box,
+    the construction of its (inverse) functionality as a decision diagram can be
+    controlled using the navigation buttons below it.
+  </p>
+  <ul>
     <li>
-        <b>Colored</b>: When ticked (default), the phase of edge weights in the decision diagram is color-coded according to the following HLS color wheel.<br>
-        <img class="colorwheel" src="./assets/hls_colorwheel.svg" alt="HLS color wheel"><br>
-        When not ticked, edges whose weight is not equal to 1 will be displayed dashed.
+      →/←: Go one step forward or backward. Can be used to step through the
+      construction.
     </li>
     <li>
-        <b>Edge Labels</b>: When ticked, edge lables are explicitly annotated on the edges. Note that this frequently reduces the visual compactness of the visualization.
+      ↠/↞: Go straight to the end (or the next special operation; see below) or
+      back to the beginning.
     </li>
     <li>
-        <b>Classic</b>: This option allows to toggle a more classic decision diagram node style, which is more similar to the way decision diagrams are frequently visualized in research papers.
+      ▶/||: Start/Pause a diashow where the construction advances step-by-step
+      in an automated fashion.
+    </li>
+  </ul>
+  <h3>Checking the equivalence of two circuits</h3>
+  <p>
+    Once a valid circuit has been entered in each of the Algorithm boxes, their
+    equivalence can be checked by successively applying operations from both
+    circuits (using the corresponding →/↠ controls) and checking whether the
+    final result resembles the identity.
+  </p>
+  <h3>Special operations and restrictions of MQT DDVis</h3>
+  <p>
+    <b>Barrier</b> statements (e.g., <i>barrier q;</i>) can be used as
+    breakpoints when stepping forward with <b>↠</b>.
+  </p>
+  <p>
+    <b>Measurement</b>, <b>Reset</b>, and
+    <b>classically-controlled</b> operations are currently not supported due to
+    their non-unitary nature. Execution may proceed until the first non-unitary
+    operation.
+  </p>
+  <p>
+    When verifying two circuits, MQT DDVis expects both circuits to have the
+    <b>same number of qubits and the same variable order</b>. If you want to
+    verify circuits using different numbers of ancillary and/or garbage qubits
+    and/or different variable orderings, you can check out our fully-fledged
+    equivalence checking tool
+    <a href="https://github.com/cda-tum/qcec">QCEC</a>.
+  </p>
+  <!--<p>-->
+  <!--    Per default, the "most-significant" qubit is always the topmost node in the resulting decision diagram. MQT DDVis offers support for changing the variable order of circuits provided in the OpenQASM format via a comment line of the form-->
+  <!--    $//\;i\;Q_j\;Q_k\;\dots\;Q_l$-->
+  <!--    indicating that DD qubit $q_0$ is mapped to circuit qubit $Q_j$, $q_1$ to $Q_k$, etc.-->
+  <!--</p>-->
+  <h3>Visualization Settings</h3>
+  <p>
+    The settings pane on the left side offers several options for changing the
+    look and feel of the MQT DDVis tool.
+  </p>
+  <ul>
+    <li>
+      <b>Colored</b>: When ticked (default), the phase of edge weights in the
+      decision diagram is color-coded according to the following HLS color
+      wheel.<br />
+      <img
+        class="colorwheel"
+        src="./assets/hls_colorwheel.svg"
+        alt="HLS color wheel"
+      /><br />
+      When not ticked, edges whose weight is not equal to 1 will be displayed
+      dashed.
     </li>
     <li>
-        <b>Polar Coordinates</b>: This option allows switching between polar and rectangular coordinates for complex number visualization.
+      <b>Edge Labels</b>: When ticked, edge labels are explicitly annotated on
+      the edges. Note that this frequently reduces the visual compactness of the
+      visualization.
     </li>
     <li>
-        <b>Step duration</b>: The minimum time for one transition when using the diashow feature. Note that the actual transition time might be longer in case of computationally expensive operations.
+      <b>Classic</b>: This option allows to toggle a more classic decision
+      diagram node style, which is more similar to the way decision diagrams are
+      frequently visualized in research papers.
     </li>
-</ul>
+    <li>
+      <b>Polar Coordinates</b>: This option allows switching between polar and
+      rectangular coordinates for complex number visualization.
+    </li>
+    <li>
+      <b>Step duration</b>: The minimum time for one transition when using the
+      diashow feature. Note that the actual transition time might be longer in
+      case of computationally expensive operations.
+    </li>
+  </ul>
 </div>

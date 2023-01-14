@@ -1,48 +1,72 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
+  <head>
     <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+      integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2"
+      crossorigin="anonymous"
+    />
 
-    <link rel="stylesheet" href="./stylesheets/style.css"/>
-    <link rel="stylesheet" href="./stylesheets/algo_area.css"/>
+    <link rel="stylesheet" href="./stylesheets/style.css" />
+    <link rel="stylesheet" href="./stylesheets/algo_area.css" />
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link
+      rel="stylesheet"
+      href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"
+    />
 
     <script>
-        MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']]
-            },
-            svg: {
-                fontCache: 'global'
-            }
-        };
-        let promise = Promise.resolve();  // Used to hold chain of typesetting calls
+      MathJax = {
+        tex: {
+          inlineMath: [
+            ["$", "$"],
+            ["\\(", "\\)"],
+          ],
+        },
+        svg: {
+          fontCache: "global",
+        },
+      };
+      let promise = Promise.resolve(); // Used to hold chain of typesetting calls
     </script>
-    <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <script
+      id="MathJax-script"
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
+    ></script>
 
     <!-- load the html of the three main tabs -->
     <script>
-        $(() => {
-            $("#sim_sec").load("./views/simulation.html", function () {
-                promise = promise.then(() => {return MathJax.typesetPromise();}).catch((err) => console.log('Typeset failed: ' + err.message))
-            });
+      $(() => {
+        $("#sim_sec").load("./views/simulation.html", function () {
+          promise = promise
+            .then(() => {
+              return MathJax.typesetPromise();
+            })
+            .catch((err) => console.log("Typeset failed: " + err.message));
         });
-
+      });
     </script>
     <script>
-        $(() => {
-            $("#ver_sec").load("./views/verification.html", function () {
-                promise = promise.then(() => {return MathJax.typesetPromise();}).catch((err) => console.log('Typeset failed: ' + err.message))
-            });
+      $(() => {
+        $("#ver_sec").load("./views/verification.html", function () {
+          promise = promise
+            .then(() => {
+              return MathJax.typesetPromise();
+            })
+            .catch((err) => console.log("Typeset failed: " + err.message));
         });
+      });
     </script>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script src="https://unpkg.com/@hpcc-js/wasm@1.20.1/dist/index.min.js"></script>
@@ -53,108 +77,228 @@
     <script src="./javascripts/main.js"></script>
     <title>MQT DDVis</title>
 
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-    <link rel="manifest" href="site.webmanifest">
-    <link rel="mask-icon" href="safari-pinned-tab.svg" color="#5bbad5">
-    <meta name="apple-mobile-web-app-title" content="MQT DDVis">
-    <meta name="application-name" content="MQT DDVis">
-    <meta name="msapplication-TileColor" content="#00aba9">
-    <meta name="theme-color" content="#ffffff">
-</head>
-<body>
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+    <link rel="manifest" href="site.webmanifest" />
+    <link rel="mask-icon" href="safari-pinned-tab.svg" color="#5bbad5" />
+    <meta name="apple-mobile-web-app-title" content="MQT DDVis" />
+    <meta name="application-name" content="MQT DDVis" />
+    <meta name="msapplication-TileColor" content="#00aba9" />
+    <meta name="theme-color" content="#ffffff" />
+  </head>
+  <body>
     <nav id="settings_menu">
-        <div id="settings_headline_div">
-            Settings
+      <div id="settings_headline_div">Settings</div>
+
+      <div class="settings-div">
+        <h3 id="ex_algo_headline">Example Algorithms</h3>
+        <input
+          type="text"
+          placeholder="Search..."
+          id="ex_algo_search_text"
+          onkeyup="exAlgoFilterFunction()"
+        />
+        <div id="ex_algo_list">
+          <button class="example-algo" onclick="loadEmptyReal()">
+            Empty Real
+          </button>
+          <button class="example-algo" onclick="loadEmptyQasm()">
+            Empty QASM
+          </button>
         </div>
-
-        <div class="settings-div">
-            <h3 id="ex_algo_headline">Example Algorithms</h3>
-            <input type="text" placeholder="Search..." id="ex_algo_search_text"
-                   onkeyup="exAlgoFilterFunction()">
-            <div id="ex_algo_list">
-                <button class="example-algo" onclick="loadEmptyReal()">Empty Real</button>
-                <button class="example-algo" onclick="loadEmptyQasm()">Empty QASM</button>
-            </div>
-            <div id="ex_algo_ver_loading">
-                <p title="Verification: whether you want to load the algorithm on the left or right side">
-                    Load Algorithm as</p>
-                <input checked="checked" id="radio_algo1" name="algo" type="radio" disabled="disabled">
-                <label title="Verification: load algorithm on the left side" for="radio_algo1">Algorithm 1</label>
-                <input id="radio_algo2" name="algo" type="radio" disabled="disabled">
-                <label title="Verification: load algorithm on the right side" for="radio_algo2">Algorithm 2</label>
-            </div>
+        <div id="ex_algo_ver_loading">
+          <p
+            title="Verification: whether you want to load the algorithm on the left or right side"
+          >
+            Load Algorithm as
+          </p>
+          <input
+            checked="checked"
+            id="radio_algo1"
+            name="algo"
+            type="radio"
+            disabled="disabled"
+          />
+          <label
+            title="Verification: load algorithm on the left side"
+            for="radio_algo1"
+            >Algorithm 1</label
+          >
+          <input
+            id="radio_algo2"
+            name="algo"
+            type="radio"
+            disabled="disabled"
+          />
+          <label
+            title="Verification: load algorithm on the right side"
+            for="radio_algo2"
+            >Algorithm 2</label
+          >
         </div>
+      </div>
 
-        <div class="settings-div">
-            <label for="cb_colored" class="checkbox" title="Enable/disable color coding of edge weights">Colored</label>
-            <input type="checkbox" id="cb_colored" title="Enable/disable color coding of edge weights"
-                   onchange="updateExportOptions()" checked disabled/>
-            <br>
-            <label for="cb_edge_labels" class="checkbox" title="Show/hide edge weights as edge labels">Edge Labels</label>
-            <input type="checkbox" id="cb_edge_labels" title="Show/hide edge weights as edge labels"
-                   onchange="updateExportOptions()" checked disabled/>
-            <br>
-            <label for="cb_classic" class="checkbox" title="Enable/disable classic decision diagram look">Classic</label>
-            <input type="checkbox" id="cb_classic" title="Enable/disable classic decision diagram look"
-                   onchange="updateExportOptions()" disabled/>
+      <div class="settings-div">
+        <label
+          for="cb_colored"
+          class="checkbox"
+          title="Enable/disable color coding of edge weights"
+          >Colored</label
+        >
+        <input
+          type="checkbox"
+          id="cb_colored"
+          title="Enable/disable color coding of edge weights"
+          onchange="updateExportOptions()"
+          checked
+          disabled
+        />
+        <br />
+        <label
+          for="cb_edge_labels"
+          class="checkbox"
+          title="Show/hide edge weights as edge labels"
+          >Edge Labels</label
+        >
+        <input
+          type="checkbox"
+          id="cb_edge_labels"
+          title="Show/hide edge weights as edge labels"
+          onchange="updateExportOptions()"
+          checked
+          disabled
+        />
+        <br />
+        <label
+          for="cb_classic"
+          class="checkbox"
+          title="Enable/disable classic decision diagram look"
+          >Classic</label
+        >
+        <input
+          type="checkbox"
+          id="cb_classic"
+          title="Enable/disable classic decision diagram look"
+          onchange="updateExportOptions()"
+          disabled
+        />
 
-            <br>
-            <label for="cb_polar" class="checkbox" title="Enable/disable polar format for complex numbers">Polar Coordinates</label>
-            <input type="checkbox" id="cb_polar" title="Enable/disable polar format for complex numbers"
-                   onchange="updateExportOptions()" checked disabled/>
+        <br />
+        <label
+          for="cb_polar"
+          class="checkbox"
+          title="Enable/disable polar format for complex numbers"
+          >Polar Coordinates</label
+        >
+        <input
+          type="checkbox"
+          id="cb_polar"
+          title="Enable/disable polar format for complex numbers"
+          onchange="updateExportOptions()"
+          checked
+          disabled
+        />
+      </div>
 
-        </div>
-
-        <div class="settings-div">
-            <label for="stepDuration" title="Duration of a step during the diashow">Step duration in ms: </label>
-            <input type="number" id="stepDuration" min="0" value="1000" step="100" onchange="validateStepDuration()"
-                   title="Duration of a step during the diashow" style="margin-right: 150px"/>
-        </div>
-
+      <div class="settings-div">
+        <label for="stepDuration" title="Duration of a step during the diashow"
+          >Step duration in ms:
+        </label>
+        <input
+          type="number"
+          id="stepDuration"
+          min="0"
+          value="1000"
+          step="100"
+          onchange="validateStepDuration()"
+          title="Duration of a step during the diashow"
+          style="margin-right: 150px"
+        />
+      </div>
     </nav>
 
     <main id="main_content">
-        <!-- the three main tabs -->
-        <div class="tab">
-            <!-- initially open start_tab -->
-            <button id="start_tab" class="tablinks active" onclick="openTab('start')">Welcome</button>
-            <button id="sim_tab" class="tablinks" onclick="openTab('sim')">Simulation</button>
-            <button id="ver_tab" class="tablinks" onclick="openTab('ver')">Functionality/Verification</button>
-            <button id="reset_btn" onclick="resetAlgorithm()">Reset Algorithm</button>
-        </div>
+      <!-- the three main tabs -->
+      <div class="tab">
+        <!-- initially open start_tab -->
+        <button
+          id="start_tab"
+          class="tablinks active"
+          onclick="openTab('start')"
+        >
+          Welcome
+        </button>
+        <button id="sim_tab" class="tablinks" onclick="openTab('sim')">
+          Simulation
+        </button>
+        <button id="ver_tab" class="tablinks" onclick="openTab('ver')">
+          Functionality/Verification
+        </button>
+        <button id="reset_btn" onclick="resetAlgorithm()">
+          Reset Algorithm
+        </button>
+      </div>
 
-        <div id="loader"></div> <!-- for displaying a loading animation -->
+      <div id="loader"></div>
+      <!-- for displaying a loading animation -->
 
-        <section id="start_sec" class="tabcontent" style="display: block">  <!-- initially open this tab -->
-            <h1>MQT DDVis - A Tool for Visualizing Decision Diagrams for Quantum Computing</h1>
-            <h2>developed by the Chair for Design Automation at the Technical University of Munich, Germany</h2>
+      <section id="start_sec" class="tabcontent" style="display: block">
+        <!-- initially open this tab -->
+        <h1>
+          MQT DDVis - A Tool for Visualizing Decision Diagrams for Quantum
+          Computing
+        </h1>
+        <h2>
+          developed by the Chair for Design Automation at the Technical
+          University of Munich, Germany
+        </h2>
 
-            <p>
-                With the emergence of more and more applications for quantum computing, also the development of corresponding methods for design automation is receiving increasing interest.
-            In this respect, Decision Diagrams (DDs) provide a promising basis for many design tasks such as simulation, synthesis, verification, and more.
-            However, users of the corresponding tools often do not have a corresponding background or an intuition about how these DD-based methods work and what their strengths and limits are.
-                In an effort to make decision diagrams for quantum computing more accessible, we present DDVis---a tool which visualizes quantum decision diagrams and allows to explore their behavior when used in the design tasks mentioned above.
-            DDVis is part of the Munich Quantum Toolkit (MQT, formerly know as JKQ).
-            </p>
+        <p>
+          With the emergence of more and more applications for quantum
+          computing, also the development of corresponding methods for design
+          automation is receiving increasing interest. In this respect, Decision
+          Diagrams (DDs) provide a promising basis for many design tasks such as
+          simulation, synthesis, verification, and more. However, users of the
+          corresponding tools often do not have a corresponding background or an
+          intuition about how these DD-based methods work and what their
+          strengths and limits are. In an effort to make decision diagrams for
+          quantum computing more accessible, we present DDVis---a tool which
+          visualizes quantum decision diagrams and allows to explore their
+          behavior when used in the design tasks mentioned above. DDVis is part
+          of the Munich Quantum Toolkit (MQT, formerly know as JKQ).
+        </p>
 
-            <p>MQT DDVis allows users to interactively learn how decision diagrams can be used in quantum computing, e.g., to</p>
-            <ol>
-                <li>compactly represent quantum states and efficiently simulate quantum circuits,</li>
-                <li>compactly represent the functionality of quantum circuits,</li>
-                <li>verify the equivalence of two circuits in an efficient fashion.</li>
-            </ol>
+        <p>
+          MQT DDVis allows users to interactively learn how decision diagrams
+          can be used in quantum computing, e.g., to
+        </p>
+        <ol>
+          <li>
+            compactly represent quantum states and efficiently simulate quantum
+            circuits,
+          </li>
+          <li>compactly represent the functionality of quantum circuits,</li>
+          <li>
+            verify the equivalence of two circuits in an efficient fashion.
+          </li>
+        </ol>
 
-            <p>In order to explore the representation of quantum states and the simulation of quantum circuits with decision diagrams, go to the <b onclick="openTab('sim')">"Simulation"</b> tab.<br>
-            In order to explore the representation of quantum functionality and its use in equivalence of two circuits, go to the <b onclick="openTab('ver')">"Functionality/Verification"</b> tab.
-            </p>
+        <p>
+          In order to explore the representation of quantum states and the
+          simulation of quantum circuits with decision diagrams, go to the
+          <b onclick="openTab('sim')">"Simulation"</b> tab.<br />
+          In order to explore the representation of quantum functionality and
+          its use in equivalence of two circuits, go to the
+          <b onclick="openTab('ver')">"Functionality/Verification"</b> tab.
+        </p>
 
-            <p>
-            If you use this tool for your research, please refer to it by citing the following publication:
-            </p>
+        <p>
+          If you use this tool for your research, please refer to it by citing
+          the following publication:
+        </p>
 
-            <pre>
+        <pre>
             <code>
             @inproceedings{willeVisualizingDecisionDiagrams2021,
                 title = {Visualizing decision diagrams for quantum computing},
@@ -164,24 +308,23 @@
             }
             </code>
             </pre>
+      </section>
 
-        </section>
+      <section id="sim_sec" class="tabcontent"></section>
 
-        <section id="sim_sec" class="tabcontent">
-        </section>
+      <section id="ver_sec" class="tabcontent"></section>
 
-        <section id="ver_sec" class="tabcontent">
-        </section>
+      <script src="./javascripts/init.js"></script>
 
-        <script src="./javascripts/init.js"></script>
-
-        <footer>
-            <p>Authors: Lukas Burgholzer, Michael Artner, Robert Wille</p>
-            <p>In case of questions, feel free to contact us at <a href="mailto:quantum.cda@xcit.tum.de">quantum.cda@xcit.tum.de</a> or by creating an issue on <a href="https://github.com/cda-tum/ddvis/issues">GitHub</a>.</p>
-        </footer>
+      <footer>
+        <p>Authors: Lukas Burgholzer, Michael Artner, Robert Wille</p>
+        <p>
+          In case of questions, feel free to contact us at
+          <a href="mailto:quantum.cda@xcit.tum.de">quantum.cda@xcit.tum.de</a>
+          or by creating an issue on
+          <a href="https://github.com/cda-tum/ddvis/issues">GitHub</a>.
+        </p>
+      </footer>
     </main>
-
-
-
-</body>
+  </body>
 </html>
