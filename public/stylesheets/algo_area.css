@@ -1,100 +1,105 @@
-
 .drop_zone {
-    width: 100%;
-    height: 80%;
-    border: 2px solid #685972;
-    display: block;
-    margin: 0 0;
-    transform: translateZ(0);
-    -webkit-text-size-adjust: none;
+  width: 100%;
+  height: 80%;
+  border: 2px solid #685972;
+  display: block;
+  margin: 0 0;
+  transform: translateZ(0);
+  -webkit-text-size-adjust: none;
 }
 
-.line_numbers, .backdrop, .highlights {
-    width: 100%;
-    height: 100%;
+.line_numbers,
+.backdrop,
+.highlights {
+  width: 100%;
+  height: 100%;
 }
 
-.line_numbers, .highlights, .q_algo {
-    /*padding: 10px; works very nice in Opera, because the scrollbar ignores padding, but looks very bad in firefox,
+.line_numbers,
+.highlights,
+.q_algo {
+  /*padding: 10px; works very nice in Opera, because the scrollbar ignores padding, but looks very bad in firefox,
     where scrolling doesn't ignore padding (at least for textareas, the divs for linenumbering and highlighting seem to ignore padding*/
-    padding-top: 0;
-    padding-bottom: 0;
-    /*letter-spacing: 1px;*/
+  padding-top: 0;
+  padding-bottom: 0;
+  /*letter-spacing: 1px;*/
 }
 
-.backdrop, .highlights {
-    z-index: 1;
+.backdrop,
+.highlights {
+  z-index: 1;
 }
 
-.backdrop, .line_numbers {
-    position: absolute;
-    /*border: 2px solid #685972;*/
-    background-color: transparent;
-    overflow: auto;
-    pointer-events: none;
-    transition: transform 1s;
+.backdrop,
+.line_numbers {
+  position: absolute;
+  /*border: 2px solid #685972;*/
+  background-color: transparent;
+  overflow: auto;
+  pointer-events: none;
+  transition: transform 1s;
 }
 
 .line_numbers {
-    z-index: 2;
+  z-index: 2;
 
-    padding-left: 10px;
-    border: none;
-    white-space: pre;
-    text-align: left;
+  padding-left: 10px;
+  border: none;
+  white-space: pre;
+  text-align: left;
 }
 
 .highlights {
-    padding: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
-    color: transparent;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  color: transparent;
 
-    text-align: left;
-    white-space: pre-wrap;
-    word-wrap: break-word;
+  text-align: left;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .q_algo {
-    width: 100%;
-    height: 100%;
-    padding-left: 25px;
-    padding-right: 10px;
-    display: block;
-    position: absolute;
-    z-index: 3;
-    overflow: auto;
-    resize: none;
-    white-space: pre;
-    word-wrap: normal;
+  width: 100%;
+  height: 100%;
+  padding-left: 25px;
+  padding-right: 10px;
+  display: block;
+  position: absolute;
+  z-index: 3;
+  overflow: auto;
+  resize: none;
+  white-space: pre;
+  word-wrap: normal;
 
-    border: none;
-    outline: none;
-    color: #000;
-    background-color: transparent;
+  border: none;
+  outline: none;
+  color: #000;
+  background-color: transparent;
 }
 
 .inv_algo_warning {
-    z-index: 4;
-    display: none;
-    position: relative;
-    top: 80%;
-    left: 75%;
-    height: 20%;
-    width: 20%;
-    background-image: url("../assets/warning.svg");
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: contain;
+  z-index: 4;
+  display: none;
+  position: relative;
+  top: 80%;
+  left: 75%;
+  height: 20%;
+  width: 20%;
+  background-image: url("../assets/warning.svg");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: contain;
 }
 
 mark {
-    color: transparent;
-    margin: 0;
-    padding: 3px 0 1px;   /* somehow without this the mark doesn't fill the height of the line */
-    background-color: #b1adad;
+  color: transparent;
+  margin: 0;
+  padding: 3px 0 1px; /* somehow without this the mark doesn't fill the height of the line */
+  background-color: #b1adad;
 
-    white-space: pre-wrap;
-    width: 20px;
-    height: 10px;
+  white-space: pre-wrap;
+  width: 20px;
+  height: 10px;
 }

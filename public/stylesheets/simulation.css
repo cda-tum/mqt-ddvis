@@ -1,88 +1,91 @@
-
 /* Create two columns/boxes that floats next to each other */
 #algo_div {
-    float: left;
-    width: 30%;
+  float: left;
+  width: 30%;
 }
 
 #qdd_div {
-    float: left;   /* not sure if this is even needed*/
-    width: 55%;
+  float: left; /* not sure if this is even needed*/
+  width: 55%;
 }
 
 #amplitudes_div {
-    float: left;
-    width: 15%;
+  float: left;
+  width: 15%;
 }
 
 #amplitudes_svg {
-    display: inline-block;
-    position: relative;
-    width: 100%;
-    height: 95%;
+  display: inline-block;
+  position: relative;
+  width: 100%;
+  height: 95%;
 }
 
 /* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
 @media (max-width: 600px) {
-    #algo_div, #qdd_div, #amplitudes_div {
-        width: 100%;
-    }
+  #algo_div,
+  #qdd_div,
+  #amplitudes_div {
+    width: 100%;
+  }
 }
 
 #irreversibleDialog {
-    display: none;
+  display: none;
 }
 
 #amp_descr {
-    position: absolute;
-    border: 2px solid black;
-    visibility: hidden;
+  position: absolute;
+  border: 2px solid black;
+  visibility: hidden;
 }
 
 #ampTooltip {
-    position: absolute;
-    z-index: 10;
-    visibility: hidden;
-    text-align: left;
-    border: solid 1px black;
-    border-radius: 0.5em;
-    background-color: rgba(255, 255, 255, 0.75);
+  position: absolute;
+  z-index: 10;
+  visibility: hidden;
+  text-align: left;
+  border: solid 1px black;
+  border-radius: 0.5em;
+  background-color: rgba(255, 255, 255, 0.75);
 }
 
 #ampTooltipAmp {
-    position: relative;
-    float: top;
+  position: relative;
+  float: top;
 }
 #ampTooltipPhase {
-    position: relative;
-    float: bottom;
+  position: relative;
+  float: bottom;
 }
 
 .ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset {
-    float: none;
-    width: 100%;
-    display: flex;
-    justify-content: center;
+  float: none;
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .ui-button:focus {
-    outline: none;
+  outline: none;
 }
 
-#prob0, #prob1 {
-    display: inline-block;
-    text-align: center;
-    margin: 0 20px 0 20px;
+#prob0,
+#prob1 {
+  display: inline-block;
+  text-align: center;
+  margin: 0 20px 0 20px;
 }
 
-#m0, #m1 {
-    border-radius: 5px;
-    margin: 5px 10px 5px 10px;
-    text-align: center;
-    display: inline-block;
-    float: none;
+#m0,
+#m1 {
+  border-radius: 5px;
+  margin: 5px 10px 5px 10px;
+  text-align: center;
+  display: inline-block;
+  float: none;
 }
 
 .colorwheel {
-    width: 300px;
+  width: 300px;
 }
