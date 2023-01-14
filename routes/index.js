@@ -1,8 +1,7 @@
-
-const fs = require('fs');
-const express = require('express');
+const fs = require("fs");
+const express = require("express");
 const router = express.Router();
-const dm = require('../datamanager');
+const dm = require("../datamanager");
 
 /**Creates a new QDDVis-object at the server for the requester.
  *
@@ -12,9 +11,9 @@ const dm = require('../datamanager');
  * }
  *
  */
-router.post('/register', (req, res) => {
-   const key = dm.register(req);
-   res.status(200).json({ key: key });
+router.post("/register", (req, res) => {
+  const key = dm.register(req);
+  res.status(200).json({ key: key });
 });
 
 /**Loads the given quantum algorithm and sends back its respective DD.
@@ -34,48 +33,50 @@ router.post('/register', (req, res) => {
  * Sends:   take a look at _sendDD documentation
  *
  */
-router.post('/load', (req, res) => {
-    const vis = dm.get(req);
-    if(vis) {
-        try {
-            const algo = req.body.algo;
-            const opNum = parseInt(req.body.opNum);
-            const format = parseInt(req.body.format);
-            const reset = req.body.reset === "true";   //whether the algorithm should be reset to the start or if iterator and current DD should stay as they are
+router.post("/load", (req, res) => {
+  const vis = dm.get(req);
+  if (vis) {
+    try {
+      const algo = req.body.algo;
+      const opNum = parseInt(req.body.opNum);
+      const format = parseInt(req.body.format);
+      const reset = req.body.reset === "true"; //whether the algorithm should be reset to the start or if iterator and current DD should stay as they are
 
-            const algo1 = req.body.algo1 === "true";    //needed to determine the algorithm of verification
+      const algo1 = req.body.algo1 === "true"; //needed to determine the algorithm of verification
 
-            const ret = vis.load(algo, format, opNum, reset, algo1);    //algo1 only used for verification
-            if(ret.numOfOperations) {
-                _sendDD(res, vis.getDD(), ret);
-            } else res.status(500).json({ msg: "Error while loading the algorithm!" });
-
-        } catch(err) {
-            const retry = err.message.startsWith("Invalid algorithm!"); //if the algorithm is invalid, we need to send the last valid algorithm
-            res.status(400).json({ msg: err.message, retry: retry});    //I think retry is no longer needed!
-        }
-    } else {
-        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
+      const ret = vis.load(algo, format, opNum, reset, algo1); //algo1 only used for verification
+      if (ret.numOfOperations) {
+        _sendDD(res, vis.getDD(), ret);
+      } else
+        res.status(500).json({ msg: "Error while loading the algorithm!" });
+    } catch (err) {
+      const retry = err.message.startsWith("Invalid algorithm!"); //if the algorithm is invalid, we need to send the last valid algorithm
+      res.status(400).json({ msg: err.message, retry: retry }); //I think retry is no longer needed!
     }
+  } else {
+    res.status(404).json({
+      msg: "Your data is no longer available. Your page will be reloaded!",
+    });
+  }
 });
 
-router.post('/reset', (req, res) => {
-    const vis = dm.get(req);
-    if(vis) {
-        try {
-            const algo1 = req.body.algo1 === "true";    //needed to determine the algorithm of verification
-            vis.unready(algo1);
-            res.status(200).end();
-
-        } catch(err) {
-            const retry = err.message.startsWith("Invalid algorithm!"); //if the algorithm is invalid, we need to send the last valid algorithm
-            res.status(400).json({ msg: err.message, retry: retry});    //I think retry is no longer needed!
-        }
-
-    } else {
-        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
+router.post("/reset", (req, res) => {
+  const vis = dm.get(req);
+  if (vis) {
+    try {
+      const algo1 = req.body.algo1 === "true"; //needed to determine the algorithm of verification
+      vis.unready(algo1);
+      res.status(200).end();
+    } catch (err) {
+      const retry = err.message.startsWith("Invalid algorithm!"); //if the algorithm is invalid, we need to send the last valid algorithm
+      res.status(400).json({ msg: err.message, retry: retry }); //I think retry is no longer needed!
     }
-})
+  } else {
+    res.status(404).json({
+      msg: "Your data is no longer available. Your page will be reloaded!",
+    });
+  }
+});
 
 /**Tries to retrieve the QDDVis-object associated with the requester and sends back its respective DD.
  *
@@ -85,13 +86,15 @@ router.post('/reset', (req, res) => {
  * Sends:   take a look at _sendDD documentation
  *
  */
-router.get('/getDD', (req, res) => {
-    const vis = dm.get(req);
-    if(vis) {
-        _sendDD(res, vis.getDD());
-    } else {
-        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
-    }
+router.get("/getDD", (req, res) => {
+  const vis = dm.get(req);
+  if (vis) {
+    _sendDD(res, vis.getDD());
+  } else {
+    res.status(404).json({
+      msg: "Your data is no longer available. Your page will be reloaded!",
+    });
+  }
 });
 
 /**Updates the export options for creating the DD from the current simulation-state.
@@ -107,34 +110,41 @@ router.get('/getDD', (req, res) => {
  * Sends:   take a look at _sendDD documentation
  *
  */
-router.put('/updateExportOptions', (req, res) => {
-    const vis = dm.get(req);
-    if(vis) {
-        const showColored = req.body.colored === "true";
-        const showEdgeLabels = req.body.edgeLabels === "true";
-        const showClassic = req.body.classic === "true";
-        const usePolarCoordinates = req.body.polar === "true";
-        const updateDD = req.body.updateDD === "true";
+router.put("/updateExportOptions", (req, res) => {
+  const vis = dm.get(req);
+  if (vis) {
+    const showColored = req.body.colored === "true";
+    const showEdgeLabels = req.body.edgeLabels === "true";
+    const showClassic = req.body.classic === "true";
+    const usePolarCoordinates = req.body.polar === "true";
+    const updateDD = req.body.updateDD === "true";
 
-        vis.updateExportOptions(showColored, showEdgeLabels, showClassic, usePolarCoordinates);
+    vis.updateExportOptions(
+      showColored,
+      showEdgeLabels,
+      showClassic,
+      usePolarCoordinates,
+    );
 
-        if(vis.isReady() && updateDD) _sendDD(res, vis.getDD());
-        else res.status(200).end(); //end the call without sending data
-
-    } else {
-        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
-    }
+    if (vis.isReady() && updateDD) _sendDD(res, vis.getDD());
+    else res.status(200).end(); //end the call without sending data
+  } else {
+    res.status(404).json({
+      msg: "Your data is no longer available. Your page will be reloaded!",
+    });
+  }
 });
 
-router.get('/getExportOptions', (req, res) => {
-    const vis = dm.get(req);
-    if(vis) {
-        const exportOptions = vis.getExportOptions();
-        res.status(200).json(exportOptions);
-
-    } else {
-        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
-    }
+router.get("/getExportOptions", (req, res) => {
+  const vis = dm.get(req);
+  if (vis) {
+    const exportOptions = vis.getExportOptions();
+    res.status(200).json(exportOptions);
+  } else {
+    res.status(404).json({
+      msg: "Your data is no longer available. Your page will be reloaded!",
+    });
+  }
 });
 
 /**Sets the simulation back to its start.
@@ -148,17 +158,18 @@ router.get('/getExportOptions', (req, res) => {
  *          may also send back a simple message if the simulation was already at the start and therefore nothing changed
  *
  */
-router.get('/tostart', (req, res) => {
-    const vis = dm.get(req);
-    if(vis) {
-        const algo1 = req.query.algo1 === "true";    //needed to determine the algorithm of verification
-        const ret = vis.toStart(algo1);             //algo1 only used for verification
-        if(ret) _sendDD(res, vis.getDD());
-        else res.status(403).json({ msg: "you were already at the start" });    //the client will search for res.svg, but it will be null so they won't redraw
-
-    } else {
-        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
-    }
+router.get("/tostart", (req, res) => {
+  const vis = dm.get(req);
+  if (vis) {
+    const algo1 = req.query.algo1 === "true"; //needed to determine the algorithm of verification
+    const ret = vis.toStart(algo1); //algo1 only used for verification
+    if (ret) _sendDD(res, vis.getDD());
+    else res.status(403).json({ msg: "you were already at the start" }); //the client will search for res.svg, but it will be null so they won't redraw
+  } else {
+    res.status(404).json({
+      msg: "Your data is no longer available. Your page will be reloaded!",
+    });
+  }
 });
 
 /**Goes back to the previous step of the simulation by undoing the last processed operation.
@@ -173,17 +184,25 @@ router.get('/tostart', (req, res) => {
  *          was undone and nothing changed
  *
  */
-router.get('/prev', (req, res) => {
-    const vis = dm.get(req);
-    if(vis) {
-        const algo1 = req.query.algo1 === "true";    //needed to determine the algorithm of verification
-        const ret = vis.prev(algo1);                 //algo1 only used for verification
-        if(ret.changed) _sendDD(res, vis.getDD(), {noGoingBack: ret.noGoingBack}); //something changes so we update the shown dd
-        else res.status(403).json({ msg: "can't go back because we are at the beginning" });    //the client will search for res.svg, but it will be null so they won't redraw
-
-    } else {
-        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
-    }
+router.get("/prev", (req, res) => {
+  const vis = dm.get(req);
+  if (vis) {
+    const algo1 = req.query.algo1 === "true"; //needed to determine the algorithm of verification
+    const ret = vis.prev(algo1); //algo1 only used for verification
+    if (ret.changed)
+      _sendDD(res, vis.getDD(), {
+        noGoingBack: ret.noGoingBack,
+      });
+    //something changes so we update the shown dd
+    else
+      res
+        .status(403)
+        .json({ msg: "can't go back because we are at the beginning" }); //the client will search for res.svg, but it will be null so they won't redraw
+  } else {
+    res.status(404).json({
+      msg: "Your data is no longer available. Your page will be reloaded!",
+    });
+  }
 });
 
 /**Goes to the next step of the simulation by applying the current operation.
@@ -198,33 +217,51 @@ router.get('/prev', (req, res) => {
  *          was applied and nothing changed
  *
  */
-router.get('/next', (req, res) => {
-    const vis = dm.get(req);
-    if(vis) {
-        const algo1 = req.query.algo1 === "true";    //needed to determine the algorithm of verification
-        const ret = vis.next(algo1);                //algo1 only used for verification
+router.get("/next", (req, res) => {
+  const vis = dm.get(req);
+  if (vis) {
+    const algo1 = req.query.algo1 === "true"; //needed to determine the algorithm of verification
+    const ret = vis.next(algo1); //algo1 only used for verification
 
-        if(ret.changed) _sendDD(res, vis.getDD(), ret); //something changes so we update the shown dd
-        else res.send({ msg: "can't go ahead because we are at the end", reload: "false" });
-    } else {
-        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
-    }
+    if (ret.changed) _sendDD(res, vis.getDD(), ret);
+    //something changes so we update the shown dd
+    else
+      res.send({
+        msg: "can't go ahead because we are at the end",
+        reload: "false",
+      });
+  } else {
+    res.status(404).json({
+      msg: "Your data is no longer available. Your page will be reloaded!",
+    });
+  }
 });
 
-router.get('/conductIrreversibleOperation', (req, res) => {
-    const vis = dm.get(req);
-    if(vis) {
-        let data = JSON.parse(req.query.parameter);
-        const ret = vis.conductIrreversibleOperation(data);
-        const dd_ret = vis.getDD();
-        if (!ret.finished) {
-            res.status(200).json({dot: dd_ret.dot, amplitudes: JSON.stringify(Array.from(dd_ret.amplitudes)), finished: ret.finished, parameter: ret.parameter});
-        } else {
-            res.status(200).json({dot: dd_ret.dot, amplitudes: JSON.stringify(Array.from(dd_ret.amplitudes)), finished: ret.finished});
-        }
+router.get("/conductIrreversibleOperation", (req, res) => {
+  const vis = dm.get(req);
+  if (vis) {
+    let data = JSON.parse(req.query.parameter);
+    const ret = vis.conductIrreversibleOperation(data);
+    const dd_ret = vis.getDD();
+    if (!ret.finished) {
+      res.status(200).json({
+        dot: dd_ret.dot,
+        amplitudes: JSON.stringify(Array.from(dd_ret.amplitudes)),
+        finished: ret.finished,
+        parameter: ret.parameter,
+      });
     } else {
-        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
+      res.status(200).json({
+        dot: dd_ret.dot,
+        amplitudes: JSON.stringify(Array.from(dd_ret.amplitudes)),
+        finished: ret.finished,
+      });
     }
+  } else {
+    res.status(404).json({
+      msg: "Your data is no longer available. Your page will be reloaded!",
+    });
+  }
 });
 
 /**Goes to the end of the simulation by applying all remaining operations.
@@ -238,17 +275,24 @@ router.get('/conductIrreversibleOperation', (req, res) => {
  *          may also send back a simple message if the simulation was already at the end and therefore nothing changed
  *
  */
-router.get('/toend', (req, res) => {
-    const vis = dm.get(req);
-    if(vis) {
-        const algo1 = req.query.algo1 === "true";    //needed to determine the algorithm of verification
-        const ret = vis.toEnd(algo1);               //algo1 only used for verification
-        if(ret.changed) _sendDD(res, vis.getDD(), {nops: ret.nops, nextIsIrreversible: ret.nextIsIrreversible, barrier: ret.barrier});  //sendFile(res, data.ip); //something changes so we update the shown dd
-        else res.send({ msg: "you were already at the end", reload: "false" });
-
-    } else {
-        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
-    }
+router.get("/toend", (req, res) => {
+  const vis = dm.get(req);
+  if (vis) {
+    const algo1 = req.query.algo1 === "true"; //needed to determine the algorithm of verification
+    const ret = vis.toEnd(algo1); //algo1 only used for verification
+    if (ret.changed)
+      _sendDD(res, vis.getDD(), {
+        nops: ret.nops,
+        nextIsIrreversible: ret.nextIsIrreversible,
+        barrier: ret.barrier,
+      });
+    //sendFile(res, data.ip); //something changes so we update the shown dd
+    else res.send({ msg: "you were already at the end", reload: "false" });
+  } else {
+    res.status(404).json({
+      msg: "Your data is no longer available. Your page will be reloaded!",
+    });
+  }
 });
 
 /**Transfers the simulation to a specific position in the algorithm either by applying or undoing operations until said
@@ -264,73 +308,91 @@ router.get('/toend', (req, res) => {
  *          was applied or undone, so nothing changed
  *
  */
-router.get('/toline', (req, res) => {
-    const vis = dm.get(req);
-    const line = parseInt(req.query.line);
-    const algo1 = req.query.algo1 === "true";    //needed to determine the algorithm of verification
-    if(vis) {
-        const ret = vis.toLine(line, algo1);    //algo1 only used for verification
-        if(ret.changed) _sendDD(res, vis.getDD(), {nops: ret.nops, nextIsIrreversible: ret.nextIsIrreversible, noGoingBack: ret.noGoingBack, reset: ret.reset});  //something changes so we update the shown dd
-        else res.send({ msg: "you were already at line " + line, reload: "false" , data: {nextIsIrreversible: ret.nextIsIrreversible, noGoingBack: ret.noGoingBack}});
-
-    } else {
-        res.status(404).json({ msg: "Your data is no longer available. Your page will be reloaded!" });
-    }
+router.get("/toline", (req, res) => {
+  const vis = dm.get(req);
+  const line = parseInt(req.query.line);
+  const algo1 = req.query.algo1 === "true"; //needed to determine the algorithm of verification
+  if (vis) {
+    const ret = vis.toLine(line, algo1); //algo1 only used for verification
+    if (ret.changed)
+      _sendDD(res, vis.getDD(), {
+        nops: ret.nops,
+        nextIsIrreversible: ret.nextIsIrreversible,
+        noGoingBack: ret.noGoingBack,
+        reset: ret.reset,
+      });
+    //something changes so we update the shown dd
+    else
+      res.send({
+        msg: "you were already at line " + line,
+        reload: "false",
+        data: {
+          nextIsIrreversible: ret.nextIsIrreversible,
+          noGoingBack: ret.noGoingBack,
+        },
+      });
+  } else {
+    res.status(404).json({
+      msg: "Your data is no longer available. Your page will be reloaded!",
+    });
+  }
 });
 
-const exAlgoDir = "./cpp/sample_qasm"
+const exAlgoDir = "./cpp/sample_qasm";
 const exAlgoNames = [];
 const exampleAlgos = [];
 
 function _readFiles(dirPath) {
-    //load all example algorithms
-    fs.readdirSync(dirPath).forEach(file => {
-        const endingIndex = file.lastIndexOf(".");
+  //load all example algorithms
+  fs.readdirSync(dirPath).forEach((file) => {
+    const endingIndex = file.lastIndexOf(".");
 
-        if(endingIndex >= 0) {  //file found
-            const name = file.substring(0, endingIndex);
-            const ending = file.substring(endingIndex+1);    //skip the .
-            if(ending === "qasm") {
-                exAlgoNames.push(name);
+    if (endingIndex >= 0) {
+      //file found
+      const name = file.substring(0, endingIndex);
+      const ending = file.substring(endingIndex + 1); //skip the .
+      if (ending === "qasm") {
+        exAlgoNames.push(name);
 
-                const algo = fs.readFileSync(dirPath + '/' + file, 'utf-8');
-                exampleAlgos.push({
-                    algo: algo,
-                    name: name,
-                    format: 1        //QASM_FORMAT       //todo it would be safer if we just send "qasm" and let the client determine the format-code
-                });
-            } else if(ending === "real") {
-                exAlgoNames.push(name);
+        const algo = fs.readFileSync(dirPath + "/" + file, "utf-8");
+        exampleAlgos.push({
+          algo: algo,
+          name: name,
+          format: 1, //QASM_FORMAT       //todo it would be safer if we just send "qasm" and let the client determine the format-code
+        });
+      } else if (ending === "real") {
+        exAlgoNames.push(name);
 
-                const algo = fs.readFileSync(dirPath + '/' + file, 'utf-8');
-                exampleAlgos.push({
-                    algo: algo,
-                    name: name,
-                    format: 2       //REAL_FORMAT       //todo it would be safer if we just send "qasm" and let the client determine the format-code
-                });
-            }
-        } else {    //potential directory found
-            const path = dirPath + "/" + file;
-            if(fs.lstatSync(path).isDirectory()) _readFiles(path);
-        }
-    });
+        const algo = fs.readFileSync(dirPath + "/" + file, "utf-8");
+        exampleAlgos.push({
+          algo: algo,
+          name: name,
+          format: 2, //REAL_FORMAT       //todo it would be safer if we just send "qasm" and let the client determine the format-code
+        });
+      }
+    } else {
+      //potential directory found
+      const path = dirPath + "/" + file;
+      if (fs.lstatSync(path).isDirectory()) _readFiles(path);
+    }
+  });
 }
 _readFiles(exAlgoDir);
 
-router.get('/exampleAlgos', (req, res) => {
-    res.status(200).json(exAlgoNames);
+router.get("/exampleAlgos", (req, res) => {
+  res.status(200).json(exAlgoNames);
 });
 
-router.get('/exampleAlgo', (req, res) => {
-    const name = req.query.name;
-    for(ea of exampleAlgos) {
-        if(ea.name === name) {
-            res.status(200).json(ea);
-            return;
-        }
+router.get("/exampleAlgo", (req, res) => {
+  const name = req.query.name;
+  for (ea of exampleAlgos) {
+    if (ea.name === name) {
+      res.status(200).json(ea);
+      return;
     }
-    res.status(404);
-})
+  }
+  res.status(404);
+});
 
 //####################################################################################################################################################################
 
@@ -344,6 +406,15 @@ module.exports = router;
  * @private
  */
 function _sendDD(res, dd, data) {
-    if(data || data === 0) res.status(200).json({ dot: dd.dot, amplitudes: JSON.stringify(Array.from(dd.amplitudes)), data: data });
-    else res.status(200).json({ dot: dd.dot, amplitudes: JSON.stringify(Array.from(dd.amplitudes)) });
+  if (data || data === 0)
+    res.status(200).json({
+      dot: dd.dot,
+      amplitudes: JSON.stringify(Array.from(dd.amplitudes)),
+      data: data,
+    });
+  else
+    res.status(200).json({
+      dot: dd.dot,
+      amplitudes: JSON.stringify(Array.from(dd.amplitudes)),
+    });
 }

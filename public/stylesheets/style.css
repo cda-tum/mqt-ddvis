@@ -1,315 +1,347 @@
-
 /* ################################## base style ################################## */
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 /* fix font family for everything besides svg text */
 body {
-    font-family: 'Lucida Grande', 'Lucida Sans Unicode', 'Trebuchet MS', sans-serif;
-    font-size: 12px;
+  font-family: "Lucida Grande", "Lucida Sans Unicode", "Trebuchet MS",
+    sans-serif;
+  font-size: 12px;
 }
 
 /* fix font family for svg text */
 svg text {
-    font-family: "Times New Roman", Times, serif;
+  font-family: "Times New Roman", Times, serif;
 }
 
 /* Style the header and the footer */
-header, footer {
-    background-color: white; /*rgb(140, 188, 243);*/
-    padding: 30px;
-    text-align: center;
-    color: #685972;
+header,
+footer {
+  background-color: white; /*rgb(140, 188, 243);*/
+  padding: 30px;
+  text-align: center;
+  color: #685972;
 }
 
 header {
-    margin-bottom: 5px;
+  margin-bottom: 5px;
 }
 
 footer {
-    font-style: italic;
+  font-style: italic;
 }
 
 h1 {
-    font-size: 25px;
+  font-size: 25px;
 }
 
 h2 {
-    font-size: 20px;
+  font-size: 20px;
 }
 
 h3 {
-    font-size: 16px;
+  font-size: 16px;
 }
 
 /* manually define font-size for all elements so the texts inside svg are not changed */
-h4, p, span, textarea, button, div, input {
-    /*font-size: 12px;*/
+h4,
+p,
+span,
+textarea,
+button,
+div,
+input {
+  /*font-size: 12px;*/
 }
 
 svg {
-    border: 2px solid #685972;
+  border: 2px solid #685972;
 }
 
 .settings-div {
-    width: 100%;
-    padding-top: 5px;
-    margin-bottom: 50px;
+  width: 100%;
+  padding-top: 5px;
+  margin-bottom: 50px;
 }
 
 .radio-algo {
-    width: 35%;
+  width: 35%;
 }
 
-.algo-div, .svg-div {
-    height: 700px;
+.algo-div,
+.svg-div {
+  height: 700px;
 }
 
 .algo-div {
-    padding: 0;
-    margin-top: 5px;
-    text-align: center;
+  padding: 0;
+  margin-top: 5px;
+  text-align: center;
 }
 
 .nav-div {
-    padding: 10px;
+  padding: 10px;
 }
 
 .nav-button {
-    width: 40px;
+  width: 40px;
 }
 
 .svg-div {
-    padding: 0;
-    margin-top: 5px;
-    text-align: center;
+  padding: 0;
+  margin-top: 5px;
+  text-align: center;
 }
 
-.tab, #settings_headline_div {
-    height: 50px;
+.tab,
+#settings_headline_div {
+  height: 50px;
 }
 
 #settings_menu {
-    float: left;
-    overflow: hidden;
-    width: 0;
-    height: 100%;
-    padding: 0;
-    /*background-color: #3498db;*/
-    transition: width 1.5s;
+  float: left;
+  overflow: hidden;
+  width: 0;
+  height: 100%;
+  padding: 0;
+  /*background-color: #3498db;*/
+  transition: width 1.5s;
 }
 
 #settings_menu > * {
-    padding-left: 10px;
+  padding-left: 10px;
 }
 
 #settings_headline_div {
-    text-align: center;
-    vertical-align: middle;
-    line-height: 50px;  /* same as the elements height */
+  text-align: center;
+  vertical-align: middle;
+  line-height: 50px; /* same as the elements height */
 }
 
 #radio_algo1 {
-    margin-left: 20px;
+  margin-left: 20px;
 }
 
 #stepDuration {
-    width: 100%;
-    max-width: 150px;
+  width: 100%;
+  max-width: 150px;
 }
 
 #main_content {
-    float: left;
-    width: 100%;
-    height: 100%;
-    transition: width 1.5s;
+  float: left;
+  width: 100%;
+  height: 100%;
+  transition: width 1.5s;
 }
 
 #reset_btn {
-    display: none;  /* hidden on the start tab */
-    float: right;
-    width: 150px;
-    border: 2px dashed #aaa;
+  display: none; /* hidden on the start tab */
+  float: right;
+  width: 150px;
+  border: 2px dashed #aaa;
 }
 
 /* clear the space after the tab-content so no content can slip into the tab */
-#start:after, #simulation:after, #verification:after {
-    content: "";
-    display: table;
-    clear: both;
+#start:after,
+#simulation:after,
+#verification:after {
+  content: "";
+  display: table;
+  clear: both;
 }
-
 
 /* ################################## specific element types ################################## */
 /* tab related code adapted from https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_tabs */
 /* Style the tab */
 .tab {
-    overflow: hidden;
-    border: 1px solid #ccc;
-    background-color: #f1f1f1;
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
 }
-  
+
 /* Style the buttons inside the tab */
 .tab button {
-    height: 100%;
-    background-color: inherit;
-    float: left;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    padding: 14px 16px;
-    transition: 0.3s;
+  height: 100%;
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
 }
-  
+
 /* Change background color of buttons on hover */
 .tab button:hover {
-    background-color: #ddd;
+  background-color: #ddd;
 }
-  
+
 /* Create an active/current tablink class */
 .tab button.active {
-    background-color: #ccc;
+  background-color: #ccc;
 }
-  
+
 /* Style the tab content */
 .tabcontent {
-    display: none;
-    padding: 5px 10px 10px;
-    /*border: 1px solid #ccc;*/
-    border-top: none;
-    animation: fadeEffect 0.7s; /* Fading effect takes 0.7 second */
+  display: none;
+  padding: 5px 10px 10px;
+  /*border: 1px solid #ccc;*/
+  border-top: none;
+  animation: fadeEffect 0.7s; /* Fading effect takes 0.7 second */
 }
 
 /* Go from zero to full opacity */
 @keyframes fadeEffect {
-    from {opacity: 0;}
-    to {opacity: 1;}
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* loading related code adapted from https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_loader5 */
 /* Center the loader */
 #loader {
-    display: none;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    z-index: 1;
-    margin: -75px 0 0 -75px;
-    border: 16px solid #f3f3f3;
-    border-radius: 50%;
-    border-top: 16px solid #3498db;
-    width: 120px;
-    height: 120px;
-    -webkit-animation: spin 2s linear infinite;
-    animation: spin 2s linear infinite;
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  margin: -75px 0 0 -75px;
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite;
+  animation: spin 2s linear infinite;
 }
 
 @-webkit-keyframes spin {
-    0% { -webkit-transform: rotate(0deg); }
-    100% { -webkit-transform: rotate(360deg); }
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Add animation to "page content" */
 .animate-bottom {
-    position: relative;
-    -webkit-animation-name: animatebottom;
-    -webkit-animation-duration: 1s;
-    animation-name: animatebottom;
-    animation-duration: 1s
+  position: relative;
+  -webkit-animation-name: animatebottom;
+  -webkit-animation-duration: 1s;
+  animation-name: animatebottom;
+  animation-duration: 1s;
 }
 
 @-webkit-keyframes animatebottom {
-    from { bottom:-100px; opacity:0 }
-    to { bottom:0; opacity:1 }
+  from {
+    bottom: -100px;
+    opacity: 0;
+  }
+  to {
+    bottom: 0;
+    opacity: 1;
+  }
 }
 
 @keyframes animatebottom {
-    from{ bottom:-100px; opacity:0 }
-    to{ bottom:0; opacity:1 }
+  from {
+    bottom: -100px;
+    opacity: 0;
+  }
+  to {
+    bottom: 0;
+    opacity: 1;
+  }
 }
-
 
 /* dropdown button related code adapted from https://www.w3schools.com/howto/howto_js_filter_dropdown.asp */
 .example-algo {
-    height: fit-content;
-    width: 100%;
-    background: #f9f9f9 linear-gradient(to bottom, #f9f9f9 5%, #e9e9e9 100%);
-    border-radius:6px;
-    /*border:1px solid #dcdcdc;*/
-    display:inline-block;
-    cursor:pointer;
+  height: fit-content;
+  width: 100%;
+  background: #f9f9f9 linear-gradient(to bottom, #f9f9f9 5%, #e9e9e9 100%);
+  border-radius: 6px;
+  /*border:1px solid #dcdcdc;*/
+  display: inline-block;
+  cursor: pointer;
 }
 
 .example-algo:hover {
-    /*background-color: #ddd;*/
-    background: #e9e9e9 linear-gradient(to bottom, #e9e9e9 5%, #f9f9f9 100%);
+  /*background-color: #ddd;*/
+  background: #e9e9e9 linear-gradient(to bottom, #e9e9e9 5%, #f9f9f9 100%);
 }
 
 #ex_algo_headline {
-    width: 100%;
+  width: 100%;
 }
 
 /* The search field */
 #ex_algo_search_text {
-    width: 100%;
-    height: 20px;
-    box-sizing: border-box;
-    /*background-image: url('searchicon.png');
+  width: 100%;
+  height: 20px;
+  box-sizing: border-box;
+  /*background-image: url('searchicon.png');
     background-position: 14px 12px;
     background-repeat: no-repeat;*/
-    padding: 14px 20px 12px 0;
-    border: none;
-    border-bottom: 1px solid #ddd;
+  padding: 14px 20px 12px 0;
+  border: none;
+  border-bottom: 1px solid #ddd;
 }
 
 #ex_algo_ver_loading {
-    width: 100%;
-    height: auto;
-    transition: height 1.5s;
-    padding-top: 20px;
+  width: 100%;
+  height: auto;
+  transition: height 1.5s;
+  padding-top: 20px;
 }
 
 #ex_algo_ver_loading input[type="radio"] {
-    opacity: 0;
-    position: fixed;
-    width: 0;
+  opacity: 0;
+  position: fixed;
+  width: 0;
 }
 
 #ex_algo_ver_loading label {
-    display: inline-block;
-    alignment: center;
-    background-color: #fff;
-    padding: 5px 5px;
-    border: 1px solid #444;
-    border-radius: 4px;
-    width: 48%;
-    font-size: 8pt;
-    text-align: center;
+  display: inline-block;
+  alignment: center;
+  background-color: #fff;
+  padding: 5px 5px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  width: 48%;
+  font-size: 8pt;
+  text-align: center;
 }
 
 #ex_algo_ver_loading label:hover {
-    background-color: #666;
+  background-color: #666;
 }
 
 #ex_algo_ver_loading input[type="radio"]:checked + label {
-    background-color: #ddd;
-    border-color: #000;
+  background-color: #ddd;
+  border-color: #000;
 }
 
 #ex_algo_list {
-    width: 100%;
-    height: 280px;
-    overflow-y: auto;
-    padding-top: 10px;
-    padding-bottom: 20px;
+  width: 100%;
+  height: 280px;
+  overflow-y: auto;
+  padding-top: 10px;
+  padding-bottom: 20px;
 }
 
 /* The search field when it gets focus/clicked on */
 /* #ex_algo_search_text:focus {outline: 3px solid #ddd;} */
-
