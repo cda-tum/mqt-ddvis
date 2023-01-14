@@ -29,7 +29,7 @@ jobs:
          IdentityFile ~/.ssh/deploy.key
         END
     - name: Show files
-      run: ssh deploy 'cd ${CDA_TARGET_DIR} && ls -a'
+      run: ssh deploy 'cd /var/www/cda/app/ddvis/ && ls -a'
     - name: Show git status
       run: ssh deploy 'cd ${CDA_TARGET_DIR} && git status'
     - name: Check out the source
