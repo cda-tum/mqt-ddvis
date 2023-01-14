@@ -28,6 +28,10 @@ jobs:
          User ${CDA_USER_NAME}
          IdentityFile ~/.ssh/deploy.key
         END
+    - name: Show files
+      run: ssh deploy 'cd ${CDA_TARGET_DIR} && ls -a'
+    - name: Show git status
+      run: ssh deploy 'cd ${CDA_TARGET_DIR} && git status'
     - name: Check out the source
       run: ssh deploy 'cd ${CDA_TARGET_DIR} && git fetch && git reset --hard origin/main'
     - name: Install the dependencies
