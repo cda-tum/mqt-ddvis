@@ -1,5 +1,4 @@
 [submodule "cpp/qfr"]
 	path = cpp/qfr
 	url = https://github.com/cda-tum/qfr.git
-	shallow = true
 	branch = main
