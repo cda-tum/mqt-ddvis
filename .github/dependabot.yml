@@ -1,43 +1,23 @@
 version: 2
 updates:
-  # Enable version updates for git submodules
   - package-ecosystem: "gitsubmodule"
-    # Look for `.gitmodules` in the `root` directory
-    directory:         "/"
-    # Check the submodules for updates every week
+    directory: "/"
     schedule:
       interval: "weekly"
       day: "friday"
       time: "06:00"
       timezone: "Europe/Vienna"
-    assignees:
-      - "burgholzer"
-      - "hillmich"
-
-  # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
-    # Look for `*.yml` files in the `.github/workflows` directory
-    directory:         "/"
-    # Check for updates to GitHub Actions every week
+    directory: "/"
     schedule:
       interval: "weekly"
       day: "friday"
       time: "06:00"
       timezone: "Europe/Vienna"
-    assignees:
-      - "burgholzer"
-      - "hillmich"
-      
-  
-  # Enable version updates for npm
-  - package-ecosystem: 'npm'
-    # Look for `package.json` and `lock` files in the `root` directory
-    directory: '/'
+  - package-ecosystem: "npm"
+    directory: "/"
     schedule:
-      interval: 'weekly'
+      interval: "weekly"
       day: "friday"
       time: "06:00"
       timezone: "Europe/Vienna"
-    assignees:
-      - "burgholzer"
-      - "hillmich"

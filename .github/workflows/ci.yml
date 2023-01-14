@@ -1,18 +1,22 @@
 name: CI
 
 on:
-  push:
-    branches: [ master, main ]
   pull_request:
-    branches: [ master, main ]
+  push:
+    branches:
+      - main
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ 14.x, 16.x, 18.x ]
+        node-version: [14.x, 16.x, 18.x]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -23,15 +27,3 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
       - run: npm run build --if-present
-
-  codestyle:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - uses: DoozyX/clang-format-lint-action@v0.15
-        with:
-          source:             'cpp/module'
-          extensions:         'h,hpp,c,cpp'
-          clangFormatVersion: 12
