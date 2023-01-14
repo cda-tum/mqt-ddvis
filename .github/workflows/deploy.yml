@@ -1,4 +1,3 @@
-# Based on: https://zartman.xyz/blog/gh-static-deploy/
 name: Server Deployment
 on:
   push:
@@ -11,24 +10,30 @@ env:
   CDA_HOST_NAME: tueicda-cda.srv.mwn.de
   CDA_USER_NAME: web-user
   CDA_TARGET_DIR: /var/www/cda/app/ddvis/
-  CDA_GIT_DIR: .git/
 
 jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
     - name: Setup SSH via the stored Action Secrets
       run: |
         mkdir -p ~/.ssh
         echo "${KNOWN_HOSTS}" >> ~/.ssh/known_hosts
-        echo "${DEPLOY_KEY}" > ~/.ssh/my_rsync_key
-        echo "IdentityFile ~/.ssh/my_rsync_key" >> ~/.ssh/config
-        chmod -R 700 ~/.ssh
-    - name: rsync deployment
-      working-directory: ${{ github.workspace }}
-      run: |
-        rsync -avz --update  -e ssh . ${CDA_USER_NAME}@${CDA_HOST_NAME}:${CDA_TARGET_DIR} --exclude ${CDA_GIT_DIR}
+        echo "${DEPLOY_KEY}" > ~/.ssh/deploy.key
+        chmod 600 ~/.ssh/deploy.key
+        cat >>~/.ssh/config <<END
+        Host deploy
+         HostName ${CDA_HOST_NAME}
+         User ${CDA_USER_NAME}
+         IdentityFile ~/.ssh/deploy.key
+        END
+    - name: Stop the server
+      run: ssh deploy 'sudo systemctl stop ddvis.service'
+    - name: Check out the source
+      run: ssh deploy 'cd ${CDA_TARGET_DIR} && git fetch && git reset --hard origin/main'
+    - name: Install the dependencies
+      run: ssh deploy 'cd ${CDA_TARGET_DIR} && npm install'
+    - name: Start the server
+      if: ${{ always() }}
+      run: ssh deploy 'sudo systemctl start ddvis.service'
