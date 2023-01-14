@@ -43,6 +43,8 @@
     "npm": "^9.3.0"
   },
   "binary": {
-    "napi_versions": [7]
+    "napi_versions": [
+      7
+    ]
   }
 }
