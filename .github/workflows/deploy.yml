@@ -28,12 +28,7 @@ jobs:
          User ${CDA_USER_NAME}
          IdentityFile ~/.ssh/deploy.key
         END
-    - name: Stop the server
-      run: ssh deploy 'sudo systemctl stop ddvis.service'
     - name: Check out the source
       run: ssh deploy 'cd ${CDA_TARGET_DIR} && git fetch && git reset --hard origin/main'
     - name: Install the dependencies
       run: ssh deploy 'cd ${CDA_TARGET_DIR} && npm install'
-    - name: Start the server
-      if: ${{ always() }}
-      run: ssh deploy 'sudo systemctl start ddvis.service'
