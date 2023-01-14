@@ -9,7 +9,6 @@ env:
   KNOWN_HOSTS: ${{ secrets.KNOWN_HOSTS }}
   CDA_HOST_NAME: tueicda-cda.srv.mwn.de
   CDA_USER_NAME: web-user
-  CDA_TARGET_DIR: /var/www/cda/app/ddvis/
 
 jobs:
   deploy:
@@ -28,11 +27,7 @@ jobs:
          User ${CDA_USER_NAME}
          IdentityFile ~/.ssh/deploy.key
         END
-    - name: Show files
-      run: ssh deploy 'cd /var/www/cda/app/ddvis/ && ls -a'
-    - name: Show git status
-      run: ssh deploy 'cd $CDA_TARGET_DIR && git status'
     - name: Check out the source
-      run: ssh deploy 'cd $CDA_TARGET_DIR && git fetch && git reset --hard origin/main'
+      run: ssh deploy 'cd /var/www/cda/app/ddvis/ && git fetch && git reset --hard origin/main'
     - name: Install the dependencies
-      run: ssh deploy 'cd $CDA_TARGET_DIR && npm install'
+      run: ssh deploy 'cd /var/www/cda/app/ddvis/ && npm install'
