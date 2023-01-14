@@ -31,8 +31,8 @@ jobs:
     - name: Show files
       run: ssh deploy 'cd /var/www/cda/app/ddvis/ && ls -a'
     - name: Show git status
-      run: ssh deploy 'cd ${CDA_TARGET_DIR} && git status'
+      run: ssh deploy 'cd $CDA_TARGET_DIR && git status'
     - name: Check out the source
-      run: ssh deploy 'cd ${CDA_TARGET_DIR} && git fetch && git reset --hard origin/main'
+      run: ssh deploy 'cd $CDA_TARGET_DIR && git fetch && git reset --hard origin/main'
     - name: Install the dependencies
-      run: ssh deploy 'cd ${CDA_TARGET_DIR} && npm install'
+      run: ssh deploy 'cd $CDA_TARGET_DIR && npm install'
