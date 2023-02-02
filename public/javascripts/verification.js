@@ -269,7 +269,7 @@ function ver_print(dd, callback, resetZoom = false) {
         .on("transitionStart", callback);
     }
   } else {
-    ver_qdd_div.html(ver_qdd_text);
+    ver_graphviz.renderDot("digraph {}");
     if (callback) callback();
   }
 }
