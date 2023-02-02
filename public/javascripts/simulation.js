@@ -751,7 +751,7 @@ function print(dd, callback, resetZoom = false) {
     }
     plotAmplitudes(dd.amplitudes);
   } else {
-    qdd_div.html(qdd_text);
+    graphviz.renderDot("digraph {}");
     amp_svg.style("visibility", "hidden");
     amp_descr.style("visibility", "hidden");
     if (callback) callback();
