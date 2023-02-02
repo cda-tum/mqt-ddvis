@@ -950,9 +950,11 @@ function plotAmplitudes(amplitudes) {
         );
     }
 
-    amp_plot
-      .selectAll("rect")
-      .on("mouseover", function (d, i) {
+    let rect = amp_plot.selectAll("rect");
+    rect
+      .on("mouseover", function (event, d) {
+        const e = rect.nodes();
+        const i = e.indexOf(event.currentTarget);
         amp_tooltip.html(
           "State: " +
             i.toString(2).padStart(Math.log2(namps), "0") +
@@ -965,10 +967,10 @@ function plotAmplitudes(amplitudes) {
         );
         return amp_tooltip.style("visibility", "visible");
       })
-      .on("mousemove", function () {
+      .on("mousemove", function (event) {
         return amp_tooltip
-          .style("top", d3.event.pageY - 10 + "px")
-          .style("left", d3.event.pageX + 10 + "px");
+          .style("top", event.pageY - 10 + "px")
+          .style("left", event.pageX + 10 + "px");
       })
       .on("mouseout", function () {
         return amp_tooltip.style("visibility", "hidden");
