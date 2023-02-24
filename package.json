@@ -31,7 +31,7 @@
   "homepage": "https://iic.jku.at/eda/research/quantum_dd/tool",
   "license": "MIT",
   "dependencies": {
-    "body-parser": "^1.20.1",
+    "body-parser": "^1.20.2",
     "cmake-js": "^7.2.1",
     "cookie-parser": "^1.4.6",
     "d3-graphviz": "^5.0.2",
