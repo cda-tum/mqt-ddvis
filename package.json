@@ -37,7 +37,7 @@
     "d3-graphviz": "^5.0.2",
     "express": "^4.18.2",
     "http-errors": "^2.0.0",
-    "jquery": "^3.6.3",
+    "jquery": "^3.6.4",
     "morgan": "^1.10.0",
     "node-addon-api": "^6.0.0",
     "npm": "^9.6.1"
