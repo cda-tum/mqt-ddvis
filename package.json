@@ -40,7 +40,7 @@
     "jquery": "^3.6.4",
     "morgan": "^1.10.0",
     "node-addon-api": "^6.0.0",
-    "npm": "^9.6.1"
+    "npm": "^9.6.2"
   },
   "binary": {
     "napi_versions": [
