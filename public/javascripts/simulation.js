@@ -526,7 +526,7 @@ function _resizeDialog(dialog, pzero, pone) {
       dialog.dialog("option", "position", {
         my: "center",
         at: "center",
-        of: "#algo_div",
+        of: window,
       });
       dialog.dialog("option", "width", $(window).width() * 0.15);
       let dialogWidth = dialog.innerWidth();
