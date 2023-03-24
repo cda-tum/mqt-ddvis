@@ -548,7 +548,7 @@ function _startDialog(dialog, title, text, pzero, pone) {
     resizable: false,
     autoOpen: true,
     modal: true,
-    position: { my: "center", at: "center", of: "#algo_div" },
+    position: { my: "center", at: "center", of: window },
     width: $(algo_div).width() * 0.9,
     buttons: {
       "Option 0": {
