@@ -23,9 +23,9 @@ macro(CHECK_SUBMODULE_PRESENT modulename)
   endif()
 endmacro()
 
-check_submodule_present(qfr)
+check_submodule_present(mqt-core)
 # add submodule directory. this automatically adds the appropriate targets and include files
-add_subdirectory(cpp/qfr)
+add_subdirectory(cpp/mqt-core)
 
 # create executable
 add_library(${PROJECT_NAME} SHARED cpp/module/module.cpp cpp/module/QDDVer.cpp cpp/module/QDDVer.h
