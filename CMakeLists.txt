@@ -25,6 +25,7 @@ endmacro()
 
 check_submodule_present(mqt-core)
 # add submodule directory. this automatically adds the appropriate targets and include files
+set(BINDINGS ON)
 add_subdirectory(cpp/mqt-core)
 
 # create executable
