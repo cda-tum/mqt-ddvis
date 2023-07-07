@@ -39,7 +39,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC cpp/module)
 set(GENERATE_POSITION_INDEPENDENT_CODE ON)
 
 # link the QFR library and the project options and warnings.
-target_link_libraries(${PROJECT_NAME} PRIVATE MQT::qfr_dd project_options project_warnings)
+target_link_libraries(${PROJECT_NAME} PRIVATE MQT::CoreDD)
 
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${CMAKE_JS_INC})
 target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB})
