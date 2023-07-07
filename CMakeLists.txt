@@ -36,7 +36,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 target_include_directories(${PROJECT_NAME} PUBLIC cpp/module)
 
 # enable PIC generation
-set(GENERATE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # link the QFR library and the project options and warnings.
 target_link_libraries(${PROJECT_NAME} PRIVATE MQT::CoreDD)
