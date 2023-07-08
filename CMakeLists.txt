@@ -23,9 +23,10 @@ macro(CHECK_SUBMODULE_PRESENT modulename)
   endif()
 endmacro()
 
-check_submodule_present(qfr)
+check_submodule_present(mqt-core)
 # add submodule directory. this automatically adds the appropriate targets and include files
-add_subdirectory(cpp/qfr)
+set(BINDINGS ON)
+add_subdirectory(cpp/mqt-core)
 
 # create executable
 add_library(${PROJECT_NAME} SHARED cpp/module/module.cpp cpp/module/QDDVer.cpp cpp/module/QDDVer.h
@@ -36,10 +37,10 @@ set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 target_include_directories(${PROJECT_NAME} PUBLIC cpp/module)
 
 # enable PIC generation
-set(GENERATE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # link the QFR library and the project options and warnings.
-target_link_libraries(${PROJECT_NAME} PRIVATE MQT::qfr_dd project_options project_warnings)
+target_link_libraries(${PROJECT_NAME} PRIVATE MQT::CoreDD)
 
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${CMAKE_JS_INC})
 target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB})
