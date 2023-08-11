@@ -63,14 +63,13 @@ void QDDVis::stepForward() {
   qc::MatrixDD currDD{};
   if ((*iterator)->isClassicControlledOperation()) {
     auto startIndex = static_cast<dd::Qubit>((*iterator)->getParameter().at(0));
-    auto length =
-        static_cast<dd::QubitCount>((*iterator)->getParameter().at(1));
+    auto length = static_cast<std::size_t>((*iterator)->getParameter().at(1));
     auto expectedValue =
         static_cast<std::size_t>((*iterator)->getParameter().at(2));
 
     std::size_t value = 0;
-    for (dd::QubitCount i = 0; i < length; ++i) {
-      value |= (measurements[startIndex + i] << i);
+    for (std::size_t i = 0; i < length; ++i) {
+      value |= (static_cast<std::size_t>(measurements[startIndex + i]) << i);
     }
 
     if (value == expectedValue) {
@@ -121,14 +120,13 @@ void QDDVis::stepBack() {
   qc::MatrixDD currDD{};
   if ((*iterator)->isClassicControlledOperation()) {
     auto startIndex = static_cast<dd::Qubit>((*iterator)->getParameter().at(0));
-    auto length =
-        static_cast<dd::QubitCount>((*iterator)->getParameter().at(1));
+    auto length = static_cast<std::size_t>((*iterator)->getParameter().at(1));
     auto expectedValue =
         static_cast<std::size_t>((*iterator)->getParameter().at(2));
 
     std::size_t value = 0;
-    for (dd::QubitCount i = 0; i < length; ++i) {
-      value |= (measurements[startIndex + i] << i);
+    for (std::size_t i = 0; i < length; ++i) {
+      value |= (static_cast<std::size_t>(measurements[startIndex + i]) << i);
     }
 
     if (value == expectedValue) {
