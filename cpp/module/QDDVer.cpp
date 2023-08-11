@@ -241,7 +241,7 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
   std::stringstream ss{algo};
 
   // the third parameter (how many operations to apply immediately)
-  unsigned int opNum = static_cast<unsigned int>(info[2].As<Napi::Number>());
+  auto opNum = static_cast<unsigned int>(info[2].As<Napi::Number>());
   // at this point opNum might be bigger than the number of operations the
   // algorithm has!
 
@@ -249,11 +249,11 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
   const bool process = static_cast<bool>(info[3].As<Napi::Boolean>());
 
   // the fifth parameter (algo1)
-  bool algo1 = static_cast<bool>(info[4].As<Napi::Boolean>());
+  const auto algo1 = static_cast<bool>(info[4].As<Napi::Boolean>());
 
   try {
     // second parameter describes the format of the algorithm
-    const unsigned int formatCode =
+    const auto formatCode =
         static_cast<unsigned int>(info[1].As<Napi::Number>());
     qc::Format format;
     if (formatCode == 1)
@@ -353,9 +353,9 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
   }
 
   if (algo1 && opNum > qc1->getNops())
-    opNum = qc1->getNops();
+    opNum = static_cast<unsigned int>(qc1->getNops());
   else if (!algo1 && opNum > qc2->getNops())
-    opNum = qc2->getNops();
+    opNum = static_cast<unsigned int>(qc2->getNops());
 
   if (opNum > 0) {
     if (algo1)
@@ -413,8 +413,7 @@ Napi::Value QDDVer::ToStart(const Napi::CallbackInfo& info) {
     Napi::TypeError::New(env, "arg1: Boolean expected!")
         .ThrowAsJavaScriptException();
   }
-  bool algo1 = (bool)info[0].As<Napi::Boolean>();
-
+  const auto algo1 = static_cast<bool>(info[0].As<Napi::Boolean>());
   if (algo1) {
     if (!ready1) {
       // Napi::Error::New(env, "No algorithm loaded as
@@ -490,8 +489,7 @@ Napi::Value QDDVer::Prev(const Napi::CallbackInfo& info) {
         .ThrowAsJavaScriptException();
     return state;
   }
-  bool algo1 = (bool)info[0].As<Napi::Boolean>();
-
+  const auto algo1 = static_cast<bool>(info[0].As<Napi::Boolean>());
   if (algo1) {
     if (!ready1) {
       Napi::Error::New(env, "No algorithm loaded as algo1!")
@@ -561,8 +559,7 @@ Napi::Value QDDVer::Next(const Napi::CallbackInfo& info) {
         .ThrowAsJavaScriptException();
     return state;
   }
-  bool algo1 = (bool)info[0].As<Napi::Boolean>();
-
+  const auto algo1 = static_cast<bool>(info[0].As<Napi::Boolean>());
   if (algo1) {
     if (!ready1) {
       Napi::Error::New(env, "No algorithm loaded as algo1!")
@@ -638,8 +635,7 @@ Napi::Value QDDVer::ToEnd(const Napi::CallbackInfo& info) {
         .ThrowAsJavaScriptException();
     return state;
   }
-  bool algo1 = (bool)info[0].As<Napi::Boolean>();
-
+  const auto algo1 = static_cast<bool>(info[0].As<Napi::Boolean>());
   if (algo1) {
     if (!ready1) {
       Napi::Error::New(env, "No algorithm loaded as algo1!")
@@ -729,15 +725,16 @@ Napi::Value QDDVer::ToLine(const Napi::CallbackInfo& info) {
         .ThrowAsJavaScriptException();
   }
 
-  unsigned int param = (unsigned int)info[0].As<Napi::Number>();
-  bool         algo1 = (bool)info[1].As<Napi::Boolean>();
-
+  auto       param = static_cast<unsigned int>(info[0].As<Napi::Number>());
+  const auto algo1 = static_cast<bool>(info[0].As<Napi::Boolean>());
   if (algo1) {
     if (param > qc1->getNops())
-      param = qc1->getNops(); // we can't go further than to the end
+      // we can't go further than to the end
+      param = static_cast<unsigned int>(qc1->getNops());
   } else {
     if (param > qc2->getNops())
-      param = qc2->getNops(); // we can't go further than to the end
+      // we can't go further than to the end
+      param = static_cast<unsigned int>(qc2->getNops());
   }
   const unsigned int targetPos = param;
 
@@ -864,10 +861,10 @@ void QDDVer::UpdateExportOptions(const Napi::CallbackInfo& info) {
     return;
   }
 
-  this->showColors          = (bool)info[0].As<Napi::Boolean>();
-  this->showEdgeLabels      = (bool)info[1].As<Napi::Boolean>();
-  this->showClassic         = (bool)info[2].As<Napi::Boolean>();
-  this->usePolarCoordinates = (bool)info[3].As<Napi::Boolean>();
+  this->showColors          = static_cast<bool>(info[0].As<Napi::Boolean>());
+  this->showEdgeLabels      = static_cast<bool>(info[1].As<Napi::Boolean>());
+  this->showClassic         = static_cast<bool>(info[2].As<Napi::Boolean>());
+  this->usePolarCoordinates = static_cast<bool>(info[3].As<Napi::Boolean>());
 }
 
 Napi::Value QDDVer::GetExportOptions(const Napi::CallbackInfo& info) {
@@ -898,8 +895,8 @@ Napi::Value QDDVer::IsReady(const Napi::CallbackInfo& info) {
     Napi::TypeError::New(env, "arg1: Boolean expected!")
         .ThrowAsJavaScriptException();
   }
-  bool algo1 = (bool)info[0].As<Napi::Boolean>();
 
+  const auto algo1 = static_cast<bool>(info[0].As<Napi::Boolean>());
   if (algo1)
     return Napi::Boolean::New(env, this->ready1);
   else
@@ -919,8 +916,7 @@ void QDDVer::Unready(const Napi::CallbackInfo& info) {
         .ThrowAsJavaScriptException();
     return;
   }
-  bool algo1 = (bool)info[0].As<Napi::Boolean>();
-
+  const auto algo1 = static_cast<bool>(info[0].As<Napi::Boolean>());
   if (algo1)
     this->ready1 = false;
   else
