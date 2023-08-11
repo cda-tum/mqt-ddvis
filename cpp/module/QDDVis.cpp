@@ -63,14 +63,13 @@ void QDDVis::stepForward() {
   qc::MatrixDD currDD{};
   if ((*iterator)->isClassicControlledOperation()) {
     auto startIndex = static_cast<dd::Qubit>((*iterator)->getParameter().at(0));
-    auto length =
-        static_cast<dd::QubitCount>((*iterator)->getParameter().at(1));
+    auto length = static_cast<std::size_t>((*iterator)->getParameter().at(1));
     auto expectedValue =
         static_cast<std::size_t>((*iterator)->getParameter().at(2));
 
     std::size_t value = 0;
-    for (dd::QubitCount i = 0; i < length; ++i) {
-      value |= (measurements[startIndex + i] << i);
+    for (std::size_t i = 0; i < length; ++i) {
+      value |= (static_cast<std::size_t>(measurements[startIndex + i]) << i);
     }
 
     if (value == expectedValue) {
@@ -121,14 +120,13 @@ void QDDVis::stepBack() {
   qc::MatrixDD currDD{};
   if ((*iterator)->isClassicControlledOperation()) {
     auto startIndex = static_cast<dd::Qubit>((*iterator)->getParameter().at(0));
-    auto length =
-        static_cast<dd::QubitCount>((*iterator)->getParameter().at(1));
+    auto length = static_cast<std::size_t>((*iterator)->getParameter().at(1));
     auto expectedValue =
         static_cast<std::size_t>((*iterator)->getParameter().at(2));
 
     std::size_t value = 0;
-    for (dd::QubitCount i = 0; i < length; ++i) {
-      value |= (measurements[startIndex + i] << i);
+    for (std::size_t i = 0; i < length; ++i) {
+      value |= (static_cast<std::size_t>(measurements[startIndex + i]) << i);
     }
 
     if (value == expectedValue) {
@@ -237,7 +235,8 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
 
   try {
     // second parameter describes the format of the algorithm
-    const unsigned int formatCode = (unsigned int)info[1].As<Napi::Number>();
+    const auto formatCode =
+        static_cast<unsigned int>(info[1].As<Napi::Number>());
     if (formatCode == 1)
       qc->import(ss, qc::Format::OpenQASM);
     else if (formatCode == 2)
@@ -272,17 +271,16 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
             Napi::Number::New(env, static_cast<double>(qc->getNops())));
 
   // the third parameter (how many operations to apply immediately)
-  unsigned int opNum =
-      (unsigned int)info[2]
-          .As<Napi::Number>(); // at this point opNum may be bigger than the
-                               // number of operations the algorithm has!
+  auto opNum = static_cast<unsigned int>(
+      info[2].As<Napi::Number>()); // at this point opNum may be bigger than the
+                                   // number of operations the algorithm has!
   if (opNum > qc->getNops())
-    opNum = qc->getNops();
+    opNum = static_cast<unsigned int>(qc->getNops());
   if (opNum > 0) {
-    atInitial = false;
-    const bool process =
-        (bool)info[3].As<Napi::Boolean>(); // the fourth parameter tells us to
-                                           // process iterated operations or not
+    atInitial          = false;
+    const bool process = static_cast<bool>(
+        info[3].As<Napi::Boolean>()); // the fourth parameter tells us to
+                                      // process iterated operations or not
     if (process) {
       if (sim.p != nullptr) {
         dd->decRef(sim);
@@ -458,12 +456,12 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
     state.Set("changed", Napi::Boolean::New(env, true));
 
     if ((*iterator)->getType() == qc::Reset) {
-      auto qubits       = (*iterator)->getTargets();
-      auto totalResets  = qubits.size();
-      auto qubitToReset = qubits.front();
-      auto qubitsReset  = 0;
-      auto [pzero, pone] =
-          dd->determineMeasurementProbabilities(sim, qubitToReset, true);
+      auto qubits        = (*iterator)->getTargets();
+      auto totalResets   = qubits.size();
+      auto qubitToReset  = qubits.front();
+      auto qubitsReset   = 0;
+      auto [pzero, pone] = dd->determineMeasurementProbabilities(
+          sim, static_cast<dd::Qubit>(qubitToReset), true);
 
       Napi::Object reset = Napi::Object::New(env);
       reset.Set("qubit", Napi::Number::New(env, qubitToReset));
@@ -489,8 +487,8 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
       auto qubitToMeasure    = qubits.front();
       auto cbitToStore       = cbits.front();
       auto qubitsMeasured    = 0;
-      auto [pzero, pone] =
-          dd->determineMeasurementProbabilities(sim, qubitToMeasure, true);
+      auto [pzero, pone]     = dd->determineMeasurementProbabilities(
+          sim, static_cast<dd::Qubit>(qubitToMeasure), true);
 
       Napi::Object measurement = Napi::Object::New(env);
       measurement.Set("qubit", Napi::Number::New(env, qubitToMeasure));
@@ -619,9 +617,10 @@ Napi::Value QDDVis::ToLine(const Napi::CallbackInfo& info) {
     return state;
   }
 
-  unsigned int param = (unsigned int)info[0].As<Napi::Number>();
+  auto param = static_cast<unsigned int>(info[0].As<Napi::Number>());
   if (param > qc->getNops())
-    param = qc->getNops(); // we can't go further than to the end
+    // we can't go further than to the end
+    param = static_cast<unsigned int>(qc->getNops());
   const unsigned int targetPos = param;
 
   try {
@@ -794,10 +793,10 @@ void QDDVis::UpdateExportOptions(const Napi::CallbackInfo& info) {
     return;
   }
 
-  this->showColors          = (bool)info[0].As<Napi::Boolean>();
-  this->showEdgeLabels      = (bool)info[1].As<Napi::Boolean>();
-  this->showClassic         = (bool)info[2].As<Napi::Boolean>();
-  this->usePolarCoordinates = (bool)info[3].As<Napi::Boolean>();
+  this->showColors          = static_cast<bool>(info[0].As<Napi::Boolean>());
+  this->showEdgeLabels      = static_cast<bool>(info[1].As<Napi::Boolean>());
+  this->showClassic         = static_cast<bool>(info[2].As<Napi::Boolean>());
+  this->usePolarCoordinates = static_cast<bool>(info[3].As<Napi::Boolean>());
 }
 
 Napi::Value QDDVis::GetExportOptions(const Napi::CallbackInfo& info) {
@@ -931,7 +930,8 @@ QDDVis::ConductIrreversibleOperation(const Napi::CallbackInfo& info) {
     }
   } else {
     // get target classical bit
-    auto cbit = obj.Get("cbit").As<Napi::Number>().Int64Value();
+    auto cbit = static_cast<std::size_t>(
+        obj.Get("cbit").As<Napi::Number>().Int64Value());
     if (classicalValueToMeasure != "none") {
       bool measureOne = (classicalValueToMeasure == "1");
       measureQubit(qubit, measureOne, pzero, pone);
