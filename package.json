@@ -21,7 +21,7 @@
   ],
   "author": {
     "name": "Lukas Burgholzer",
-    "email": "lukas.burgholzer@jku.at",
+    "email": "lukas.burgholzer@tum.de",
     "url": "https://burgholzer.me"
   },
   "contributors": [
@@ -41,7 +41,7 @@
     "jquery-ui": "^1.13.2",
     "morgan": "^1.10.0",
     "node-addon-api": "^7.0.0",
-    "npm": "^9.8.1"
+    "npm": "^10.1.0"
   },
   "binary": {
     "napi_versions": [
