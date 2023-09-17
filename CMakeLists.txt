@@ -23,9 +23,13 @@ macro(CHECK_SUBMODULE_PRESENT modulename)
   endif()
 endmacro()
 
+# enable PIC generation
+set(CMAKE_POSITION_INDEPENDENT_CODE
+    ON
+    CACHE BOOL "Build Position Independent Code")
+
 check_submodule_present(mqt-core)
 # add submodule directory. this automatically adds the appropriate targets and include files
-set(BINDINGS ON)
 set(BUILD_MQT_CORE_TESTS OFF)
 add_subdirectory(cpp/mqt-core)
 
@@ -36,9 +40,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 
 # include directories
 target_include_directories(${PROJECT_NAME} PUBLIC cpp/module)
-
-# enable PIC generation
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # link the QFR library and the project options and warnings.
 target_link_libraries(${PROJECT_NAME} PRIVATE MQT::CoreDD)
