@@ -13,9 +13,7 @@
 An installation-free web-tool developed by the Chair for Design Automation at the [Technical University of Munich](https://www.tum.de/) which visualizes quantum decision diagrams and allows to explore their behavior when used in design tasks such as simulation, synthesis, or verification.
 
 DDVis is part of the Munich Quantum Toolkit (MQT; formerly known as JKQ and developed by the [Institute for Integrated Circuits](https://iic.jku.at/eda/) at the [Johannes Kepler University Linz](https://jku.at)).
-
-It builds upon [our quantum functionality representation (QFR)](https://github.com/cda-tum/qfr)
-and [our decision diagram (DD) package](https://github.com/cda-tum/dd_package.git).
+It builds upon [MQT Core](https://github.com/cda-tum/mqt-core), which forms the backbone of the MQT.
 
 The tool is hosted online at [https://www.cda.cit.tum.de/app/ddvis/](https://www.cda.cit.tum.de/app/ddvis/).
 
@@ -27,7 +25,7 @@ MQT DDVis allows users to interactively learn how decision diagrams can be used 
 
 If you are interested in our research on either topic, visit [https://www.cda.cit.tum.de/research/quantum/](https://www.cda.cit.tum.de/research/quantum/).
 
-If you have any questions, feel free to contact us via [quantum.cda@xcit.tum.de](mailto:quantum.cda@xcit.tum.de) or by creating an issue on [GitHub](https://github.com/cda-tum/ddvis/issues).
+If you have any questions, feel free to contact us via [quantum.cda@xcit.tum.de](mailto:quantum.cda@xcit.tum.de) or by creating an issue on [GitHub](https://github.com/cda-tum/mqt-ddvis/issues).
 
 ## Quickstart
 
@@ -35,8 +33,8 @@ To run DDVis locally, you will require a C++ compiler, CMake, Node.js, and NPM (
 The following commands will build the app and start it. Open your browser at `localhost:3000` to access the user interface.
 
 ```
-$ git clone --recurse-submodules git@github.com:cda-tum/ddvis.git
-$ cd ddvis
+$ git clone --recurse-submodules git@github.com:cda-tum/mqt-ddvis.git
+$ cd mqt-ddvis
 ddvis $ npm install
 ddvis $ npm run-script run
 [...]
