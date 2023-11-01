@@ -41,7 +41,7 @@
     "jquery-ui": "^1.13.2",
     "morgan": "^1.10.0",
     "node-addon-api": "^7.0.0",
-    "npm": "^10.1.0"
+    "npm": "^10.2.2"
   },
   "binary": {
     "napi_versions": [
