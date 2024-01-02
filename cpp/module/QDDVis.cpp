@@ -149,35 +149,11 @@ void QDDVis::stepBack() {
   dd->garbageCollect();
 }
 
-void QDDVis::measureQubit(dd::Qubit qubitIdx, bool measureOne, dd::fp pzero,
-                          dd::fp pone) {
-  dd::GateMatrix measure_m{{{0, 0}, {0, 0}, {0, 0}, {0, 0}}};
-
-  dd::fp norm_factor{};
-
-  if (!measureOne) {
-    measure_m[0] = {1, 0};
-    norm_factor  = pzero;
-  } else {
-    measure_m[3] = {1, 0};
-    norm_factor  = pone;
-  }
-  dd::Edge m_gate = dd->makeGateDD(measure_m, qc->getNqubits(), qubitIdx);
-  dd::Edge e      = dd->multiply(m_gate, sim);
-  dd->decRef(sim);
-
-  auto c = dd->cn.getCached(std::sqrt(1.0 / norm_factor), 0);
-  dd::ComplexNumbers::mul(c, e.w, c);
-  e.w = dd->cn.lookup(c);
-  dd->incRef(e);
-  sim = e;
-}
-
 void QDDVis::calculateAmplitudes(Napi::Float32Array& amplitudes) {
   for (std::size_t i = 0; i < 1ull << qc->getNqubits(); ++i) {
-    auto result           = dd->getValueByPath(sim, i);
-    amplitudes[2 * i]     = static_cast<float>(result.r);
-    amplitudes[2 * i + 1] = static_cast<float>(result.i);
+    auto result           = sim.getValueByIndex(i);
+    amplitudes[2 * i]     = static_cast<float>(result.real());
+    amplitudes[2 * i + 1] = static_cast<float>(result.imag());
   }
 }
 
@@ -914,9 +890,9 @@ QDDVis::ConductIrreversibleOperation(const Napi::CallbackInfo& info) {
   if (isReset) {
     // reset operation
     if (classicalValueToMeasure == "0") {
-      measureQubit(qubit, false, pzero, pone);
+      dd->performCollapsingMeasurement(sim, qubit, pzero, true);
     } else if (classicalValueToMeasure == "1") {
-      measureQubit(qubit, true, pzero, pone);
+      dd->performCollapsingMeasurement(sim, qubit, pone, false);
       // apply x operation to reset to |0>
       const auto x   = qc::StandardOperation(qc->getNqubits(), qubit, qc::X);
       auto       tmp = dd->multiply(dd::getDD(&x, dd), sim);
@@ -933,9 +909,10 @@ QDDVis::ConductIrreversibleOperation(const Napi::CallbackInfo& info) {
     auto cbit = static_cast<std::size_t>(
         obj.Get("cbit").As<Napi::Number>().Int64Value());
     if (classicalValueToMeasure != "none") {
-      bool measureOne = (classicalValueToMeasure == "1");
-      measureQubit(qubit, measureOne, pzero, pone);
-      measurements[cbit] = measureOne;
+      const bool measureZero = (classicalValueToMeasure == "0");
+      dd->performCollapsingMeasurement(sim, qubit, measureZero ? pzero : pone,
+                                       measureZero);
+      measurements[cbit] = !measureZero;
     }
     cbit++;
     parameter.Set("cbit", Napi::Number::New(env, static_cast<double>(cbit)));
