@@ -2,17 +2,15 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/cda-tum/ddvis/ci.yml?branch=main&style=flat-square&logo=github&label=c%2B%2B)](https://github.com/cda-tum/ddvis/actions/workflows/ci.yml)
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/cda-tum/qmap/main/docs/source/_static/mqt_light.png" width="60%">
-    <img src="https://raw.githubusercontent.com/cda-tum/qmap/main/docs/source/_static/mqt_dark.png" width="60%">
-  </picture>
-  </p>
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/cda-tum/mqt-core/main/docs/_static/mqt_light.png" width="60%">
+   <img src="https://raw.githubusercontent.com/cda-tum/mqt-core/main/docs/_static/mqt_dark.png" width="60%">
+ </picture>
+</p>
 
 # MQT DDVis
 
-An installation-free web-tool developed by the Chair for Design Automation at the [Technical University of Munich](https://www.tum.de/) which visualizes quantum decision diagrams and allows to explore their behavior when used in design tasks such as simulation, synthesis, or verification.
-
-DDVis is part of the Munich Quantum Toolkit (MQT; formerly known as JKQ and developed by the [Institute for Integrated Circuits](https://iic.jku.at/eda/) at the [Johannes Kepler University Linz](https://jku.at)).
+An installation-free web-tool that visualizes quantum decision diagrams and allows to explore their behavior when used in design tasks such as simulation, synthesis, or verification developed as part of the [_Munich Quantum Toolkit_](https://mqt.readthedocs.io) (_MQT_) by the [Chair for Design Automation](https://www.cda.cit.tum.de/) at the [Technical University of Munich](https://www.tum.de/).
 It builds upon [MQT Core](https://github.com/cda-tum/mqt-core), which forms the backbone of the MQT.
 
 The tool is hosted online at [https://www.cda.cit.tum.de/app/ddvis/](https://www.cda.cit.tum.de/app/ddvis/).
@@ -55,3 +53,29 @@ If you use our tool for your research, we would appreciate if you refer to it by
     year = 2021
 }
 ```
+
+---
+
+## Acknowledgements
+
+The Munich Quantum Toolkit has been supported by the European
+Research Council (ERC) under the European Union's Horizon 2020 research and innovation program (grant agreement
+No. 101001318), the Bavarian State Ministry for Science and Arts through the Distinguished Professorship Program, as well as the
+Munich Quantum Valley, which is supported by the Bavarian state government with funds from the Hightech Agenda Bayern Plus.
+
+<p align="center">
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/cda-tum/mqt-core/main/docs/_static/tum_dark.svg" width="28%">
+<img src="https://raw.githubusercontent.com/cda-tum/mqt-core/main/docs/_static/tum_light.svg" width="28%">
+</picture>
+<picture>
+<img src="https://raw.githubusercontent.com/cda-tum/mqt-core/main/docs/_static/logo-bavaria.svg" width="16%">
+</picture>
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/cda-tum/mqt-core/main/docs/_static/erc_dark.svg" width="24%">
+<img src="https://raw.githubusercontent.com/cda-tum/mqt-core/main/docs/_static/erc_light.svg" width="24%">
+</picture>
+<picture>
+<img src="https://raw.githubusercontent.com/cda-tum/mqt-core/main/docs/_static/logo-mqv.svg" width="28%">
+</picture>
+</p>

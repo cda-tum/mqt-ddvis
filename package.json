@@ -1,6 +1,6 @@
 {
   "name": "ddvis",
-  "version": "1.5.1",
+  "version": "1.6.1",
   "description": "MQT DDVis - A Tool for Visualizing Decision Diagrams for Quantum Computing",
   "main": "server.js",
   "scripts": {
@@ -10,14 +10,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "github.com/cda-tum/ddvis"
+    "url": "github.com/cda-tum/mqt-ddvis"
   },
   "keywords": [
-    "quantum",
-    "computer",
-    "decision",
-    "diagrams",
-    "qdd"
+    "quantum-computing",
+    "decision-diagrams",
+    "design-automation"
   ],
   "author": {
     "name": "Lukas Burgholzer",
@@ -27,7 +25,7 @@
   "contributors": [
     "Michael Artner <michael.artner@hotmail.de>"
   ],
-  "bugs": "https://github.com/cda-tum/ddvis/issues",
+  "bugs": "https://github.com/cda-tum/mqt-ddvis/issues",
   "homepage": "https://www.cda.cit.tum.de/app/ddvis/",
   "license": "MIT",
   "dependencies": {
