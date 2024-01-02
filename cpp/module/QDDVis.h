@@ -29,8 +29,6 @@ private:
   //"private" methods
   void stepForward();
   void stepBack();
-  void measureQubit(dd::Qubit qubitIdx, bool measureOne, dd::fp pzero,
-                    dd::fp pone);
   void calculateAmplitudes(Napi::Float32Array& amplitudes);
 
   // exported ("public") methods       - return type must be Napi::Value or
