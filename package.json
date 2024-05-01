@@ -36,10 +36,10 @@
     "express": "^4.19.2",
     "http-errors": "^2.0.0",
     "jquery": "^3.7.1",
-    "jquery-ui": "^1.13.2",
+    "jquery-ui": "^1.13.3",
     "morgan": "^1.10.0",
     "node-addon-api": "^8.0.0",
-    "npm": "^10.5.2"
+    "npm": "^10.7.0"
   },
   "binary": {
     "napi_versions": [
