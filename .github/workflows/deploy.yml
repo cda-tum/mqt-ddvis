@@ -28,6 +28,6 @@ jobs:
            IdentityFile ~/.ssh/deploy.key
           END
       - name: Check out the source
-        run: ssh deploy 'cd /var/www/cda/app/ddvis/ && git fetch && git reset --hard origin/main'
+        run: ssh deploy 'cd /var/www/cda/app/ddvis/ && git fetch && git reset --hard origin/main && git submodule update --init --recursive'
       - name: Install the dependencies
         run: ssh deploy 'cd /var/www/cda/app/ddvis/ && npm install'

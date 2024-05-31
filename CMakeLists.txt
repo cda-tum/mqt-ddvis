@@ -1,9 +1,5 @@
 # set required cmake version
-cmake_minimum_required(VERSION 3.19)
-
-# This avoids googletest complaining that this (IPO) policy is not set
-cmake_policy(SET CMP0069 NEW)
-set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
+cmake_minimum_required(VERSION 3.19...3.28)
 
 # detailed description
 project(
@@ -42,7 +38,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 target_include_directories(${PROJECT_NAME} PUBLIC cpp/module)
 
 # link the QFR library and the project options and warnings.
-target_link_libraries(${PROJECT_NAME} PRIVATE MQT::CoreDD)
+target_link_libraries(${PROJECT_NAME} PRIVATE MQT::CoreDD MQT::ProjectOptions MQT::ProjectWarnings)
 
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${CMAKE_JS_INC})
 target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB})
