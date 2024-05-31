@@ -331,48 +331,23 @@ class AlgoArea {
     if (res.responseJSON && res.responseJSON.msg) {
       const parserError = res.responseJSON.msg;
 
-      let lineStart = parserError.indexOf("l:"); //"l:" states the server-side line
-      if (lineStart > -1) {
-        lineStart += 2; //skip "l:"
+      // Extract filename, line, column, and message from the error string
+      const errorParts = parserError.split(/:\s*/);
+      const lineMsg = parseInt(errorParts[1]);
+      const column = parseInt(errorParts[2]);
+      const msg = errorParts[3];
 
-        const lineEnd = parserError.indexOf(":", lineStart);
-        if (lineEnd > -1) {
-          const lineMsg = parseInt(parserError.substring(lineStart, lineEnd)); //the line that is stated
-          // in the parser message
-          const temp = this._line_numbers.html().split("\n");
-          let lineNumber;
-          if (temp.length < lineMsg || lineMsg <= 0) lineNumber = lineMsg;
-          else {
-            lineNumber = parseInt(temp[lineMsg - 1]); //use the number that the line numbering displays
-            //if no line numbers are there yet, we simply display the number from the parser error
-            if (!lineNumber) lineNumber = lineMsg;
-          }
-
-          const line = lineNumber;
-          if (line) {
-            let colStart = parserError.indexOf("c:", lineEnd - 1);
-            if (colStart > -1) {
-              colStart += 2;
-
-              const colEnd = parserError.indexOf("msg:", colStart);
-              if (colEnd > -1) {
-                const column = parseInt(parserError.substr(colStart, colEnd));
-
-                errMsg += "line " + line + ", column " + column + "\n";
-              } else errMsg += "line " + line + "\n";
-            } else errMsg += "line " + line + "\n";
-          }
-        }
+      // Get the line number displayed in the line numbering
+      const temp = this._line_numbers.html().split("\n");
+      let lineNumber;
+      if (temp.length < lineMsg || lineMsg <= 0) lineNumber = lineMsg;
+      else {
+        lineNumber = parseInt(temp[lineMsg - 1]);
+        if (!lineNumber) lineNumber = lineMsg;
       }
 
-      const msgStart = parserError.indexOf("msg:") + 4;
-      if (msgStart > -1) {
-        //don't show the position information of the error, if there is any additionally (because the line is
-        // wrong and we've already created the information)
-        const msgEnd = parserError.lastIndexOf(" in line");
-        if (msgEnd > -1) errMsg += parserError.substring(msgStart, msgEnd);
-        else errMsg += parserError.substring(msgStart);
-      }
+      // Construct the error message
+      errMsg += "line " + lineNumber + ", column " + column + "\n" + msg;
     }
 
     return errMsg;
