@@ -296,12 +296,10 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
     }
     // resize the DD package so that it can manage the current circuit size
     dd->resize(qc1->getNqubits());
-  } catch (std::exception& e) {
-    std::cout << "Exception while loading the algorithm: " << e.what()
-              << std::endl;
-    std::string err(e.what());
-    Napi::Error::New(env, "Invalid algorithm!\n" + err)
-        .ThrowAsJavaScriptException();
+  } catch (const std::exception& e) {
+    const auto* msg = e.what();
+    std::cout << "Exception while loading the algorithm: " << msg << "\n";
+    Napi::Error::New(env, std::string(msg)).ThrowAsJavaScriptException();
     return state;
   }
 
@@ -322,7 +320,7 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
           stepToStart(true);
         else if (!algo1 && ready2)
           stepToStart(false);
-      } catch (std::exception& e) {
+      } catch (const std::exception& e) {
         std::cout << "Exception while resetting algo" << (algo1 ? "1" : "2")
                   << e.what() << std::endl;
         std::string err(e.what());
@@ -457,7 +455,7 @@ Napi::Value QDDVer::ToStart(const Napi::CallbackInfo& info) {
     stepToStart(algo1);
     return Napi::Boolean::New(env, true); // something changed
 
-  } catch (std::exception& e) {
+  } catch (const std::exception& e) {
     std::cout << "Exception while going back to the start!" << std::endl;
     std::cout << e.what() << std::endl;
     return Napi::Boolean::New(env, false); // nothing changed
@@ -526,7 +524,7 @@ Napi::Value QDDVer::Prev(const Napi::CallbackInfo& info) {
 
     return state;
 
-  } catch (std::exception& e) {
+  } catch (const std::exception& e) {
     std::cout << "Exception while getting the current operation {src: prev}!"
               << e.what() << std::endl;
     std::cout << e.what() << std::endl;
@@ -601,7 +599,7 @@ Napi::Value QDDVer::Next(const Napi::CallbackInfo& info) {
     }
     return state;
 
-  } catch (std::exception& e) {
+  } catch (const std::exception& e) {
     std::cout << "Exception while getting the current operation {src: next}!"
               << std::endl;
     std::cout << e.what() << std::endl;
@@ -686,7 +684,7 @@ Napi::Value QDDVer::ToEnd(const Napi::CallbackInfo& info) {
     state.Set("nops", Napi::Number::New(env, static_cast<double>(nops)));
     return state;
 
-  } catch (std::exception& e) {
+  } catch (const std::exception& e) {
     std::cout << "Exception while going to the end!" << std::endl;
     std::cout << e.what() << std::endl;
     return state;
@@ -776,17 +774,12 @@ Napi::Value QDDVer::ToLine(const Napi::CallbackInfo& info) {
 
     return Napi::Boolean::New(env, true); // something changed
 
-  } catch (std::exception& e) {
-    std::string msg =
-        "Exception while going to line "; // + position + " to " + targetPos;
-    // msg += position + " to " + targetPos;
-    // msg.append(position);
-    // msg.append(" to ");
-    // msg.append(targetPos);
-    std::cout << "Exception while going from "
-              << (algo1 ? position1 : position2) << " to " << targetPos
-              << std::endl;
-    std::cout << e.what() << std::endl;
+  } catch (const std::exception& e) {
+    std::stringstream ss{};
+    ss << "Exception while going from " << (algo1 ? position1 : position2)
+       << " to " << targetPos << ": " << e.what() << "\n";
+    const auto msg = ss.str();
+    std::cout << msg << std::endl;
     Napi::Error::New(env, msg).ThrowAsJavaScriptException();
     return Napi::Boolean::New(env, false);
   }
@@ -816,12 +809,13 @@ Napi::Value QDDVer::GetDD(const Napi::CallbackInfo& info) {
     state.Set("amplitudes", Napi::Float32Array::New(env, 0));
     return state;
 
-  } catch (std::exception& e) {
-    std::cout << "Exception while getting the DD: " << e.what() << std::endl;
-    std::cout << "The values of the Flags are: " << this->showColors << ", "
-              << this->showEdgeLabels << ", " << this->showClassic << ", "
-              << this->usePolarCoordinates << std::endl;
-    std::string err = "Invalid getDD()-call! "; // + e.what();
+  } catch (const std::exception& e) {
+    std::stringstream sserr{};
+    sserr << "Exception while getting the DD: " << e.what() << "\n";
+    sserr << "The values of the Flags are: " << this->showColors << ", "
+          << this->showEdgeLabels << ", " << this->showClassic << ", "
+          << this->usePolarCoordinates << "\n";
+    const auto err = sserr.str();
     Napi::Error::New(env, err).ThrowAsJavaScriptException();
     return Napi::String::New(env, "-1");
   }
