@@ -74,13 +74,13 @@ void QDDVis::stepForward() {
 
     if (value == expectedValue) {
       currDD = dd::getDD(iterator->get(),
-                         dd); // retrieve the "new" current operation
+                         *dd); // retrieve the "new" current operation
     } else {
-      currDD = dd->makeIdent(qc->getNqubits());
+      currDD = dd->makeIdent();
     }
   } else {
     currDD =
-        dd::getDD(iterator->get(), dd); // retrieve the "new" current operation
+        dd::getDD(iterator->get(), *dd); // retrieve the "new" current operation
   }
 
   auto temp =
@@ -130,14 +130,15 @@ void QDDVis::stepBack() {
     }
 
     if (value == expectedValue) {
-      currDD = dd::getInverseDD(iterator->get(),
-                                dd); // get the inverse of the current operation
+      currDD =
+          dd::getInverseDD(iterator->get(),
+                           *dd); // get the inverse of the current operation
     } else {
-      currDD = dd->makeIdent(qc->getNqubits());
+      currDD = dd->makeIdent();
     }
   } else {
     currDD = dd::getInverseDD(iterator->get(),
-                              dd); // get the inverse of the current operation
+                              *dd); // get the inverse of the current operation
   }
 
   auto temp = dd->multiply(
@@ -214,7 +215,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     const auto formatCode =
         static_cast<unsigned int>(info[1].As<Napi::Number>());
     if (formatCode == 1)
-      qc->import(ss, qc::Format::OpenQASM);
+      qc->import(ss, qc::Format::OpenQASM3);
     else if (formatCode == 2)
       qc->import(ss, qc::Format::Real);
     else {
@@ -894,8 +895,8 @@ QDDVis::ConductIrreversibleOperation(const Napi::CallbackInfo& info) {
     } else if (classicalValueToMeasure == "1") {
       dd->performCollapsingMeasurement(sim, qubit, pone, false);
       // apply x operation to reset to |0>
-      const auto x   = qc::StandardOperation(qc->getNqubits(), qubit, qc::X);
-      auto       tmp = dd->multiply(dd::getDD(&x, dd), sim);
+      const auto x   = qc::StandardOperation(qubit, qc::X);
+      auto       tmp = dd->multiply(dd::getDD(&x, *dd), sim);
       dd->incRef(tmp);
       dd->decRef(sim);
       sim = tmp;
