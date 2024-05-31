@@ -64,8 +64,8 @@ void QDDVer::stepForward(bool algo1) {
   if (algo1) {
     if (atEnd1)
       return; // no further steps possible
-    const auto currDD =
-        dd::getDD(iterator1->get(), dd); // retrieve the "new" current operation
+    const auto currDD = dd::getDD(iterator1->get(),
+                                  *dd); // retrieve the "new" current operation
 
     auto temp = dd->multiply(
         currDD, sim); // process the current operation by multiplying it with
@@ -86,7 +86,7 @@ void QDDVer::stepForward(bool algo1) {
       return; // no further steps possible
     const auto currDD = dd::getInverseDD(
         iterator2->get(),
-        dd); // retrieve the inverse of the "new" current operation
+        *dd); // retrieve the inverse of the "new" current operation
 
     auto temp = dd->multiply(
         sim, currDD); // process the current operation by multiplying it with
@@ -127,7 +127,7 @@ void QDDVer::stepBack(bool algo1) {
     position1--;
 
     const auto currDD = dd::getInverseDD(
-        iterator1->get(), dd); // get the inverse of the current operation
+        iterator1->get(), *dd); // get the inverse of the current operation
 
     auto temp = dd->multiply(
         currDD,
@@ -150,7 +150,7 @@ void QDDVer::stepBack(bool algo1) {
     position2--;
 
     const auto currDD =
-        dd::getDD(iterator2->get(), dd); // get the current operation
+        dd::getDD(iterator2->get(), *dd); // get the current operation
 
     auto temp = dd->multiply(sim, currDD); //"remove" the current operation by
                                            // multiplying with its inverse
@@ -257,7 +257,7 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
         static_cast<unsigned int>(info[1].As<Napi::Number>());
     qc::Format format;
     if (formatCode == 1)
-      format = qc::Format::OpenQASM;
+      format = qc::Format::OpenQASM3;
     else if (formatCode == 2)
       format = qc::Format::Real;
     else {
@@ -310,9 +310,9 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
   if (sim.p == nullptr || (algo1 && !ready2) || (!algo1 && !ready1)) {
     // sim = dd->makeZeroState(qc->getNqubits());
     if (algo1)
-      sim = dd->createInitialMatrix(qc1->getNqubits(), qc1->ancillary);
+      sim = dd->createInitialMatrix(qc1->ancillary);
     else
-      sim = dd->createInitialMatrix(qc2->getNqubits(), qc2->ancillary);
+      sim = dd->createInitialMatrix(qc2->ancillary);
     dd->incRef(sim);
 
   } else { // reset the previously loaded algorithm if process is true
