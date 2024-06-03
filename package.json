@@ -1,5 +1,5 @@
 {
-  "name": "ddvis",
+  "name": "mqt-ddvis",
   "version": "1.7.0",
   "description": "MQT DDVis - A Tool for Visualizing Decision Diagrams for Quantum Computing",
   "main": "server.js",
