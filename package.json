@@ -5,7 +5,6 @@
   "main": "server.js",
   "scripts": {
     "build": "cmake-js compile --config Release --CDCMAKE_BUILD_PARALLEL_LEVEL=4",
-    "prerun": "npm run build",
     "run": "node ./bin/www"
   },
   "repository": {
