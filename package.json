@@ -1,6 +1,6 @@
 {
   "name": "ddvis",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "description": "MQT DDVis - A Tool for Visualizing Decision Diagrams for Quantum Computing",
   "main": "server.js",
   "scripts": {
