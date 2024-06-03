@@ -1,11 +1,10 @@
 {
-  "name": "ddvis",
-  "version": "1.6.1",
+  "name": "mqt-ddvis",
+  "version": "1.7.0",
   "description": "MQT DDVis - A Tool for Visualizing Decision Diagrams for Quantum Computing",
   "main": "server.js",
   "scripts": {
-    "build": "cmake-js compile --config Release --CDCMAKE_BUILD_PARALLEL_LEVEL=4",
-    "prerun": "npm run build",
+    "build": "cmake-js compile --config Release -G Ninja --target mqt-ddvis",
     "run": "node ./bin/www"
   },
   "repository": {

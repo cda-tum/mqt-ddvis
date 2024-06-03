@@ -1,4 +1,4 @@
-const qddVis = require("./build/Release/DDVis");
+const qddVis = require("./build/Release/mqt-ddvis");
 
 //const data = new Map(); //saves the QDDVis-objects needed for simulation
 

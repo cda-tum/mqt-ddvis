@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.19...3.28)
 
 # detailed description
 project(
-  DDVis
-  VERSION 1.5.1
+  mqt-ddvis
+  VERSION 1.7.0
   DESCRIPTION "MQT DDVis - A Tool for Visualizing Decision Diagrams for Quantum Computing"
   LANGUAGES CXX)
 
