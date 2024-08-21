@@ -7,9 +7,9 @@
 #ifndef QDDVIS_H
 #define QDDVIS_H
 
-#include "QuantumComputation.hpp"
 #include "dd/Operations.hpp"
 #include "dd/Package.hpp"
+#include "ir/QuantumComputation.hpp"
 
 #include <iostream>
 #include <memory>

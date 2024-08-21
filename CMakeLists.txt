@@ -8,26 +8,13 @@ project(
   DESCRIPTION "MQT DDVis - A Tool for Visualizing Decision Diagrams for Quantum Computing"
   LANGUAGES CXX)
 
-# check whether the submodule ``modulename`` is correctly cloned in the ``/extern`` directory.
-macro(CHECK_SUBMODULE_PRESENT modulename)
-  if(NOT EXISTS "${PROJECT_SOURCE_DIR}/cpp/${modulename}/CMakeLists.txt")
-    message(
-      FATAL_ERROR
-        "${modulename} submodule not cloned properly. \
-        Please run `git submodule update --init --recursive` \
-        from the main project directory")
-  endif()
-endmacro()
-
 # enable PIC generation
 set(CMAKE_POSITION_INDEPENDENT_CODE
     ON
     CACHE BOOL "Build Position Independent Code")
 
-check_submodule_present(mqt-core)
 # add submodule directory. this automatically adds the appropriate targets and include files
-set(BUILD_MQT_CORE_TESTS OFF)
-add_subdirectory(cpp/mqt-core)
+include(cmake/ExternalDependencies.cmake)
 
 # create executable
 add_library(${PROJECT_NAME} SHARED cpp/module/module.cpp cpp/module/QDDVer.cpp cpp/module/QDDVer.h
