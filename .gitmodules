@@ -1,4 +1,0 @@
-[submodule "cpp/mqt-core"]
-	path = cpp/mqt-core
-	url = https://github.com/cda-tum/mqt-core.git
-	branch = main
