@@ -2,7 +2,7 @@
 FROM node:20-alpine
 
 # Add gcc and cmake
-RUN apk add build-base cmake ninja
+RUN apk add build-base cmake ninja git
 
 # Set the working directory in the container to /app
 WORKDIR /app
