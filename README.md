@@ -36,6 +36,7 @@ The following commands will build the app and start it. Open your browser at `lo
 $ git clone --recurse-submodules git@github.com:cda-tum/mqt-ddvis.git
 $ cd mqt-ddvis
 ddvis $ npm install
+ddvis $ npm run-script build
 ddvis $ npm run-script run
 [...]
 > node ./bin/www
