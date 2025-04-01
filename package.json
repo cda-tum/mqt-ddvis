@@ -28,17 +28,17 @@
   "homepage": "https://www.cda.cit.tum.de/app/ddvis/",
   "license": "MIT",
   "dependencies": {
-    "body-parser": "^1.20.3",
+    "body-parser": "^2.2.0",
     "cmake-js": "^7.3.0",
     "cookie-parser": "^1.4.7",
     "d3-graphviz": "^5.6.0",
-    "express": "^4.21.2",
+    "express": "^5.1.0",
     "http-errors": "^2.0.0",
     "jquery": "^3.7.1",
     "jquery-ui": "^1.14.1",
     "morgan": "^1.10.0",
     "node-addon-api": "^8.3.1",
-    "npm": "^11.1.0"
+    "npm": "^11.2.0"
   },
   "binary": {
     "napi_versions": [
