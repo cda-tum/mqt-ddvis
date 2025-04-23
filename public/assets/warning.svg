@@ -1,4 +1,15 @@
-<?xml version="1.0" ?><svg id="Layer_1" style="enable-background:new 0 0 128 128;" version="1.1" viewBox="0 0 128 128" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><style type="text/css">
+<?xml version="1.0" ?>
+<!--
+ Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
+ Copyright (c) 2025 Munich Quantum Software Company GmbH
+ All rights reserved.
+
+ SPDX-License-Identifier: MIT
+
+ Licensed under the MIT License
+-->
+
+<svg id="Layer_1" style="enable-background:new 0 0 128 128;" version="1.1" viewBox="0 0 128 128" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><style type="text/css">
 	.st0{fill:none;stroke:#B5B1BA;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
 	.st1{fill:none;stroke:#736D7C;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;}
 	.st2{fill:none;stroke:#736D7C;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:0.1112,8.8944;}

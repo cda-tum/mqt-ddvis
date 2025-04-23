@@ -1,4 +1,14 @@
 /*
+ * Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
+ * Copyright (c) 2025 Munich Quantum Software Company GmbH
+ * All rights reserved.
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ * Licensed under the MIT License
+ */
+
+/*
  * This file is part of MQT DDVis library which is released under the MIT
  * license. See file README.md or go to http://iic.jku.at/eda/research/quantum/
  * for more information.

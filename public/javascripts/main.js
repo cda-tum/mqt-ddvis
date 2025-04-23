@@ -1,3 +1,11 @@
+// Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
+// Copyright (c) 2025 Munich Quantum Software Company GmbH
+// All rights reserved.
+//
+// SPDX-License-Identifier: MIT
+//
+// Licensed under the MIT License
+
 //for browser specific things, check which browser is used
 // Firefox 1.0+
 const isFirefox = typeof InstallTrigger !== "undefined";

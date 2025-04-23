@@ -5,8 +5,8 @@
 
 /* fix font family for everything besides svg text */
 body {
-  font-family:
-    "Lucida Grande", "Lucida Sans Unicode", "Trebuchet MS", sans-serif;
+  font-family: "Lucida Grande", "Lucida Sans Unicode", "Trebuchet MS",
+    sans-serif;
   font-size: 12px;
 }
 
