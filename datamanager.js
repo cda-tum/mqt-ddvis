@@ -67,9 +67,11 @@ function _getTargetManager(req) {
   let managerId = "sim"; //take sim per default for back-compatability;
 
   //different API-calls can have a different request-structure
-  if (req.targetManager) managerId = req.targetManager;
-  else if (req.query.targetManager) managerId = req.query.targetManager;
-  else if (req.body.targetManager) managerId = req.body.targetManager;
+  if (req && req.targetManager) managerId = req.targetManager;
+  else if (req && req.query && req.query.targetManager)
+    managerId = req.query.targetManager;
+  else if (req && req.body && req.body.targetManager)
+    managerId = req.body.targetManager;
 
   return manager.get(managerId);
 }
