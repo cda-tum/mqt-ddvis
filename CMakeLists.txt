@@ -21,6 +21,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE
     ON
     CACHE BOOL "Build Position Independent Code")
 
+# disable IPO
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF INTERNAL BOOL "Disable IPO")
+
 # add submodule directory. this automatically adds the appropriate targets and include files
 include(cmake/ExternalDependencies.cmake)
 
