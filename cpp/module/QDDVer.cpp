@@ -1,4 +1,14 @@
 /*
+ * Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
+ * Copyright (c) 2025 Munich Quantum Software Company GmbH
+ * All rights reserved.
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ * Licensed under the MIT License
+ */
+
+/*
  * This file is part of MQT DDVis library which is released under the MIT
  * license. See file README.md or go to http://iic.jku.at/eda/research/quantum/
  * for more information.
@@ -7,6 +17,7 @@
 #include "QDDVer.h"
 
 #include "dd/Export.hpp"
+#include "qasm3/Importer.hpp"
 
 Napi::Object QDDVer::Init(Napi::Env env, Napi::Object exports) {
   Napi::HandleScope scope(env);
@@ -42,14 +53,14 @@ QDDVer::QDDVer(const Napi::CallbackInfo& info)
   Napi::Env         env = info.Env();
   Napi::HandleScope scope(env);
 
-  this->dd = std::make_unique<dd::Package<>>(1);
+  this->dd = std::make_unique<dd::Package>(1);
 
-  this->qc1       = std::make_unique<qc::QuantumComputation>();
-  this->iterator1 = this->qc1->begin();
+  this->qc1       = qc::QuantumComputation{};
+  this->iterator1 = this->qc1.begin();
   this->position1 = 0;
 
-  this->qc2       = std::make_unique<qc::QuantumComputation>();
-  this->iterator2 = this->qc2->begin();
+  this->qc2       = qc::QuantumComputation{};
+  this->iterator2 = this->qc2.begin();
   this->position2 = 0;
 }
 
@@ -64,42 +75,25 @@ void QDDVer::stepForward(bool algo1) {
   if (algo1) {
     if (atEnd1)
       return; // no further steps possible
-    const auto currDD = dd::getDD(iterator1->get(),
-                                  *dd); // retrieve the "new" current operation
 
-    auto temp = dd->multiply(
-        currDD, sim); // process the current operation by multiplying it with
-                      // the previous simulation-state
-    dd->incRef(temp);
-    dd->decRef(sim);
-    sim = temp;
-    dd->garbageCollect();
-
-    iterator1++; // advance iterator
+    const auto& op1 = **iterator1;
+    sim             = dd::applyUnitaryOperation(op1, sim, *dd);
+    ++iterator1; // advance iterator
     position1++;
-    // qc1->end() is after the last operation in the iterator
-    if (iterator1 == qc1->end())
+    // qc1.end() is after the last operation in the iterator
+    if (iterator1 == qc1.end())
       atEnd1 = true;
 
   } else {
     if (atEnd2)
       return; // no further steps possible
-    const auto currDD = dd::getInverseDD(
-        iterator2->get(),
-        *dd); // retrieve the inverse of the "new" current operation
 
-    auto temp = dd->multiply(
-        sim, currDD); // process the current operation by multiplying it with
-                      // the previous simulation-state
-    dd->incRef(temp);
-    dd->decRef(sim);
-    sim = temp;
-    dd->garbageCollect();
-
-    iterator2++; // advance iterator
+    const auto& op2 = **iterator2;
+    sim             = dd::applyUnitaryOperation(op2, sim, *dd, {}, false);
+    ++iterator2; // advance iterator
     position2++;
-    // qc2->end() is after the last operation in the iterator
-    if (iterator2 == qc2->end())
+    // qc2.end() is after the last operation in the iterator
+    if (iterator2 == qc2.end())
       atEnd2 = true;
   }
 }
@@ -118,46 +112,30 @@ void QDDVer::stepBack(bool algo1) {
     if (atInitial1)
       return; // no step back possible
 
-    if (iterator1 == qc1->begin()) {
+    if (iterator1 == qc1.begin()) {
       atInitial1 = true;
       return;
     }
 
-    iterator1--; // set iterator back to the desired operation
+    --iterator1; // set iterator back to the desired operation
     position1--;
 
-    const auto currDD = dd::getInverseDD(
-        iterator1->get(), *dd); // get the inverse of the current operation
-
-    auto temp = dd->multiply(
-        currDD,
-        sim); //"remove" the current operation by multiplying with its inverse
-    dd->incRef(temp);
-    dd->decRef(sim);
-    sim = temp;
-    dd->garbageCollect();
-
+    const auto& op1 = **iterator1;
+    sim             = dd::applyUnitaryOperation(*op1.getInverted(), sim, *dd);
   } else {
     if (atInitial2)
       return; // no step back possible
 
-    if (iterator2 == qc2->begin()) {
+    if (iterator2 == qc2.begin()) {
       atInitial2 = true;
       return;
     }
 
-    iterator2--; // set iterator back to the desired operation
+    --iterator2; // set iterator back to the desired operation
     position2--;
 
-    const auto currDD =
-        dd::getDD(iterator2->get(), *dd); // get the current operation
-
-    auto temp = dd->multiply(sim, currDD); //"remove" the current operation by
-                                           // multiplying with its inverse
-    dd->incRef(temp);
-    dd->decRef(sim);
-    sim = temp;
-    dd->garbageCollect();
+    const auto& op2 = **iterator2;
+    sim = dd::applyUnitaryOperation(*op2.getInverted(), sim, *dd, {}, false);
   }
 }
 
@@ -211,7 +189,7 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
         .ThrowAsJavaScriptException();
     return state;
   }
-  if (!info[1].IsNumber()) { // format code (1 = QASM, 2 = Real)
+  if (!info[1].IsNumber()) { // format code (1 = QASM)
     Napi::TypeError::New(env, "arg3: unsigned int expected!")
         .ThrowAsJavaScriptException();
     return state;
@@ -238,7 +216,6 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
   // the first parameter (algorithm)
   auto              arg  = info[0].As<Napi::String>();
   const std::string algo = arg.Utf8Value();
-  std::stringstream ss{algo};
 
   // the third parameter (how many operations to apply immediately)
   auto opNum = static_cast<unsigned int>(info[2].As<Napi::Number>());
@@ -252,50 +229,36 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
   const auto algo1 = static_cast<bool>(info[4].As<Napi::Boolean>());
 
   try {
-    // second parameter describes the format of the algorithm
-    const auto formatCode =
-        static_cast<unsigned int>(info[1].As<Napi::Number>());
-    qc::Format format;
-    if (formatCode == 1)
-      format = qc::Format::OpenQASM3;
-    else if (formatCode == 2)
-      format = qc::Format::Real;
-    else {
-      Napi::Error::New(env, "Invalid format-code!")
-          .ThrowAsJavaScriptException();
-      return state;
-    }
-
     if (algo1) {
-      qc1->import(ss, format);
+      qc1 = qasm3::Importer::imports(algo);
       // check if the number of qubits is the same for both algorithms
-      if (ready2 && qc1->getNqubits() != qc2->getNqubits()) {
+      if (ready2 && qc1.getNqubits() != qc2.getNqubits()) {
         // algo2 is already loaded (because ready2 is true), so we reset algo1
-        qc1->reset();
+        qc1.reset();
         ready1 = false;
         std::stringstream msg;
         msg << "Number of qubits don't match! This algorithm needs "
-            << qc2->getNqubits() << " qubits.";
+            << qc2.getNqubits() << " qubits.";
         Napi::Error::New(env, msg.str()).ThrowAsJavaScriptException();
         return state;
       }
     } else {
-      qc2->import(ss, format);
+      qc2 = qasm3::Importer::imports(algo);
 
       // check if the number of qubits is the same for both algorithms
-      if (ready1 && qc1->getNqubits() != qc2->getNqubits()) {
+      if (ready1 && qc1.getNqubits() != qc2.getNqubits()) {
         // algo1 is already loaded (because ready2 is true), so we reset algo2
-        qc2->reset();
+        qc2.reset();
         ready2 = false;
         std::stringstream msg;
         msg << "Number of qubits don't match! This algorithm needs "
-            << qc1->getNqubits() << " qubits.";
+            << qc1.getNqubits() << " qubits.";
         Napi::Error::New(env, msg.str()).ThrowAsJavaScriptException();
         return state;
       }
     }
     // resize the DD package so that it can manage the current circuit size
-    dd->resize(qc1->getNqubits());
+    dd->resize(qc1.getNqubits());
   } catch (const std::exception& e) {
     const auto* msg = e.what();
     std::cout << "Exception while loading the algorithm: " << msg << "\n";
@@ -306,13 +269,10 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
   // if sim hasn't been set yet or only one algorithm is loaded (meaning the
   // other isn't ready), we create its initial state/matrix
   if (sim.p == nullptr || (algo1 && !ready2) || (!algo1 && !ready1)) {
-    // sim = dd->makeZeroState(qc->getNqubits());
     if (algo1)
-      sim = dd->createInitialMatrix(qc1->ancillary);
+      sim = dd->createInitialMatrix(qc1.getAncillary());
     else
-      sim = dd->createInitialMatrix(qc2->ancillary);
-    dd->incRef(sim);
-
+      sim = dd->createInitialMatrix(qc2.getAncillary());
   } else { // reset the previously loaded algorithm if process is true
     if (process) {
       try {
@@ -340,20 +300,20 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
     ready1     = true;
     atInitial1 = true;
     atEnd1     = false;
-    iterator1  = qc1->begin();
+    iterator1  = qc1.begin();
     position1  = 0;
   } else {
     ready2     = true;
     atInitial2 = true;
     atEnd2     = false;
-    iterator2  = qc2->begin();
+    iterator2  = qc2.begin();
     position2  = 0;
   }
 
-  if (algo1 && opNum > qc1->getNops())
-    opNum = static_cast<unsigned int>(qc1->getNops());
-  else if (!algo1 && opNum > qc2->getNops())
-    opNum = static_cast<unsigned int>(qc2->getNops());
+  if (algo1 && opNum > qc1.getNops())
+    opNum = static_cast<unsigned int>(qc1.getNops());
+  else if (!algo1 && opNum > qc2.getNops())
+    opNum = static_cast<unsigned int>(qc2.getNops());
 
   if (opNum > 0) {
     if (algo1)
@@ -370,13 +330,13 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
         // just advance the iterator so it points to the operations where we
         // stopped before the edit
         for (unsigned int i = 0; i < opNum; i++)
-          iterator1++;
+          ++iterator1;
         position1 = opNum;
       } else {
         // just advance the iterator so it points to the operations where we
         // stopped before the edit
         for (unsigned int i = 0; i < opNum; i++)
-          iterator2++;
+          ++iterator2;
         position2 = opNum;
       }
     }
@@ -384,10 +344,10 @@ Napi::Value QDDVer::Load(const Napi::CallbackInfo& info) {
 
   if (algo1)
     state.Set("numOfOperations",
-              Napi::Number::New(env, static_cast<double>(qc1->getNops())));
+              Napi::Number::New(env, static_cast<double>(qc1.getNops())));
   else
     state.Set("numOfOperations",
-              Napi::Number::New(env, static_cast<double>(qc2->getNops())));
+              Napi::Number::New(env, static_cast<double>(qc2.getNops())));
   return state;
 }
 
@@ -418,10 +378,12 @@ Napi::Value QDDVer::ToStart(const Napi::CallbackInfo& info) {
       // algo1!").ThrowAsJavaScriptException();
       std::cout << "not ready 1" << std::endl;
       return Napi::Boolean::New(env, false);
-    } else if (qc1->empty()) {
+    }
+    if (qc1.empty()) {
       std::cout << "empty 2" << std::endl;
       return Napi::Boolean::New(env, false);
-    } else if (atInitial1) {
+    }
+    if (atInitial1) {
       std::cout << "at initial 2" << std::endl;
       return Napi::Boolean::New(env, false); // nothing changed
     }
@@ -437,10 +399,12 @@ Napi::Value QDDVer::ToStart(const Napi::CallbackInfo& info) {
       // algo2!").ThrowAsJavaScriptException();
       std::cout << "not ready 2" << std::endl;
       return Napi::Boolean::New(env, false);
-    } else if (qc2->empty()) {
+    }
+    if (qc2.empty()) {
       std::cout << "empty 2" << std::endl;
       return Napi::Boolean::New(env, false);
-    } else if (atInitial2) {
+    }
+    if (atInitial2) {
       std::cout << "atInitial 2" << std::endl;
       return Napi::Boolean::New(env, false); // nothing changed
     }
@@ -493,7 +457,8 @@ Napi::Value QDDVer::Prev(const Napi::CallbackInfo& info) {
       Napi::Error::New(env, "No algorithm loaded as algo1!")
           .ThrowAsJavaScriptException();
       return state;
-    } else if (qc1->empty()) {
+    }
+    if (qc1.empty()) {
       return state;
     }
 
@@ -507,7 +472,8 @@ Napi::Value QDDVer::Prev(const Napi::CallbackInfo& info) {
       Napi::Error::New(env, "No algorithm loaded as algo2!")
           .ThrowAsJavaScriptException();
       return state;
-    } else if (qc2->empty()) {
+    }
+    if (qc2.empty()) {
       return state;
     }
 
@@ -563,7 +529,8 @@ Napi::Value QDDVer::Next(const Napi::CallbackInfo& info) {
       Napi::Error::New(env, "No algorithm loaded as algo1!")
           .ThrowAsJavaScriptException();
       return state;
-    } else if (qc1->empty()) {
+    }
+    if (qc1.empty()) {
       return state;
     }
 
@@ -577,7 +544,8 @@ Napi::Value QDDVer::Next(const Napi::CallbackInfo& info) {
       Napi::Error::New(env, "No algorithm loaded as algo2!")
           .ThrowAsJavaScriptException();
       return state;
-    } else if (qc2->empty()) {
+    }
+    if (qc2.empty()) {
       return state;
     }
 
@@ -593,8 +561,8 @@ Napi::Value QDDVer::Next(const Napi::CallbackInfo& info) {
     stepForward(algo1); // process the next operation
     auto& iterator = algo1 ? iterator1 : iterator2;
     auto& qc       = algo1 ? qc1 : qc2;
-    if (iterator != qc->end() && ((*iterator)->getType() == qc::Measure ||
-                                  (*iterator)->getType() == qc::Reset)) {
+    if (iterator != qc.end() && ((*iterator)->getType() == qc::Measure ||
+                                 (*iterator)->getType() == qc::Reset)) {
       state.Set("nextIsIrreversible", Napi::Boolean::New(env, true));
     }
     return state;
@@ -639,7 +607,8 @@ Napi::Value QDDVer::ToEnd(const Napi::CallbackInfo& info) {
       Napi::Error::New(env, "No algorithm loaded as algo1!")
           .ThrowAsJavaScriptException();
       return state;
-    } else if (qc1->empty() || atEnd1) {
+    }
+    if (qc1.empty() || atEnd1) {
       return state;
     }
     atInitial1 = false; // now we are definitely not at the beginning (if there
@@ -652,7 +621,8 @@ Napi::Value QDDVer::ToEnd(const Napi::CallbackInfo& info) {
       Napi::Error::New(env, "No algorithm loaded as algo2!")
           .ThrowAsJavaScriptException();
       return state;
-    } else if (qc2->empty() || atEnd2) {
+    }
+    if (qc2.empty() || atEnd2) {
       return state;
     }
     atInitial2 = false; // now we are definitely not at the beginning (if there
@@ -671,15 +641,15 @@ Napi::Value QDDVer::ToEnd(const Napi::CallbackInfo& info) {
           (*iterator)->getType() == qc::Reset) {
         state.Set("nextIsIrreversible", Napi::Boolean::New(env, true));
         break;
-      } else if ((*iterator)->getType() == qc::Barrier) {
+      }
+      if ((*iterator)->getType() == qc::Barrier) {
         ++nops;
         stepForward(algo1); // process the barrier
         state.Set("barrier", Napi::Boolean::New(env, true));
         break;
-      } else {
-        ++nops;
-        stepForward(algo1); // process the next operation
       }
+      ++nops;
+      stepForward(algo1); // process the next operation
     }
     state.Set("nops", Napi::Number::New(env, static_cast<double>(nops)));
     return state;
@@ -726,13 +696,13 @@ Napi::Value QDDVer::ToLine(const Napi::CallbackInfo& info) {
   auto       param = static_cast<unsigned int>(info[0].As<Napi::Number>());
   const auto algo1 = static_cast<bool>(info[0].As<Napi::Boolean>());
   if (algo1) {
-    if (param > qc1->getNops())
+    if (param > qc1.getNops())
       // we can't go further than to the end
-      param = static_cast<unsigned int>(qc1->getNops());
+      param = static_cast<unsigned int>(qc1.getNops());
   } else {
-    if (param > qc2->getNops())
+    if (param > qc2.getNops())
       // we can't go further than to the end
-      param = static_cast<unsigned int>(qc2->getNops());
+      param = static_cast<unsigned int>(qc2.getNops());
   }
   const unsigned int targetPos = param;
 
@@ -751,7 +721,7 @@ Napi::Value QDDVer::ToLine(const Napi::CallbackInfo& info) {
       atEnd1     = false;
       if (position1 == 0)
         atInitial1 = true;
-      if (position1 == qc1->getNops())
+      if (position1 == qc1.getNops())
         atEnd1 = true;
 
     } else {
@@ -768,7 +738,7 @@ Napi::Value QDDVer::ToLine(const Napi::CallbackInfo& info) {
       atEnd2     = false;
       if (position2 == 0)
         atInitial2 = true;
-      if (position2 == qc2->getNops())
+      if (position2 == qc2.getNops())
         atEnd2 = true;
     }
 
@@ -893,8 +863,7 @@ Napi::Value QDDVer::IsReady(const Napi::CallbackInfo& info) {
   const auto algo1 = static_cast<bool>(info[0].As<Napi::Boolean>());
   if (algo1)
     return Napi::Boolean::New(env, this->ready1);
-  else
-    return Napi::Boolean::New(env, this->ready2);
+  return Napi::Boolean::New(env, this->ready2);
 }
 
 void QDDVer::Unready(const Napi::CallbackInfo& info) {

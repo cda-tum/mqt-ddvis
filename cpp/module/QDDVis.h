@@ -1,4 +1,14 @@
 /*
+ * Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
+ * Copyright (c) 2025 Munich Quantum Software Company GmbH
+ * All rights reserved.
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ * Licensed under the MIT License
+ */
+
+/*
  * This file is part of MQT DDVis library which is released under the MIT
  * license. See file README.md or go to http://iic.jku.at/eda/research/quantum/
  * for more information.
@@ -47,9 +57,9 @@ private:
   Napi::Value ConductIrreversibleOperation(const Napi::CallbackInfo& info);
 
   // fields
-  std::unique_ptr<dd::Package<>>          dd;
-  std::unique_ptr<qc::QuantumComputation> qc;
-  qc::VectorDD                            sim{};
+  std::unique_ptr<dd::Package> dd;
+  qc::QuantumComputation       qc{};
+  dd::VectorDD                 sim{};
 
   std::vector<std::unique_ptr<qc::Operation>>::iterator iterator{};
   unsigned int position = 0; // current position of the iterator

@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!--
+ Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
+ Copyright (c) 2025 Munich Quantum Software Company GmbH
+ All rights reserved.
+
+ SPDX-License-Identifier: MIT
+
+ Licensed under the MIT License
+-->
+
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <!-- Created with matplotlib (https://matplotlib.org/) -->

@@ -1,3 +1,11 @@
+// Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
+// Copyright (c) 2025 Munich Quantum Software Company GmbH
+// All rights reserved.
+//
+// SPDX-License-Identifier: MIT
+//
+// Licensed under the MIT License
+
 const fs = require("fs");
 const express = require("express");
 const router = express.Router();
@@ -359,15 +367,6 @@ function _readFiles(dirPath) {
           algo: algo,
           name: name,
           format: 1, //QASM_FORMAT       //todo it would be safer if we just send "qasm" and let the client determine the format-code
-        });
-      } else if (ending === "real") {
-        exAlgoNames.push(name);
-
-        const algo = fs.readFileSync(dirPath + "/" + file, "utf-8");
-        exampleAlgos.push({
-          algo: algo,
-          name: name,
-          format: 2, //REAL_FORMAT       //todo it would be safer if we just send "qasm" and let the client determine the format-code
         });
       }
     } else {

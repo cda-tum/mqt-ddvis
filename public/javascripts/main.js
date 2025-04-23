@@ -1,3 +1,11 @@
+// Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
+// Copyright (c) 2025 Munich Quantum Software Company GmbH
+// All rights reserved.
+//
+// SPDX-License-Identifier: MIT
+//
+// Licensed under the MIT License
+
 //for browser specific things, check which browser is used
 // Firefox 1.0+
 const isFirefox = typeof InstallTrigger !== "undefined";
@@ -223,40 +231,12 @@ call.fail((res) =>
   showResponseError(res, "Loading example algorithms failed!"),
 );
 
-const emptyReal =
-  ".version 2.0 \n" +
-  ".numvars 0 \n" +
-  ".variables \n" +
-  ".begin \n" +
-  "\n" +
-  ".end \n";
 const emptyQasm =
   "OPENQASM 2.0;\n" +
   'include "qelib1.inc";\n' +
   "\n" +
   "qreg q[];\n" +
   "creg c[];\n";
-
-function loadEmptyReal() {
-  if (curTab === START_TAB) return;
-
-  if (curTab === SIM_TAB) {
-    algoArea.resetAlgorithm();
-    algoArea.algoFormat = REAL_FORMAT;
-    algoArea.algo = emptyReal;
-  } else if (curTab === VER_TAB) {
-    const algo1 = document.getElementById("radio_algo1").checked;
-    if (algo1) {
-      ver1_algoArea.resetAlgorithm();
-      ver1_algoArea.algoFormat = REAL_FORMAT;
-      ver1_algoArea.algo = emptyReal;
-    } else {
-      ver2_algoArea.resetAlgorithm();
-      ver2_algoArea.algoFormat = REAL_FORMAT;
-      ver2_algoArea.algo = emptyReal;
-    }
-  }
-}
 
 function loadEmptyQasm() {
   if (curTab === START_TAB) return;

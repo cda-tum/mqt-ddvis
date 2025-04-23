@@ -1,4 +1,14 @@
 /*
+ * Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
+ * Copyright (c) 2025 Munich Quantum Software Company GmbH
+ * All rights reserved.
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ * Licensed under the MIT License
+ */
+
+/*
  * This file is part of MQT DDVis library which is released under the MIT
  * license. See file README.md or go to http://iic.jku.at/eda/research/quantum/
  * for more information.
@@ -8,6 +18,7 @@
 
 #include "dd/Export.hpp"
 #include "dd/Operations.hpp"
+#include "qasm3/Importer.hpp"
 
 Napi::Object QDDVis::Init(Napi::Env env, Napi::Object exports) {
   Napi::HandleScope scope(env);
@@ -45,10 +56,10 @@ QDDVis::QDDVis(const Napi::CallbackInfo& info)
   Napi::Env         env = info.Env();
   Napi::HandleScope scope(env);
 
-  this->dd = std::make_unique<dd::Package<>>(1);
-  this->qc = std::make_unique<qc::QuantumComputation>();
+  this->dd = std::make_unique<dd::Package>(1);
+  this->qc = qc::QuantumComputation{};
 
-  this->iterator = this->qc->begin();
+  this->iterator = this->qc.begin();
   this->position = 0;
 }
 
@@ -60,41 +71,19 @@ QDDVis::QDDVis(const Napi::CallbackInfo& info)
 void QDDVis::stepForward() {
   if (atEnd)
     return; // no further steps possible
-  qc::MatrixDD currDD{};
-  if ((*iterator)->isClassicControlledOperation()) {
-    auto startIndex = static_cast<dd::Qubit>((*iterator)->getParameter().at(0));
-    auto length = static_cast<std::size_t>((*iterator)->getParameter().at(1));
-    auto expectedValue =
-        static_cast<std::size_t>((*iterator)->getParameter().at(2));
 
-    std::size_t value = 0;
-    for (std::size_t i = 0; i < length; ++i) {
-      value |= (static_cast<std::size_t>(measurements[startIndex + i]) << i);
-    }
-
-    if (value == expectedValue) {
-      currDD = dd::getDD(iterator->get(),
-                         *dd); // retrieve the "new" current operation
-    } else {
-      currDD = dd->makeIdent();
-    }
-  } else {
-    currDD =
-        dd::getDD(iterator->get(), *dd); // retrieve the "new" current operation
+  const auto& op = **iterator;
+  if (op.isUnitary()) {
+    sim = dd::applyUnitaryOperation(op, sim, *dd);
+  } else if (op.isClassicControlledOperation()) {
+    const auto& classicOp =
+        dynamic_cast<const qc::ClassicControlledOperation&>(op);
+    sim =
+        dd::applyClassicControlledOperation(classicOp, sim, *dd, measurements);
   }
-
-  auto temp =
-      dd->multiply(currDD, sim); // process the current operation by multiplying
-                                 // it with the previous simulation-state
-  dd->incRef(temp);
-  dd->decRef(sim);
-  sim = temp;
-  dd->garbageCollect();
-
-  iterator++; // advance iterator
+  ++iterator; // advance iterator
   position++;
-  if (iterator ==
-      qc->end()) { // qc1->end() is after the last operation in the iterator
+  if (iterator == qc.end()) {
     atEnd = true;
   }
 }
@@ -109,15 +98,15 @@ void QDDVis::stepBack() {
   if (atInitial)
     return; // no step back possible
 
-  if (iterator == qc->begin()) {
+  if (iterator == qc.begin()) {
     atInitial = true;
     return;
   }
 
-  iterator--; // set iterator back to the desired operation
+  --iterator; // set iterator back to the desired operation
   position--;
 
-  qc::MatrixDD currDD{};
+  dd::MatrixDD currDD{};
   if ((*iterator)->isClassicControlledOperation()) {
     auto startIndex = static_cast<dd::Qubit>((*iterator)->getParameter().at(0));
     auto length = static_cast<std::size_t>((*iterator)->getParameter().at(1));
@@ -131,27 +120,21 @@ void QDDVis::stepBack() {
 
     if (value == expectedValue) {
       currDD =
-          dd::getInverseDD(iterator->get(),
+          dd::getInverseDD(*iterator->get(),
                            *dd); // get the inverse of the current operation
     } else {
       currDD = dd->makeIdent();
     }
   } else {
-    currDD = dd::getInverseDD(iterator->get(),
+    currDD = dd::getInverseDD(*iterator->get(),
                               *dd); // get the inverse of the current operation
   }
 
-  auto temp = dd->multiply(
-      currDD,
-      sim); //"remove" the current operation by multiplying with its inverse
-  dd->incRef(temp);
-  dd->decRef(sim);
-  sim = temp;
-  dd->garbageCollect();
+  sim = dd->applyOperation(currDD, sim);
 }
 
 void QDDVis::calculateAmplitudes(Napi::Float32Array& amplitudes) {
-  for (std::size_t i = 0; i < 1ull << qc->getNqubits(); ++i) {
+  for (std::size_t i = 0; i < 1ull << qc.getNqubits(); ++i) {
     auto result           = sim.getValueByIndex(i);
     amplitudes[2 * i]     = static_cast<float>(result.real());
     amplitudes[2 * i + 1] = static_cast<float>(result.imag());
@@ -187,7 +170,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         .ThrowAsJavaScriptException();
     return state;
   }
-  if (!info[1].IsNumber()) { // format code (1 = QASM, 2 = Real)
+  if (!info[1].IsNumber()) { // format code (1 = QASM)
     Napi::TypeError::New(env, "arg3: unsigned int expected!")
         .ThrowAsJavaScriptException();
     return state;
@@ -208,22 +191,9 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
   // the first parameter (algorithm)
   auto              arg  = info[0].As<Napi::String>();
   const std::string algo = arg.Utf8Value();
-  std::stringstream ss{algo};
 
   try {
-    // second parameter describes the format of the algorithm
-    const auto formatCode =
-        static_cast<unsigned int>(info[1].As<Napi::Number>());
-    if (formatCode == 1)
-      qc->import(ss, qc::Format::OpenQASM3);
-    else if (formatCode == 2)
-      qc->import(ss, qc::Format::Real);
-    else {
-      Napi::Error::New(env, "Invalid format-code!")
-          .ThrowAsJavaScriptException();
-      return state;
-    }
-
+    qc = qasm3::Importer::imports(algo);
   } catch (const std::exception& e) {
     const auto* msg = e.what();
     std::cout << "Exception while loading the algorithm: " << msg << "\n";
@@ -236,21 +206,21 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
   ready     = true;
   atInitial = true;
   atEnd     = false;
-  iterator  = qc->begin();
+  iterator  = qc.begin();
   position  = 0;
   // resize the DD package so that it can hold as many variables
-  dd->resize(qc->getNqubits());
-  measurements.resize(qc->getNqubits());
+  dd->resize(qc.getNqubits());
+  measurements.resize(qc.getNqubits());
 
   state.Set("numOfOperations",
-            Napi::Number::New(env, static_cast<double>(qc->getNops())));
+            Napi::Number::New(env, static_cast<double>(qc.getNops())));
 
   // the third parameter (how many operations to apply immediately)
   auto opNum = static_cast<unsigned int>(
       info[2].As<Napi::Number>()); // at this point opNum may be bigger than the
                                    // number of operations the algorithm has!
-  if (opNum > qc->getNops())
-    opNum = static_cast<unsigned int>(qc->getNops());
+  if (opNum > qc.getNops())
+    opNum = static_cast<unsigned int>(qc.getNops());
   if (opNum > 0) {
     atInitial          = false;
     const bool process = static_cast<bool>(
@@ -260,24 +230,22 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
       if (sim.p != nullptr) {
         dd->decRef(sim);
       }
-      sim = dd->makeZeroState(qc->getNqubits());
-      dd->incRef(sim);
-
+      sim = dd->makeZeroState(qc.getNqubits());
       for (unsigned int i = 0; i < opNum; i++) { // apply some operations
         stepForward();
       }
     } else {
       for (unsigned int i = 0; i < opNum; i++) {
-        iterator++; // just advance the iterator so it points to the operations
+        ++iterator; // just advance the iterator so it points to the operations
                     // where we stopped before the edit
         position++;
       }
     }
-    if (iterator != qc->end() && ((*iterator)->getType() == qc::Measure ||
-                                  (*iterator)->getType() == qc::Reset)) {
+    if (iterator != qc.end() && ((*iterator)->getType() == qc::Measure ||
+                                 (*iterator)->getType() == qc::Reset)) {
       state.Set("nextIsIrreversible", Napi::Boolean::New(env, true));
     }
-    if (iterator != qc->begin()) {
+    if (iterator != qc.begin()) {
       auto testForMeasureIt = iterator;
       --testForMeasureIt;
       if ((*testForMeasureIt)->getType() == qc::Measure ||
@@ -290,8 +258,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
     if (sim.p != nullptr) {
       dd->decRef(sim);
     }
-    sim = dd->makeZeroState(qc->getNqubits());
-    dd->incRef(sim);
+    sim = dd->makeZeroState(qc.getNqubits());
   }
   return state;
 }
@@ -310,33 +277,31 @@ Napi::Value QDDVis::ToStart(const Napi::CallbackInfo& info) {
   if (!ready) {
     Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
     return Napi::Boolean::New(env, false);
-  } else if (qc->empty()) {
+  }
+  if (qc.empty()) {
     return Napi::Boolean::New(env, false);
   }
 
   if (atInitial)
     return Napi::Boolean::New(env, false); // nothing changed
-  else {
-    try {
-      dd->decRef(sim);
-      sim = dd->makeZeroState(qc->getNqubits());
-      dd->incRef(sim);
-      atInitial = true;
-      atEnd = false; // now we are definitely not at the end (if there were no
-                     // operation, so atInitial and atEnd could be true at the
-                     // same time, if(qc1-empty)
-      // would already have returned
-      iterator = qc->begin();
-      position = 0;
-      std::fill(measurements.begin(), measurements.end(), false);
+  try {
+    dd->decRef(sim);
+    sim       = dd->makeZeroState(qc.getNqubits());
+    atInitial = true;
+    atEnd     = false; // now we are definitely not at the end (if there were no
+                       // operation, so atInitial and atEnd could be true at the
+                       // same time, if(qc1-empty)
+    // would already have returned
+    iterator = qc.begin();
+    position = 0;
+    std::fill(measurements.begin(), measurements.end(), false);
 
-      return Napi::Boolean::New(env, true); // something changed
+    return Napi::Boolean::New(env, true); // something changed
 
-    } catch (const std::exception& e) {
-      std::cout << "Exception while going back to the start!" << std::endl;
-      std::cout << e.what() << std::endl;
-      return Napi::Boolean::New(env, false); // nothing changed
-    }
+  } catch (const std::exception& e) {
+    std::cout << "Exception while going back to the start!" << std::endl;
+    std::cout << e.what() << std::endl;
+    return Napi::Boolean::New(env, false); // nothing changed
   }
 }
 
@@ -361,7 +326,8 @@ Napi::Value QDDVis::Prev(const Napi::CallbackInfo& info) {
   if (!ready) {
     Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
     return state;
-  } else if (qc->empty()) {
+  }
+  if (qc.empty()) {
     return state;
   }
 
@@ -375,7 +341,7 @@ Napi::Value QDDVis::Prev(const Napi::CallbackInfo& info) {
     stepBack(); // go back to the start before the last processed operation
     state.Set("changed", Napi::Boolean::New(env, true));
 
-    if (iterator != qc->begin()) {
+    if (iterator != qc.begin()) {
       auto testForMeasureIt = iterator;
       --testForMeasureIt;
       if ((*testForMeasureIt)->getType() == qc::Measure ||
@@ -417,7 +383,8 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
   if (!ready) {
     Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
     return state;
-  } else if (qc->empty()) {
+  }
+  if (qc.empty()) {
     return state;
   }
 
@@ -436,7 +403,7 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
       auto qubitToReset  = qubits.front();
       auto qubitsReset   = 0;
       auto [pzero, pone] = dd->determineMeasurementProbabilities(
-          sim, static_cast<dd::Qubit>(qubitToReset), true);
+          sim, static_cast<dd::Qubit>(qubitToReset));
 
       Napi::Object reset = Napi::Object::New(env);
       reset.Set("qubit", Napi::Number::New(env, qubitToReset));
@@ -451,7 +418,7 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
       iterator++; // advance iterator
       position++;
       if (iterator ==
-          qc->end()) { // qc1->end() is after the last operation in the iterator
+          qc.end()) { // qc1->end() is after the last operation in the iterator
         atEnd = true;
       }
     } else if ((*iterator)->getType() == qc::Measure) {
@@ -463,7 +430,7 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
       auto cbitToStore       = cbits.front();
       auto qubitsMeasured    = 0;
       auto [pzero, pone]     = dd->determineMeasurementProbabilities(
-          sim, static_cast<dd::Qubit>(qubitToMeasure), true);
+          sim, static_cast<dd::Qubit>(qubitToMeasure));
 
       Napi::Object measurement = Napi::Object::New(env);
       measurement.Set("qubit", Napi::Number::New(env, qubitToMeasure));
@@ -480,15 +447,15 @@ Napi::Value QDDVis::Next(const Napi::CallbackInfo& info) {
       iterator++; // advance iterator
       position++;
       if (iterator ==
-          qc->end()) { // qc1->end() is after the last operation in the iterator
+          qc.end()) { // qc1->end() is after the last operation in the iterator
         atEnd = true;
       }
     } else {
       stepForward(); // process the next operation
     }
 
-    if (iterator != qc->end() && ((*iterator)->getType() == qc::Measure ||
-                                  (*iterator)->getType() == qc::Reset)) {
+    if (iterator != qc.end() && ((*iterator)->getType() == qc::Measure ||
+                                 (*iterator)->getType() == qc::Reset)) {
       state.Set("nextIsIrreversible", Napi::Boolean::New(env, true));
     }
     return state;
@@ -522,42 +489,42 @@ Napi::Value QDDVis::ToEnd(const Napi::CallbackInfo& info) {
   if (!ready) {
     Napi::Error::New(env, "No algorithm loaded!").ThrowAsJavaScriptException();
     return state;
-  } else if (qc->empty()) {
+  }
+  if (qc.empty()) {
     return state;
   }
 
-  if (atEnd)
+  if (atEnd) {
     return state; // nothing changed
-  else {
-    atInitial = false; // now we are definitely not at the beginning (if there
-                       // were no operation, so atInitial and atEnd could be
-                       // true at the same time, if(qc1-empty)
-    // would already have returned
-    try {
-      state.Set("changed", Napi::Boolean::New(env, true));
-      unsigned long long nops = 0;
-      while (!atEnd) {
-        if ((*iterator)->getType() == qc::Measure ||
-            (*iterator)->getType() == qc::Reset) {
-          state.Set("nextIsIrreversible", Napi::Boolean::New(env, true));
-          break;
-        } else if ((*iterator)->getType() == qc::Barrier) {
-          ++nops;
-          stepForward(); // process the barrier
-          state.Set("barrier", Napi::Boolean::New(env, true));
-          break;
-        } else {
-          ++nops;
-          stepForward(); // process the next operation
-        }
+  }
+  atInitial = false; // now we are definitely not at the beginning (if there
+                     // were no operation, so atInitial and atEnd could be
+                     // true at the same time, if(qc1-empty)
+  // would already have returned
+  try {
+    state.Set("changed", Napi::Boolean::New(env, true));
+    unsigned long long nops = 0;
+    while (!atEnd) {
+      if ((*iterator)->getType() == qc::Measure ||
+          (*iterator)->getType() == qc::Reset) {
+        state.Set("nextIsIrreversible", Napi::Boolean::New(env, true));
+        break;
       }
-      state.Set("nops", Napi::Number::New(env, static_cast<double>(nops)));
-      return state;
-    } catch (const std::exception& e) {
-      std::cout << "Exception while going to the end!" << std::endl;
-      std::cout << e.what() << std::endl;
-      return state;
+      if ((*iterator)->getType() == qc::Barrier) {
+        ++nops;
+        stepForward(); // process the barrier
+        state.Set("barrier", Napi::Boolean::New(env, true));
+        break;
+      }
+      ++nops;
+      stepForward(); // process the next operation
     }
+    state.Set("nops", Napi::Number::New(env, static_cast<double>(nops)));
+    return state;
+  } catch (const std::exception& e) {
+    std::cout << "Exception while going to the end!" << std::endl;
+    std::cout << e.what() << std::endl;
+    return state;
   }
 }
 
@@ -593,13 +560,13 @@ Napi::Value QDDVis::ToLine(const Napi::CallbackInfo& info) {
   }
 
   auto param = static_cast<unsigned int>(info[0].As<Napi::Number>());
-  if (param > qc->getNops())
+  if (param > qc.getNops())
     // we can't go further than to the end
-    param = static_cast<unsigned int>(qc->getNops());
+    param = static_cast<unsigned int>(qc.getNops());
   const unsigned int targetPos = param;
 
   try {
-    if (iterator != qc->begin()) {
+    if (iterator != qc.begin()) {
       auto testForMeasureIt = iterator;
       --testForMeasureIt;
       if ((*testForMeasureIt)->getType() == qc::Measure ||
@@ -607,8 +574,8 @@ Napi::Value QDDVis::ToLine(const Napi::CallbackInfo& info) {
         state.Set("noGoingBack", Napi::Boolean::New(env, true));
       }
     }
-    if (iterator != qc->end() && ((*iterator)->getType() == qc::Measure ||
-                                  (*iterator)->getType() == qc::Reset)) {
+    if (iterator != qc.end() && ((*iterator)->getType() == qc::Measure ||
+                                 (*iterator)->getType() == qc::Reset)) {
       state.Set("nextIsIrreversible", Napi::Boolean::New(env, true));
     }
     if (position == targetPos)
@@ -626,11 +593,11 @@ Napi::Value QDDVis::ToLine(const Napi::CallbackInfo& info) {
         state.Set("noGoingBack", Napi::Boolean::New(env, true));
 
         dd->decRef(sim);
-        sim = dd->makeZeroState(qc->getNqubits());
+        sim = dd->makeZeroState(qc.getNqubits());
         dd->incRef(sim);
         atInitial = true;
         atEnd     = false;
-        iterator  = qc->begin();
+        iterator  = qc.begin();
         position  = 0;
         std::fill(measurements.begin(), measurements.end(), false);
         if ((*iterator)->getType() == qc::Measure ||
@@ -673,7 +640,7 @@ Napi::Value QDDVis::ToLine(const Napi::CallbackInfo& info) {
     atEnd     = false;
     if (position == 0)
       atInitial = true;
-    else if (position == qc->getNops())
+    else if (position == qc.getNops())
       atEnd = true;
 
     return state; // something changed
@@ -711,9 +678,9 @@ Napi::Value QDDVis::GetDD(const Napi::CallbackInfo& info) {
     std::string str = ss.str();
     state.Set("dot", Napi::String::New(env, str));
     state.Set("amplitudes", Napi::Float32Array::New(env, 0));
-    if (qc->getNqubits() <= MAX_QUBITS_FOR_AMPLITUDES) {
+    if (qc.getNqubits() <= MAX_QUBITS_FOR_AMPLITUDES) {
       auto amplitudes =
-          Napi::Float32Array::New(env, 1ull << (qc->getNqubits() + 1));
+          Napi::Float32Array::New(env, 1ull << (qc.getNqubits() + 1));
       calculateAmplitudes(amplitudes);
       state.Set("amplitudes", amplitudes);
     }
@@ -890,13 +857,8 @@ QDDVis::ConductIrreversibleOperation(const Napi::CallbackInfo& info) {
     } else if (classicalValueToMeasure == "1") {
       dd->performCollapsingMeasurement(sim, qubit, pone, false);
       // apply x operation to reset to |0>
-      const auto x   = qc::StandardOperation(qubit, qc::X);
-      auto       tmp = dd->multiply(dd::getDD(&x, *dd), sim);
-      dd->incRef(tmp);
-      dd->decRef(sim);
-      sim = tmp;
-
-      dd->garbageCollect();
+      const auto x = qc::StandardOperation(qubit, qc::X);
+      sim          = dd::applyUnitaryOperation(x, sim, *dd);
     } else {
       // do something in case operation is cancelled
     }
@@ -922,8 +884,7 @@ QDDVis::ConductIrreversibleOperation(const Napi::CallbackInfo& info) {
 
   // next qubit
   qubit++;
-  std::tie(pzero, pone) =
-      dd->determineMeasurementProbabilities(sim, qubit, true);
+  std::tie(pzero, pone) = dd->determineMeasurementProbabilities(sim, qubit);
 
   parameter.Set("qubit", Napi::Number::New(env, qubit));
   parameter.Set("pzero", Napi::Number::New(env, pzero));

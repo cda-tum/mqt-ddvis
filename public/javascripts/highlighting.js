@@ -1,3 +1,11 @@
+// Copyright (c) 2023 - 2025 Chair for Design Automation, TUM
+// Copyright (c) 2025 Munich Quantum Software Company GmbH
+// All rights reserved.
+//
+// SPDX-License-Identifier: MIT
+//
+// Licensed under the MIT License
+
 //Make the width of the highlights dependent on the screen-width so at least in full-screen mode and smaller window sizes the highlighting looks correct.
 // If users make the window bigger than their screen, the highlighting may get to small but aside from defining it way to large, there doesn't seem to be
 // a solution to this.
