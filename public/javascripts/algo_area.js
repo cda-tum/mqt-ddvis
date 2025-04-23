@@ -8,7 +8,6 @@
 
 const FORMAT_UNKNOWN = 0;
 const QASM_FORMAT = 1;
-const REAL_FORMAT = 2;
 
 const paddingLeftOffset = 15; //10px is the padding of lineNumbers, so q_algo also needs at least this much padding
 const paddingLeftPerDigit = 10; //padding of q_algo based on the number of digits the line-numbering needs
@@ -150,8 +149,7 @@ class AlgoArea {
 
   set algoFormat(f) {
     //check for validity
-    if (f === QASM_FORMAT || f === REAL_FORMAT || f === FORMAT_UNKNOWN)
-      this._algoFormat = f;
+    if (f === QASM_FORMAT || f === FORMAT_UNKNOWN) this._algoFormat = f;
     else {
       this._algoFormat = FORMAT_UNKNOWN;
       console.log(
@@ -471,8 +469,6 @@ class AlgoArea {
         let format = FORMAT_UNKNOWN;
         if (event.dataTransfer.files[i].name.endsWith(".qasm"))
           format = QASM_FORMAT;
-        else if (event.dataTransfer.files[i].name.endsWith(".real"))
-          format = REAL_FORMAT;
         else {
           this._error("Filetype not supported!");
           return;
@@ -648,8 +644,7 @@ class AlgoArea {
    * @returns {number} a code that represents one of the supported formats
    */
   findFormat(algo) {
-    if (algo.includes("OPENQASM")) return QASM_FORMAT;
-    else return REAL_FORMAT; //right now only these two formats are supported, so if it is not QASM, it must be Real
+    return QASM_FORMAT;
   }
 
   /**Checks if the given QASM- or Real-line is an operation.
@@ -670,11 +665,6 @@ class AlgoArea {
           //line.includes("{") ||
           //line.endsWith("}") ||
           line.includes("gate") ||
-          AlgoArea.isComment(line, format)
-        );
-      } else if (format === REAL_FORMAT) {
-        return !(
-          line.startsWith(".") || //all non-operation lines start with "."
           AlgoArea.isComment(line, format)
         );
       } else if (format === FORMAT_UNKNOWN) {
@@ -817,7 +807,6 @@ class AlgoArea {
    */
   static isComment(line, format) {
     if (format === QASM_FORMAT) return line.trim().startsWith("//");
-    else if (format === REAL_FORMAT) return line.trim().startsWith("#");
     else if (format === FORMAT_UNKNOWN) {
       console.log("Format unknown. Line: " + line);
       return true;
@@ -836,7 +825,6 @@ class AlgoArea {
    */
   static containsComment(line, format) {
     if (format === QASM_FORMAT) return line.includes("//");
-    else if (format === REAL_FORMAT) return line.includes("#");
     else {
       console.log("Format not recognized");
       return true;

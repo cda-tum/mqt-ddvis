@@ -170,7 +170,7 @@ Napi::Value QDDVis::Load(const Napi::CallbackInfo& info) {
         .ThrowAsJavaScriptException();
     return state;
   }
-  if (!info[1].IsNumber()) { // format code (1 = QASM, 2 = Real)
+  if (!info[1].IsNumber()) { // format code (1 = QASM)
     Napi::TypeError::New(env, "arg3: unsigned int expected!")
         .ThrowAsJavaScriptException();
     return state;
