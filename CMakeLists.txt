@@ -1,5 +1,5 @@
 # set required cmake version
-cmake_minimum_required(VERSION 3.19...3.28)
+cmake_minimum_required(VERSION 3.24...4.0)
 
 # detailed description
 project(
