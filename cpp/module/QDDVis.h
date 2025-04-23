@@ -57,9 +57,9 @@ private:
   Napi::Value ConductIrreversibleOperation(const Napi::CallbackInfo& info);
 
   // fields
-  std::unique_ptr<dd::Package<>>          dd;
-  std::unique_ptr<qc::QuantumComputation> qc;
-  qc::VectorDD                            sim{};
+  std::unique_ptr<dd::Package> dd;
+  qc::QuantumComputation       qc{};
+  dd::VectorDD                 sim{};
 
   std::vector<std::unique_ptr<qc::Operation>>::iterator iterator{};
   unsigned int position = 0; // current position of the iterator

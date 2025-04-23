@@ -54,8 +54,8 @@ private:
   void        Unready(const Napi::CallbackInfo& info);
 
   // fields
-  std::unique_ptr<dd::Package<>> dd;
-  qc::MatrixDD                   sim{};
+  std::unique_ptr<dd::Package> dd;
+  dd::MatrixDD                 sim{};
 
   // options for the DD export
   bool showColors          = true;
@@ -63,7 +63,7 @@ private:
   bool showClassic         = false;
   bool usePolarCoordinates = true;
 
-  std::unique_ptr<qc::QuantumComputation> qc1;
+  qc::QuantumComputation qc1;
   std::vector<std::unique_ptr<qc::Operation>>::iterator
                iterator1{};   // operations of algo1
   unsigned int position1 = 0; // current position of iterator1
@@ -74,7 +74,7 @@ private:
   bool atEnd1 =
       false; // whether we're currently after the last operation of algo1
 
-  std::unique_ptr<qc::QuantumComputation> qc2;
+  qc::QuantumComputation qc2;
   std::vector<std::unique_ptr<qc::Operation>>::iterator
                iterator2{};   // operations of algo2
   unsigned int position2 = 0; // current position of iterator2
