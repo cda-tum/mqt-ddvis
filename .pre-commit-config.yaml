@@ -52,7 +52,7 @@ repos:
 
   # Clang-format the C++ part of the code base automatically
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: "v20.1.0"
+    rev: "v20.1.7"
     hooks:
       - id: clang-format
         types_or: [c++, c, cuda]
@@ -68,7 +68,7 @@ repos:
 
   # Format configuration files with prettier
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.5.3
+    rev: v3.6.2
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
