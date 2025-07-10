@@ -22,7 +22,7 @@
     {
       matchManagers: ["npm"],
       addLabels: ["javascript"],
-      commitMessagePrefix: "⬆"
+      commitMessagePrefix: "⬆\uD83D\uDCDC"
     },
     {
       matchManagers: ["pre-commit"],
