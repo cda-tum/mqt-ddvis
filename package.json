@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "github.com/cda-tum/mqt-ddvis"
+    "url": "github.com/munich-quantum-toolkit/ddvis"
   },
   "keywords": [
     "quantum-computing",
@@ -24,7 +24,7 @@
   "contributors": [
     "Michael Artner <michael.artner@hotmail.de>"
   ],
-  "bugs": "https://github.com/cda-tum/mqt-ddvis/issues",
+  "bugs": "https://github.com/munich-quantum-toolkit/ddvis/issues",
   "homepage": "https://www.cda.cit.tum.de/app/ddvis/",
   "license": "MIT",
   "dependencies": {

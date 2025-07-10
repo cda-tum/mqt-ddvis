@@ -4,8 +4,8 @@
 <p align="center">
   <a href="https://mqt.readthedocs.io">
    <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/mqt-banner-dark.svg" width="90%">
-     <img src="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/mqt-banner-light.svg" width="90%" alt="MQT Banner">
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/logo-mqt-dark.svg" width="60%">
+      <img src="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/logo-mqt-light.svg" width="60%" alt="MQT Logo">
    </picture>
   </a>
 </p>
@@ -25,7 +25,27 @@ MQT DDVis allows users to interactively learn how decision diagrams can be used 
 
 If you are interested in our research on either topic, visit [https://www.cda.cit.tum.de/research/quantum/](https://www.cda.cit.tum.de/research/quantum/).
 
-If you have any questions, feel free to contact us via [quantum.cda@xcit.tum.de](mailto:quantum.cda@xcit.tum.de) or by creating an issue on [GitHub](https://github.com/cda-tum/mqt-ddvis/issues).
+If you have any questions, feel free to contact us via [quantum.cda@xcit.tum.de](mailto:quantum.cda@xcit.tum.de) or by creating an issue on [GitHub](https://github.com/munich-quantum-toolkit/ddvis/issues).
+
+## Contributors and Supporters
+
+The _[Munich Quantum Toolkit (MQT)](https://mqt.readthedocs.io)_ is developed by the [Chair for Design Automation](https://www.cda.cit.tum.de/) at the [Technical University of Munich](https://www.tum.de/) and supported by the [Munich Quantum Software Company (MQSC)](https://munichquantum.software).
+Among others, it is part of the [Munich Quantum Software Stack (MQSS)](https://www.munich-quantum-valley.de/research/research-areas/mqss) ecosystem, which is being developed as part of the [Munich Quantum Valley (MQV)](https://www.munich-quantum-valley.de) initiative.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/mqt-logo-banner-dark.svg" width="90%">
+    <img src="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/mqt-logo-banner-light.svg" width="90%" alt="MQT Partner Logos">
+  </picture>
+</p>
+
+Thank you to all the contributors who have helped make MQT DDVis a reality!
+
+<p align="center">
+<a href="https://github.com/munich-quantum-toolkit/ddvis/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=munich-quantum-toolkit/ddvis" />
+</a>
+</p>
 
 ## Quickstart
 
@@ -33,7 +53,7 @@ To run DDVis locally, you will require a C++ compiler, CMake, Node.js, and NPM (
 The following commands will build the app and start it. Open your browser at `localhost:3000` to access the user interface.
 
 ```
-$ git clone --recurse-submodules git@github.com:cda-tum/mqt-ddvis.git
+$ git clone --recurse-submodules git@github.com:munich-quantum-toolkit/ddvis.git mqt-ddvis
 $ cd mqt-ddvis
 ddvis $ npm install
 ddvis $ npm run-script build
@@ -44,7 +64,7 @@ ddvis $ npm run-script run
 
 (Tested under Ubuntu 20.04 with npm installed via `sudo snap install node`.)
 
-# Reference
+## Reference
 
 If you use our tool for your research, we would appreciate if you refer to it by citing the following publication:
 
@@ -61,10 +81,7 @@ If you use our tool for your research, we would appreciate if you refer to it by
 
 ## Acknowledgements
 
-The Munich Quantum Toolkit has been supported by the European
-Research Council (ERC) under the European Union's Horizon 2020 research and innovation program (grant agreement
-No. 101001318), the Bavarian State Ministry for Science and Arts through the Distinguished Professorship Program, as well as the
-Munich Quantum Valley, which is supported by the Bavarian state government with funds from the Hightech Agenda Bayern Plus.
+The Munich Quantum Toolkit has been supported by the European Research Council (ERC) under the European Union's Horizon 2020 research and innovation program (grant agreement No. 101001318), the Bavarian State Ministry for Science and Arts through the Distinguished Professorship Program, as well as the Munich Quantum Valley, which is supported by the Bavarian state government with funds from the Hightech Agenda Bayern Plus.
 
 <p align="center">
   <picture>
