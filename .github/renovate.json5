@@ -36,7 +36,7 @@
     },
     {
       description: "Automerge minor updates for stable dependencies",
-      matchManagers: ["pep621", "pre-commit"],
+      matchManagers: ["npm", "pre-commit"],
       matchUpdateTypes: ["minor", "patch"],
       matchCurrentVersion: "!/^0/",
       automerge: true
