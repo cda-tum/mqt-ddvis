@@ -25,7 +25,7 @@ MQT DDVis allows users to interactively learn how decision diagrams can be used 
 
 If you are interested in our research on either topic, visit [https://www.cda.cit.tum.de/research/quantum/](https://www.cda.cit.tum.de/research/quantum/).
 
-If you have any questions, feel free to contact us via [quantum.cda@xcit.tum.de](mailto:quantum.cda@xcit.tum.de) or by creating an issue on [GitHub](https://github.com/cda-tum/mqt-ddvis/issues).
+If you have any questions, feel free to contact us via [quantum.cda@xcit.tum.de](mailto:quantum.cda@xcit.tum.de) or by creating an issue on [GitHub](https://github.com/munich-quantum-toolkit/ddvis/issues).
 
 ## Quickstart
 
@@ -33,7 +33,7 @@ To run DDVis locally, you will require a C++ compiler, CMake, Node.js, and NPM (
 The following commands will build the app and start it. Open your browser at `localhost:3000` to access the user interface.
 
 ```
-$ git clone --recurse-submodules git@github.com:cda-tum/mqt-ddvis.git
+$ git clone --recurse-submodules git@github.com:munich-quantum-toolkit/ddvis.git
 $ cd mqt-ddvis
 ddvis $ npm install
 ddvis $ npm run-script build
