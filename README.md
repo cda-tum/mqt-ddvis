@@ -4,8 +4,8 @@
 <p align="center">
   <a href="https://mqt.readthedocs.io">
    <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/mqt-banner-dark.svg" width="90%">
-     <img src="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/mqt-banner-light.svg" width="90%" alt="MQT Banner">
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/logo-mqt-dark.svg" width="60%">
+      <img src="https://raw.githubusercontent.com/munich-quantum-toolkit/.github/refs/heads/main/docs/_static/logo-mqt-light.svg" width="60%" alt="MQT Logo">
    </picture>
   </a>
 </p>
@@ -33,7 +33,7 @@ To run DDVis locally, you will require a C++ compiler, CMake, Node.js, and NPM (
 The following commands will build the app and start it. Open your browser at `localhost:3000` to access the user interface.
 
 ```
-$ git clone --recurse-submodules git@github.com:munich-quantum-toolkit/ddvis.git
+$ git clone --recurse-submodules git@github.com:munich-quantum-toolkit/ddvis.git mqt-ddvis
 $ cd mqt-ddvis
 ddvis $ npm install
 ddvis $ npm run-script build
@@ -44,7 +44,7 @@ ddvis $ npm run-script run
 
 (Tested under Ubuntu 20.04 with npm installed via `sudo snap install node`.)
 
-# Reference
+## Reference
 
 If you use our tool for your research, we would appreciate if you refer to it by citing the following publication:
 
@@ -61,10 +61,7 @@ If you use our tool for your research, we would appreciate if you refer to it by
 
 ## Acknowledgements
 
-The Munich Quantum Toolkit has been supported by the European
-Research Council (ERC) under the European Union's Horizon 2020 research and innovation program (grant agreement
-No. 101001318), the Bavarian State Ministry for Science and Arts through the Distinguished Professorship Program, as well as the
-Munich Quantum Valley, which is supported by the Bavarian state government with funds from the Hightech Agenda Bayern Plus.
+The Munich Quantum Toolkit has been supported by the European Research Council (ERC) under the European Union's Horizon 2020 research and innovation program (grant agreement No. 101001318), the Bavarian State Ministry for Science and Arts through the Distinguished Professorship Program, as well as the Munich Quantum Valley, which is supported by the Bavarian state government with funds from the Hightech Agenda Bayern Plus.
 
 <p align="center">
   <picture>
