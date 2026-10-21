@@ -2,7 +2,14 @@
 FROM node:20-alpine
 
 # Add gcc and cmake
-RUN apk add build-base cmake ninja git
+RUN apk add --no-cache build-base cmake ninja git ca-certificates \
+    && sed -i 's|^mozilla/emSign_ECC_Root_CA_-_G3\.crt$|!&|' /etc/ca-certificates.conf \
+    && grep -q '^!mozilla/emSign_ECC_Root_CA_-_G3\.crt$' /etc/ca-certificates.conf \
+    && update-ca-certificates
+
+# Use the system trust store with the compromised eMudhra chain removed.
+ENV NODE_OPTIONS=--use-openssl-ca \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 # Set the working directory in the container to /app
 WORKDIR /app
