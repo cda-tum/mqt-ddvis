@@ -1,5 +1,5 @@
 # Use an official Node.js runtime as the base image
-FROM node:20-alpine
+FROM node:24-alpine
 
 # Add gcc and cmake
 RUN apk add build-base cmake ninja git
