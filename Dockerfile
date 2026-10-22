@@ -1,12 +1,8 @@
 # Use an official Node.js runtime as the base image
-FROM node:20-alpine
+FROM node:24-alpine
 
 # Add gcc and cmake
-RUN apk add --no-cache build-base cmake ninja git 'ca-certificates>=20261020-r0'
-
-# Use the system trust store with the compromised eMudhra chain removed.
-ENV NODE_OPTIONS=--use-openssl-ca \
-    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+RUN apk add build-base cmake ninja git
 
 # Set the working directory in the container to /app
 WORKDIR /app
